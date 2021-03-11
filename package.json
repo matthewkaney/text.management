@@ -1,0 +1,25 @@
+{
+  "name": "@mindofmatthew/cyclist",
+  "version": "0.0.1",
+  "description": "Experimental Tidal Cycles editor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mindofmatthew/cyclist.git"
+  },
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/mindofmatthew/cyclist/issues"
+  },
+  "homepage": "https://github.com/mindofmatthew/cyclist#readme",
+  "dependencies": {
+    "@codemirror/commands": "^0.18.0",
+    "@codemirror/state": "^0.18.1",
+    "@codemirror/text": "^0.18.0",
+    "@codemirror/view": "^0.18.1"
+  }
+}
