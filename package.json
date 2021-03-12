@@ -4,7 +4,7 @@
   "description": "Experimental Tidal Cycles editor",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "parcel app/index.html"
   },
   "repository": {
     "type": "git",
