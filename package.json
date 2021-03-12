@@ -17,9 +17,16 @@
   },
   "homepage": "https://github.com/mindofmatthew/cyclist#readme",
   "dependencies": {
+    "@codemirror/basic-setup": "^0.18.0",
     "@codemirror/commands": "^0.18.0",
+    "@codemirror/lang-javascript": "^0.18.0",
+    "@codemirror/legacy-modes": "^0.18.0",
     "@codemirror/state": "^0.18.1",
+    "@codemirror/stream-parser": "^0.18.1",
     "@codemirror/text": "^0.18.0",
     "@codemirror/view": "^0.18.1"
+  },
+  "devDependencies": {
+    "parcel": "^2.0.0-beta.1"
   }
 }
