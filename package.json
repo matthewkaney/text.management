@@ -27,6 +27,7 @@
     "@codemirror/view": "^0.18.1"
   },
   "devDependencies": {
+    "lezer-generator": "^0.13.3",
     "parcel": "^2.0.0-beta.1"
   }
 }
