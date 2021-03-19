@@ -23,10 +23,15 @@ const chalky = "#e5c07b",
 /// The editor theme styles for One Dark.
 export const oneDarkTheme = EditorView.theme({
   "&": {
+    fontSize: "18px",
+    height: "100%",
+    padding: "1em 2ch",
     color: "#fff",
     "& ::selection": {backgroundColor: selection},
     caretColor: cursor
   },
+
+  ".cm-content": { padding: 0 },
 
   "&.cm-focused .cm-cursor": {borderLeftColor: cursor},
   "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {backgroundColor: selection},
@@ -45,7 +50,6 @@ export const oneDarkTheme = EditorView.theme({
     backgroundColor: "#6199ff2f"
   },
 
-  // ".cm-activeLine": {backgroundColor: highlightBackground},
   ".cm-selectionMatch": {backgroundColor: "#aafe661a"},
 
   ".cm-matchingBracket, .cm-nonmatchingBracket": {
