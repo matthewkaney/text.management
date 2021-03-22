@@ -4,7 +4,9 @@ import {HighlightStyle, tags as t} from "@codemirror/highlight"
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
-const chalky = "#e5c07b",
+const
+  haze = "#00000050",
+  chalky = "#e5c07b",
   coral = "#e06c75",
   cyan = "#56b6c2",
   invalid = "#ffffff",
@@ -40,7 +42,7 @@ export const oneDarkTheme = EditorView.theme({
   ".cm-panels.cm-panels-top": {borderBottom: "2px solid black"},
   ".cm-panels.cm-panels-bottom": {borderTop: "2px solid black"},
 
-  ".cm-line": {backgroundColor: "#00000050", width: "fit-content", padding: "0", margin: "0 1ch 0 1ch"},
+  ".cm-line": {backgroundColor: haze, width: "fit-content", padding: "0", margin: "0 1ch 0 1ch"},
 
   ".cm-searchMatch": {
     backgroundColor: "#72a1ff59",
@@ -58,8 +60,8 @@ export const oneDarkTheme = EditorView.theme({
   },
 
   ".cm-gutters": {
-    backgroundColor: background,
-    color: stone,
+    backgroundColor: haze,
+    color: "white",
     border: "none"
   },
   ".cm-lineNumbers .cm-gutterElement": {color: "inherit"},
