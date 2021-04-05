@@ -24,7 +24,9 @@
     "@codemirror/state": "^0.18.1",
     "@codemirror/stream-parser": "^0.18.1",
     "@codemirror/text": "^0.18.0",
-    "@codemirror/view": "^0.18.1"
+    "@codemirror/view": "^0.18.1",
+    "node-static": "^0.7.11",
+    "ws": "^7.4.4"
   },
   "devDependencies": {
     "lezer-generator": "^0.13.3",
