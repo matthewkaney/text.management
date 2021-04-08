@@ -2,9 +2,22 @@
   "name": "@mindofmatthew/cyclist",
   "version": "0.0.1",
   "description": "Experimental Tidal Cycles editor",
-  "main": "index.js",
   "scripts": {
-    "dev": "parcel app/index.html"
+    "dev": "parcel .",
+    "build": "parcel build .",
+    "start": "node dist/server/index.js"
+  },
+  "client": "dist/client/index.html",
+  "server": "dist/server/index.js",
+  "targets": {
+    "client": {
+      "source": "app/client/index.html",
+      "context": "browser"
+    },
+    "server": {
+      "source": "app/server/index.ts",
+      "context": "node"
+    }
   },
   "repository": {
     "type": "git",
@@ -30,6 +43,6 @@
   },
   "devDependencies": {
     "lezer-generator": "^0.13.3",
-    "parcel": "^2.0.0-beta.1"
+    "parcel": "^2.0.0-beta.2"
   }
 }
