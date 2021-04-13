@@ -1,13 +1,16 @@
 import { spawn } from "child_process";
 
-export const ghci = spawn("ghci");
+const ghci = spawn("ghci");
 
 ghci.stdout.on("data", (data) => {
-  console.log(`stdout: ${data}`);
+  data = data.toString("utf-8");
+  if (!data.toString().endsWith("> ")) {
+    console.log(`"${data}"`);
+  }
 });
 
 ghci.stderr.on("data", (data) => {
-  console.error(`stderr: ${data}`);
+  console.error(`Error: ${data}`);
 });
 
 ghci.on("close", (code) => {
