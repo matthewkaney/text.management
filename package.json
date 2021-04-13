@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Experimental Tidal Cycles editor",
   "scripts": {
-    "dev": "parcel .",
+    "dev": "parcel app/client/index.html",
     "build": "parcel build .",
     "start": "node dist/server/index.js"
   },
@@ -38,6 +38,7 @@
     "@codemirror/stream-parser": "^0.18.1",
     "@codemirror/text": "^0.18.0",
     "@codemirror/view": "^0.18.1",
+    "@types/ws": "^7.4.1",
     "node-static": "^0.7.11",
     "ws": "^7.4.4"
   },

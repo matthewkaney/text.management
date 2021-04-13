@@ -1,10 +1,28 @@
-const static = require('node-static');
-const http = require('http');
+import { Server as FileServer } from "node-static";
+import { createServer } from "http";
 
-const fileServer = new static.Server('./dist/client');
+const fileServer = new FileServer("./dist/client");
 
-http.createServer(function (request, response) {
-    request.addListener('end', () => {
-        fileServer.serve(request, response);
-    }).resume();
+createServer(function (request, response) {
+  request
+    .addListener("end", () => {
+      fileServer.serve(request, response);
+    })
+    .resume();
 }).listen(1234);
+
+import { Server as WebSocketServer } from "ws";
+
+const wss = new WebSocketServer({ port: 4567 });
+
+wss.on("connection", (ws) => {
+  ws.on("message", function incoming(message) {
+    console.log("received: %s", message);
+  });
+
+  ws.send("Received Connection!");
+});
+
+import { ghci } from "./ghci";
+
+ghci;
