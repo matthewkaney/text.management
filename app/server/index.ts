@@ -16,13 +16,9 @@ import { Server as WebSocketServer } from "ws";
 const wss = new WebSocketServer({ port: 4567 });
 
 wss.on("connection", (ws) => {
-  ws.on("message", function incoming(message) {
+  ws.on("message", (message) => {
     console.log("received: %s", message);
   });
-
-  ws.send("Received Connection!");
 });
 
-import { ghci } from "./ghci";
-
-ghci;
+import "./ghci";
