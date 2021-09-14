@@ -1,18 +1,41 @@
 import { spawn } from "child_process";
+import { createInterface } from "readline";
 
-const ghci = spawn("ghci");
+interface Response {
+  type: "reply" | "error";
+  data: string;
+}
 
-ghci.stdout.on("data", (data) => {
-  data = data.toString("utf-8");
-  if (!data.toString().endsWith("> ")) {
-    console.log(`"${data}"`);
+export class GHCI {
+  private process = spawn("ghci");
+  private out = createInterface({ input: this.process.stdout });
+  private err = createInterface({ input: this.process.stderr });
+
+  constructor(callback: (response: Response) => any) {
+    this.out.on("line", (data) => {
+      if (!data.endsWith("> ")) {
+        console.log(`"${data}"`);
+        callback({ type: "reply", data });
+      }
+    });
+
+    this.err.on("line", (data) => {
+      if (data !== "") {
+        console.error(`Error: ${data}`);
+        callback({ type: "error", data });
+      }
+    });
+
+    this.process.on("close", (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
   }
-});
 
-ghci.stderr.on("data", (data) => {
-  console.error(`Error: ${data}`);
-});
+  send(text: string) {
+    this.process.stdin.write(text + "\n");
+  }
 
-ghci.on("close", (code) => {
-  console.log(`child process exited with code ${code}`);
-});
+  close() {
+    this.process.kill();
+  }
+}

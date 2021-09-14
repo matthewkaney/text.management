@@ -7,7 +7,11 @@ import { oneDark } from "./theme";
 
 let socket = new WebSocket("ws://localhost:4567/");
 
-socket.addEventListener("open", () => {});
+socket.addEventListener("open", () => {
+  socket.addEventListener("message", ({ data }) => {
+    console.log(JSON.parse(data).data);
+  });
+});
 
 let commands: KeyBinding[] = [
   {
