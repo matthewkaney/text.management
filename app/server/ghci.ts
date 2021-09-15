@@ -1,5 +1,17 @@
-import { spawn } from "child_process";
+import { spawn, exec } from "child_process";
 import { createInterface } from "readline";
+import { createReadStream } from "fs";
+import { join } from "path";
+
+let bootPath: string | null = null;
+
+exec(
+  "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'",
+  (error, stdout) => {
+    console.log(`Found BootTidal path: ${stdout}`);
+    bootPath = join(stdout, "BootTidal.hs");
+  }
+);
 
 interface Response {
   type: "reply" | "error";
@@ -12,6 +24,10 @@ export class GHCI {
   private err = createInterface({ input: this.process.stderr });
 
   constructor(callback: (response: Response) => any) {
+    if (bootPath) {
+      createReadStream(bootPath).pipe(this.process.stdin, { end: false });
+    }
+
     this.out.on("line", (data) => {
       if (!data.endsWith("> ")) {
         console.log(`"${data}"`);
