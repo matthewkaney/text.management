@@ -9,7 +9,11 @@ let socket = new WebSocket("ws://localhost:4567/");
 
 socket.addEventListener("open", () => {
   socket.addEventListener("message", ({ data }) => {
-    console.log(JSON.parse(data).data);
+    const element = document.createElement("div");
+    element.innerText = JSON.parse(data).data;
+    element.classList.add("item");
+    document.getElementById("terminal-contents").appendChild(element);
+    element.scrollIntoView(false);
   });
 });
 
@@ -38,6 +42,6 @@ window.addEventListener("load", () => {
         keymap.of(commands),
       ],
     }),
-    parent: document.body,
+    parent: document.getElementById("editor"),
   });
 });
