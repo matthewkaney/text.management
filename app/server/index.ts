@@ -1,3 +1,4 @@
+//@ts-ignore
 import { Server as FileServer } from "node-static";
 import { createServer } from "http";
 
@@ -17,12 +18,11 @@ import { GHCI } from "./ghci";
 const wss = new WebSocketServer({ port: 4567 });
 
 wss.on("connection", (ws) => {
-  const ghci = new GHCI((text) => {
-    ws.send(JSON.stringify(text));
+  const ghci = new GHCI((data) => {
+    ws.send(data);
   });
 
   ws.on("message", (message) => {
-    console.log("received: %s", message);
     ghci.send(message.toString());
   });
 
