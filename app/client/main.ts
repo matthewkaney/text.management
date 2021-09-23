@@ -7,6 +7,20 @@ import { getMessages } from "../osc/osc";
 
 import { oneDark } from "./theme";
 
+//@ts-ignore
+let out = null;
+
+//@ts-ignore
+navigator.requestMIDIAccess().then((m) => {
+  for (let [, o] of m.outputs) {
+    console.log(o.name);
+    console.log(o.name.startsWith("Blofeld"));
+    if (o.name.startsWith("Blofeld")) {
+      out = o;
+    }
+  }
+});
+
 let socket = new WebSocket("ws://localhost:4567/");
 socket.binaryType = "arraybuffer";
 
@@ -14,7 +28,7 @@ socket.addEventListener("open", () => {
   socket.addEventListener("message", ({ data }) => {
     let bundle = getMessages(new Uint8Array(data));
 
-    for (let { address, args } of bundle) {
+    for (let { address, args, ntpTime } of bundle) {
       if (
         (address === "/tidal/reply" || address === "/tidal/error") &&
         typeof args[0] === "string"
@@ -37,18 +51,37 @@ socket.addEventListener("open", () => {
         }
 
         if (typeof params.delta === "number" && typeof params.n === "number") {
-          let delta = params.delta;
+          let delta = params.delta * 1000;
           let note = params.n + 60;
           let vel = typeof params.vel === "number" ? params.vel : 80;
           let chan = typeof params.chan === "number" ? params.chan : 0;
 
-          // sendMIDI(noteOn(chan, note, vel), time);
-          // sendMIDI(noteOff(chan, note, 0), time + delta);
+          let time = ntpTime ? ntpToTimestamp(...ntpTime) : performance.now();
+
+          //@ts-ignore
+          if (out) {
+            //@ts-ignore
+            out.send([0x90 | chan, note, vel], time);
+            //@ts-ignore
+            out.send([0x80 | chan, note, 0], time + delta);
+          } else {
+            console.log("no midi...");
+          }
         }
       }
     }
   });
 });
+
+function ntpToTimestamp(seconds: number, fracSeconds: number) {
+  return (
+    (seconds -
+      2208988800 + // Seconds relative to unix epoch (1632406222)
+      fracSeconds / 4294967296) * // Fractional seconds (1632406222.18567943572998047)
+      1000 - // Converted to milliseconds (1632406222185.67943572998047)
+    performance.timeOrigin // Adjust to current time origin (19351.679443359375)
+  );
+}
 
 let commands: KeyBinding[] = [
   {
