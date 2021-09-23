@@ -129,6 +129,26 @@ export function parse(data: Uint8Array): OSCBundle | OSCMessage {
   }
 }
 
+type TimedOSCMessage = {
+  ntpTime?: [number, number];
+} & OSCMessage;
+
+export function getMessages(data: Uint8Array) {
+  function getMessagesWithTime(
+    bundle: OSCMessage | OSCBundle,
+    ntpTime?: [number, number]
+  ): TimedOSCMessage[] {
+    if ("address" in bundle) {
+      return [{ ...bundle, ntpTime }];
+    } else {
+      let { packets, ntpTime } = bundle;
+      return packets.flatMap((p) => getMessagesWithTime(p, ntpTime));
+    }
+  }
+
+  return getMessagesWithTime(parse(data));
+}
+
 /**
  * Concatenates a series of Uint8Arrays into a single array. This
  * is equivalent to `Uint8Array.of(...elements)`, but necessary because
