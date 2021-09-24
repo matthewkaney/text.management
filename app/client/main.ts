@@ -7,19 +7,15 @@ import { getMessages } from "../osc/osc";
 
 import { oneDark } from "./theme";
 
-//@ts-ignore
-let out = null;
+let out: (name: string) => WebMidi.MIDIOutput | undefined = () => undefined;
 
-//@ts-ignore
-navigator.requestMIDIAccess().then((m) => {
-  for (let [, o] of m.outputs) {
-    console.log(o.name);
-    console.log(o.name.startsWith("Blofeld"));
-    if (o.name.startsWith("Blofeld")) {
-      out = o;
-    }
-  }
-});
+if ("requestMIDIAccess" in navigator) {
+  navigator.requestMIDIAccess().then((m) => {
+    [...m.outputs.values()].forEach((o) => console.log(o.name));
+
+    out = (n) => [...m.outputs.values()].find(({ name }) => name === n);
+  });
+}
 
 let socket = new WebSocket("ws://localhost:4567/");
 socket.binaryType = "arraybuffer";
@@ -38,7 +34,7 @@ socket.addEventListener("open", () => {
         element.classList.add("item");
         document.getElementById("terminal-contents")?.appendChild(element);
         element.scrollIntoView(false);
-      } else if (address === "/dirt/play") {
+      } else if (address === "/midi/play") {
         let params: { [k: string]: any } = {};
 
         while (args.length >= 2) {
@@ -50,22 +46,22 @@ socket.addEventListener("open", () => {
           }
         }
 
-        if (typeof params.delta === "number" && typeof params.n === "number") {
-          let delta = params.delta * 1000;
-          let note = params.n + 60;
-          let vel = typeof params.vel === "number" ? params.vel : 80;
-          let chan = typeof params.chan === "number" ? params.chan : 0;
+        console.log(params);
 
-          let time = ntpTime ? ntpToTimestamp(...ntpTime) : performance.now();
+        if (typeof params.d === "string") {
+          if (
+            typeof params.delta === "number" &&
+            typeof params.n === "number"
+          ) {
+            let delta = params.delta * 1000;
+            let note = params.n + 60;
+            let vel = typeof params.vel === "number" ? params.vel : 80;
+            let chan = typeof params.chan === "number" ? params.chan : 0;
 
-          //@ts-ignore
-          if (out) {
-            //@ts-ignore
-            out.send([0x90 | chan, note, vel], time);
-            //@ts-ignore
-            out.send([0x80 | chan, note, 0], time + delta);
-          } else {
-            console.log("no midi...");
+            let time = ntpTime ? ntpToTimestamp(...ntpTime) : performance.now();
+
+            out(params.d)?.send([0x90 | chan, note, vel], time);
+            out(params.d)?.send([0x80 | chan, note, 0], time + delta);
           }
         }
       }

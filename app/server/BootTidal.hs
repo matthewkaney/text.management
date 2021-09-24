@@ -4,7 +4,7 @@ import System.IO (hSetEncoding, stdout, utf8)
 hSetEncoding stdout utf8
 
 :{
-let target =
+let midiTarget =
       Target {oName = "editor",
               oAddress = "127.0.0.1",
               oPort = 5050,
@@ -14,10 +14,13 @@ let target =
               oHandshake = False,
               oBusPort = Nothing
              }
+             
+    midiShape =
+      OSC "/midi/play" $ Named {requiredArgs = ["d"]}
 :}
 
 -- total latency = oLatency + cFrameTimespan
-tidal <- startTidal target (defaultConfig {cVerbose = True, cFrameTimespan = 1/20})
+tidal <- startStream (defaultConfig {cVerbose = True, cFrameTimespan = 1/20}) [(midiTarget, [midiShape])]
 
 :{
 let only = (hush >>)
@@ -74,13 +77,17 @@ let only = (hush >>)
     d14 = p 14
     d15 = p 15
     d16 = p 16
-:}
-
-:{
-let getState = streamGet tidal
+    getState = streamGet tidal
     setI = streamSetI tidal
     setF = streamSetF tidal
     setS = streamSetS tidal
     setR = streamSetR tidal
     setB = streamSetB tidal
+:}
+
+import Data.Map.Strict (singleton)
+
+:{
+d :: String -> ControlPattern
+d name = pure $ singleton "d" (VS name)
 :}

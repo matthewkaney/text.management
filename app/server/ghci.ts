@@ -24,7 +24,7 @@ export class GHCI {
 
       out.on("line", (data) => {
         if (!data.endsWith("> ")) {
-          console.log(`"${data}"`);
+          console.log(`GHCI: "${data}"`);
           callback(Buffer.from(message("/tidal/reply", data)));
         }
       });

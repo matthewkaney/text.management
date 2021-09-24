@@ -23,6 +23,7 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("message", (message) => {
+    console.log(`UI: "${message.toString()}"`);
     ghci.send(message.toString());
   });
 
