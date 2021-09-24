@@ -40,12 +40,16 @@
     "@codemirror/view": "^0.18.1",
     "@types/ws": "^7.4.1",
     "node-static": "^0.7.11",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "ws": "^7.4.4"
   },
   "devDependencies": {
     "@parcel/transformer-inline-string": "^2.0.0-nightly.771",
+    "@types/react": "^17.0.24",
+    "@types/react-dom": "^17.0.9",
     "@types/webmidi": "^2.0.6",
     "lezer-generator": "^0.13.3",
-    "parcel": "^2.0.0-beta.2"
+    "parcel": "^2.0.0-rc.0"
   }
 }

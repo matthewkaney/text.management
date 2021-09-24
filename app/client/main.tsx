@@ -107,3 +107,21 @@ window.addEventListener("load", () => {
     parent: document.getElementById("editor") ?? undefined,
   });
 });
+
+import { render } from "react-dom";
+
+import { Editor } from "./Editor";
+import { Terminal } from "./Terminal";
+
+function App() {
+  return (
+    <>
+      <Editor />
+      <Terminal feed={[]} />
+    </>
+  );
+}
+
+window.addEventListener("load", () => {
+  render(<App />, document.body);
+});
