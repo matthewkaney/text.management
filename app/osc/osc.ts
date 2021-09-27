@@ -85,68 +85,87 @@ export function bundle(time: Date | number, ...packets: Uint8Array[]) {
  * @param data -
  */
 export function parse(data: Uint8Array): OSCBundle | OSCMessage {
-  let address: string;
-  [address, data] = readString(data);
+  function parseRecursively(
+    data: Uint8Array,
+    ntpTime?: [number, number],
+    time?: number
+  ) {
+    let address: string;
+    [address, data] = readString(data);
 
-  if (address === "#bundle") {
-    // OSC Bundle
+    if (address === "#bundle") {
+      // OSC Bundle
 
-    // Read timestamp
-    let ntpTime;
-    [ntpTime, data] = readTimestamp(data);
+      // Read timestamp
+      [ntpTime, data] = readTimestamp(data);
+      time = ntpToTimestamp(...ntpTime);
 
-    let packets: (OSCBundle | OSCMessage)[] = [];
+      let packets: (OSCBundle | OSCMessage)[] = [];
 
-    while (data.length > 0) {
-      let packetSize;
-      [packetSize, data] = readInt32(data);
+      while (data.length > 0) {
+        let packetSize;
+        [packetSize, data] = readInt32(data);
 
-      if (data.length < packetSize) {
-        throw Error("Unexpected end of bundle");
+        if (data.length < packetSize) {
+          throw Error("Unexpected end of bundle");
+        }
+
+        packets.push(
+          parseRecursively(data.subarray(0, packetSize), ntpTime, time)
+        );
+        data = data.subarray(packetSize);
       }
 
-      packets.push(parse(data.subarray(0, packetSize)));
-      data = data.subarray(packetSize);
-    }
+      return { time, ntpTime, packets };
+    } else if (address[0] === "/") {
+      // OSC Message
+      let types;
+      [types, data] = readString(data);
 
-    return { time: 0, ntpTime, packets };
-  } else if (address[0] === "/") {
-    // OSC Message
-    let types;
-    [types, data] = readString(data);
-
-    if (types === "") {
-      // Some implementations leave the type string off
-      return { address, args: [], argTypes: [] };
+      if (types === "") {
+        // Some implementations leave the type string off
+        return { time: performance.now(), address, args: [], argTypes: [] };
+      } else {
+        // Slice off the leading comma
+        types = types.slice(1);
+        let [argTypes, args] = readArguments(types, data);
+        return {
+          time: time ?? performance.now(),
+          address,
+          args,
+          argTypes,
+          ntpTime,
+        };
+      }
     } else {
-      // Slice off the leading comma
-      types = types.slice(1);
-      let [argTypes, args] = readArguments(types, data);
-      return { address, args, argTypes };
+      throw Error(`Data is neither an OSC message or bundle`);
     }
-  } else {
-    throw Error(`Data is neither an OSC message or bundle`);
   }
+
+  return parseRecursively(data);
 }
 
-type TimedOSCMessage = {
-  ntpTime?: [number, number];
-} & OSCMessage;
-
 export function getMessages(data: Uint8Array) {
-  function getMessagesWithTime(
-    bundle: OSCMessage | OSCBundle,
-    ntpTime?: [number, number]
-  ): TimedOSCMessage[] {
+  function toMessages(bundle: OSCMessage | OSCBundle): OSCMessage[] {
     if ("address" in bundle) {
-      return [{ ...bundle, ntpTime }];
+      return [bundle];
     } else {
-      let { packets, ntpTime } = bundle;
-      return packets.flatMap((p) => getMessagesWithTime(p, ntpTime));
+      let { packets } = bundle;
+      return packets.flatMap((p) => toMessages(p));
     }
   }
 
-  return getMessagesWithTime(parse(data));
+  return toMessages(parse(data));
+}
+
+function ntpToTimestamp(seconds: number, fracSeconds: number) {
+  return (
+    (seconds -
+      2208988800 + // Seconds relative to unix epoch
+      fracSeconds / 4294967296) * // Fractional seconds
+      1000 - // Converted to milliseconds
+    performance.timeOrigin // Adjust to current time origin
+  );
 }
 
 /**

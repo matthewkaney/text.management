@@ -11,9 +11,11 @@ export interface OSCBundle {
  * An object representing a single OSC message.
  */
 export interface OSCMessage {
+  time: number;
   address: string;
   args: OSCArgumentValueList;
   argTypes: OSCArgumentTagList;
+  ntpTime?: [number, number];
 }
 
 /**
