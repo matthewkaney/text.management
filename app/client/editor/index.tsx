@@ -7,7 +7,7 @@ import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 
 import { oneDark } from "./theme";
 
-import { sendOSC } from "./OSC";
+import { sendOSC } from "../osc";
 
 let commands: KeyBinding[] = [
   {

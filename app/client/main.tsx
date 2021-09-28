@@ -1,23 +1,39 @@
-let out: (name: string) => WebMidi.MIDIOutput | undefined = () => undefined;
-
-if ("requestMIDIAccess" in navigator) {
-  navigator.requestMIDIAccess().then((m) => {
-    [...m.outputs.values()].forEach((o) => console.log(o.name));
-
-    out = (n) => [...m.outputs.values()].find(({ name }) => name === n);
-  });
-}
-
+import { useState, useEffect } from "react";
 import { render } from "react-dom";
 
-import { Editor } from "./Editor";
-import { Terminal } from "./Terminal";
+import { listenForOSC } from "./osc";
+import { playMIDI } from "./midi";
+
+import { Editor } from "./editor";
+import { Terminal, TerminalMessage } from "./Terminal";
 
 function App() {
+  const [feed, setFeed] = useState<TerminalMessage[]>([]);
+
+  useEffect(() => {
+    return listenForOSC("/tidal/reply", ({ args: [text] }) => {
+      if (typeof text === "string") {
+        setFeed((f) => [...f, { level: "log", source: "tidal", text }]);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    return listenForOSC("/tidal/error", ({ args: [text] }) => {
+      if (typeof text === "string") {
+        setFeed((f) => [...f, { level: "error", source: "tidal", text }]);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    return listenForOSC("/midi/play", playMIDI);
+  }, []);
+
   return (
     <>
       <Editor />
-      <Terminal feed={[]} />
+      <Terminal feed={feed} />
     </>
   );
 }

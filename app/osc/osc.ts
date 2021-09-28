@@ -5,6 +5,10 @@
  * Licensed under the MIT and GPL 3 licenses.
  */
 
+import { performance as nodePerformance } from "perf_hooks";
+
+const performance = nodePerformance ?? window.performance;
+
 import {
   OSCBundle,
   OSCMessage,
