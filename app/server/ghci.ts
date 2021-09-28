@@ -12,8 +12,13 @@ export class GHCI {
 
   constructor(callback: (data: Buffer) => any) {
     this.socket = createSocket("udp4");
-    this.socket.bind(5050, "localhost", () => {
-      this.process = spawn("ghci", ["-XOverloadedStrings"]);
+    this.socket.bind(0, "localhost", () => {
+      this.process = spawn("ghci", ["-XOverloadedStrings"], {
+        env: {
+          ...process.env,
+          midi_port: this.socket.address().port.toString(),
+        },
+      });
 
       this.process.stdin.write(':set prompt ""\n:set prompt-cont ""\n');
 
@@ -42,6 +47,7 @@ export class GHCI {
     });
 
     this.socket.on("message", (data) => {
+      console.log("Received osc message");
       callback(data);
     });
   }

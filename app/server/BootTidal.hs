@@ -3,11 +3,16 @@ import Sound.Tidal.Context
 import System.IO (hSetEncoding, stdout, utf8)
 hSetEncoding stdout utf8
 
+import System.Environment (getEnv)
+
+midiPortString <- getEnv "midi_port"
+midiPort = read midiPortString :: Int
+
 :{
 let midiTarget =
       Target {oName = "editor",
               oAddress = "127.0.0.1",
-              oPort = 5050,
+              oPort = midiPort,
               oLatency = 0.02,
               oSchedule = Pre BundleStamp,
               oWindow = Nothing,
