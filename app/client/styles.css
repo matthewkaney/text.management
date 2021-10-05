@@ -35,8 +35,16 @@ body {
 
 #terminal-contents .item {
   background-color: #00000050;
+  margin-top: 1.4em;
+  position: relative;
+  padding: 0 0.5ch;
 }
 
-#terminal-contents .item:not(:last-child) {
-  margin-bottom: 1.4em;
+#terminal-contents .item .source {
+  font-size: 9px;
+  position: absolute;
+  top: -12.5px;
+  left: 0;
+  padding: 0 1ch;
+  background-color: #00000050;
 }

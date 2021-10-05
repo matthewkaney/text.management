@@ -1,3 +1,5 @@
+import clsx from "clsx";
+
 export interface TerminalMessage {
   level: "log" | "error";
   source: string;
@@ -25,5 +27,11 @@ interface TerminalItemProps {
 }
 
 function TerminalItem({ message }: TerminalItemProps) {
-  return <div className="item">{message.text}</div>;
+  let { level, source, text } = message;
+  return (
+    <div className={clsx("item", level)}>
+      <div className="source">{source}</div>
+      {text}
+    </div>
+  );
 }

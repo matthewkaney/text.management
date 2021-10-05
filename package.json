@@ -39,6 +39,7 @@
     "@codemirror/text": "^0.18.0",
     "@codemirror/view": "^0.18.1",
     "@types/ws": "^7.4.1",
+    "clsx": "^1.1.1",
     "node-static": "^0.7.11",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
