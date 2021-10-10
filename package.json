@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Experimental Tidal Cycles editor",
   "scripts": {
-    "dev": "parcel app/client/index.html",
     "build": "parcel build .",
     "start": "node dist/server/index.js"
   },
@@ -21,14 +20,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mindofmatthew/cyclist.git"
+    "url": "git+https://github.com/mindofmatthew/untitled.git"
   },
   "author": "Matthew Kaney",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/mindofmatthew/cyclist/issues"
+    "url": "https://github.com/mindofmatthew/untitled/issues"
   },
-  "homepage": "https://github.com/mindofmatthew/cyclist#readme",
+  "homepage": "https://github.com/mindofmatthew/untitled#readme",
   "dependencies": {
     "@codemirror/basic-setup": "^0.18.0",
     "@codemirror/commands": "^0.18.0",
