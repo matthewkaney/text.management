@@ -1,18 +1,14 @@
-//@ts-ignore
-import { Server as FileServer } from "node-static";
-import { createServer } from "http";
+import express from "express";
 
-import { parse } from "../osc/osc";
+import { getMessages } from "../osc/osc";
 
-const fileServer = new FileServer("./dist/client");
+const app = express();
 
-createServer(function (request, response) {
-  request
-    .addListener("end", () => {
-      fileServer.serve(request, response);
-    })
-    .resume();
-}).listen(1234);
+app.use(express.static("../client"));
+
+app.listen(1234, () => {
+  console.log("server is listening");
+});
 
 import { Server as WebSocketServer } from "ws";
 import { GHCI } from "./ghci";
@@ -24,17 +20,18 @@ wss.on("connection", (ws) => {
     ws.send(data);
   });
 
-  ws.on("message", (message) => {
-    if (message instanceof Buffer) {
-      let osc = parse(message);
-      if (
-        "address" in osc &&
-        osc.address === "/tidal/code" &&
-        typeof osc.args[0] === "string"
-      ) {
-        let code = osc.args[0];
-        console.log(`UI: "${code}"`);
-        ghci.send(code);
+  ws.on("message", (data) => {
+    if (data instanceof Buffer) {
+      for (let osc of getMessages(data)) {
+        if (
+          "address" in osc &&
+          osc.address === "/tidal/code" &&
+          typeof osc.args[0] === "string"
+        ) {
+          let code = osc.args[0];
+          console.log(`UI: "${code}"`);
+          ghci.send(code);
+        }
       }
     }
   });

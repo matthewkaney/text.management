@@ -38,13 +38,14 @@
     "@codemirror/text": "^0.18.0",
     "@codemirror/view": "^0.18.1",
     "clsx": "^1.1.1",
-    "node-static": "^0.7.11",
+    "express": "^4.17.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "ws": "^7.4.4"
   },
   "devDependencies": {
     "@parcel/transformer-inline-string": "^2.0.0-nightly.771",
+    "@types/express": "^4.17.13",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@types/webmidi": "^2.0.6",
