@@ -34,10 +34,11 @@ body {
 }
 
 #terminal-contents .item {
-  background-color: #00000050;
   margin-top: 1.4em;
   position: relative;
   padding: 0 0.5ch;
+  background-size: 100% calc(100% + 12.5px);
+  background-position: 0 -12.5px;
 }
 
 #terminal-contents .item .source {
@@ -46,5 +47,20 @@ body {
   top: -12.5px;
   left: 0;
   padding: 0 1ch;
+  background-position: 0 12.5px;
+}
+
+#terminal-contents .item.log,
+#terminal-contents .item.log .source {
   background-color: #00000050;
+}
+
+#terminal-contents .item.error,
+#terminal-contents .item.error .source {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #6c000050 0px,
+    #6c000050 10px,
+    #a6020250 10px 20px
+  );
 }
