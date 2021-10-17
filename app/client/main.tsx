@@ -7,6 +7,8 @@ import { playMIDI } from "./midi";
 import { Editor } from "./editor";
 import { Terminal, TerminalMessage } from "./Terminal";
 
+import { HydraCanvas } from "./hydra";
+
 function App() {
   const [feed, setFeed] = useState<TerminalMessage[]>([]);
 
@@ -34,6 +36,7 @@ function App() {
     <>
       <Editor />
       <Terminal feed={feed} />
+      <HydraCanvas />
     </>
   );
 }
