@@ -25,6 +25,7 @@ body {
   padding: 1em 2ch 1em 0;
   box-sizing: border-box;
   height: 100%;
+  word-break: break-word;
 }
 
 #terminal-contents {
