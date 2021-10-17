@@ -19,7 +19,7 @@ const haze = "#00000050",
   highlightBackground = "#2c313a",
   background = "#282c34",
   selection = "#3E4451",
-  cursor = "#528bff";
+  cursor = "white";
 
 /// The editor theme styles for One Dark.
 export const oneDarkTheme = EditorView.theme(
@@ -36,7 +36,10 @@ export const oneDarkTheme = EditorView.theme(
     ".cm-content": { padding: 0 },
 
     "&.cm-focused": { outline: "none" },
-    "&.cm-focused .cm-cursor": { borderLeftColor: cursor },
+    "&.cm-focused .cm-cursor": {
+      borderLeftColor: cursor,
+      borderLeftWidth: "2px",
+    },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: selection,
     },
@@ -48,8 +51,12 @@ export const oneDarkTheme = EditorView.theme(
     ".cm-line": {
       backgroundColor: haze,
       width: "fit-content",
-      padding: "0",
+      padding: "0 .5ch",
       margin: "0 1ch 0 1ch",
+    },
+
+    ".cm-emptyLine:not(.cm-activeLine)": {
+      padding: "0",
     },
 
     ".cm-searchMatch": {
