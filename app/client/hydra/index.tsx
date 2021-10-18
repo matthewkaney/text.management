@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 import { connectRemote } from "../osc";
 
-import page from "url:./viewer.html";
+import pageSource from "bundle-text:./viewer.html";
 
 export function HydraCanvas() {
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
@@ -29,7 +29,7 @@ export function HydraCanvas() {
   return (
     <iframe
       ref={setIframe}
-      src={page}
+      srcDoc={pageSource}
       style={{
         position: "absolute",
         width: "100%",
