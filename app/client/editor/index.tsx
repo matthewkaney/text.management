@@ -15,7 +15,7 @@ let commands: KeyBinding[] = [
     run: ({ state }) => {
       let { from } = state.selection.main;
       let { text } = state.doc.lineAt(from);
-      return sendOSC("/tidal/code", text);
+      return sendOSC("/code", text);
     },
   },
 ];

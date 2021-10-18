@@ -14,18 +14,23 @@
       }
     </style>
     <script src="https://unpkg.com/hydra-synth"></script>
-    <script type="module">
+    <script>
       //import { getMessages } from "../../osc/osc.ts";
 
       window.addEventListener("message", ({data, ports}) => {
-        if (data === "channel" && ports.length > 1) {
-          console.log("attaching ports");
+        if (data === "channel" && ports.length > 0) {
           let [port] = ports;
 
           port.addEventListener("message", ({data}) => {
             console.log("received message");
-            console.log(data);
+            
           });
+
+          port.addEventListener("messageerror", event => {
+            console.error(event);
+          });
+
+          port.start();
         }
       });
 

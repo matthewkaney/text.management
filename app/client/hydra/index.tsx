@@ -13,7 +13,6 @@ export function HydraCanvas() {
 
       let onLoad = () => {
         iframe.contentWindow?.postMessage("channel", "*", [channel.port2]);
-        console.log("sending message channel");
       };
 
       let disconnect = connectRemote(channel.port1);

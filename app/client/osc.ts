@@ -49,6 +49,8 @@ export function connectRemote(remote: Remote) {
 
     remote.addEventListener("message", handleData);
 
+    remote.start();
+
     return () => {
       dispatch = () => false;
       remote.removeEventListener("message", handleData);
