@@ -1,19 +1,20 @@
 import express from "express";
+import { join } from "path";
 
 import { getMessages } from "../osc/osc";
 
 const app = express();
 
-app.use(express.static("../client"));
+app.use(express.static(join(__dirname, "../client")));
 
-app.listen(1234, () => {
+const server = app.listen(1234, () => {
   console.log("server is listening");
 });
 
-import { Server as WebSocketServer } from "ws";
+import { Server as WSServer } from "ws";
 import { GHCI } from "./ghci";
 
-const wss = new WebSocketServer({ port: 4567 });
+const wss = new WSServer({ server });
 
 wss.on("connection", (ws) => {
   const ghci = new GHCI((data) => {
