@@ -1,8 +1,8 @@
 import { message, getMessages } from "../osc/osc";
 import { OSCArgumentInputValue, OSCMessage } from "../osc/types";
 
-//let socket = new WebSocket("ws://localhost:4567/");
-//socket.binaryType = "arraybuffer";
+// let socket = new WebSocket(`ws://${window.location.host}/`);
+// socket.binaryType = "arraybuffer";
 
 type OSCHandler = (message: OSCMessage) => any;
 
