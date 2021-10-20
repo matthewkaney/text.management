@@ -9,5 +9,5 @@ In its initial form, this is a webserver-based editor for the Tidal Cycles langu
 1. Clone this repository.
 2. Run the command `npm install` to set up dependencies.
 3. Run the command `npm run build` to build a local version of the server.
-4. Run the command `npm run start` to run the server.
+4. Run the command `npm start` to run the server.
 5. Navigate a browser to http://localhost:1234/ to use the interface.
