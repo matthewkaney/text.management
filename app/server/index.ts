@@ -7,8 +7,20 @@ const app = express();
 
 app.use(express.static(join(__dirname, "../client")));
 
+import { networkInterfaces } from "os";
+
 const server = app.listen(1234, () => {
-  console.log("server is listening");
+  let nets = networkInterfaces();
+
+  for (const netList of Object.values(nets)) {
+    if (netList) {
+      for (const net of netList) {
+        if (net.family === "IPv4" && !net.internal) {
+          console.log(`Editor is live: ${net.address}:1234`);
+        }
+      }
+    }
+  }
 });
 
 import { Server as WSServer } from "ws";
