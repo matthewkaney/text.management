@@ -19,9 +19,15 @@ let commands: KeyBinding[] = [
   {
     key: "Shift-Enter",
     run: ({ state }) => {
-      let { from } = state.selection.main;
-      let { text } = state.doc.lineAt(from);
-      return sendOSC("/tidal/code", text);
+      if (state.selection.main.empty) {
+        let { from } = state.selection.main;
+        let { text } = state.doc.lineAt(from);
+        return sendOSC("/tidal/code", text);
+      } else {
+        let { from, to } = state.selection.main;
+        let text = state.sliceDoc(from, to);
+        return sendOSC("/tidal/code", text);
+      }
     },
   },
 ];
