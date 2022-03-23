@@ -18,14 +18,32 @@ import { oneDark } from "./theme";
 let commands: KeyBinding[] = [
   {
     key: "Shift-Enter",
-    run: ({ state }) => {
-      if (state.selection.main.empty) {
-        let { from } = state.selection.main;
-        let { text } = state.doc.lineAt(from);
+    run: ({ state: { doc, selection } }) => {
+      if (selection.main.empty) {
+        let { text, number } = doc.lineAt(selection.main.from);
+
+        if (text.trim().length === 0) {
+          // Do nothing
+          return true;
+        }
+
+        let fromL, toL;
+        fromL = toL = number;
+
+        while (fromL > 1 && doc.line(fromL - 1).text.trim().length > 0) {
+          fromL -= 1;
+        }
+        while (toL < doc.lines && doc.line(toL + 1).text.trim().length > 0) {
+          toL += 1;
+        }
+
+        let { from } = doc.line(fromL);
+        let { to } = doc.line(toL);
+        text = doc.sliceString(from, to);
         return sendOSC("/tidal/code", text);
       } else {
-        let { from, to } = state.selection.main;
-        let text = state.sliceDoc(from, to);
+        let { from, to } = selection.main;
+        let text = doc.sliceString(from, to);
         return sendOSC("/tidal/code", text);
       }
     },
