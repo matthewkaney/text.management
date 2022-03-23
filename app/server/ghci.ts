@@ -86,7 +86,7 @@ export class GHCI {
   }
 
   send(text: string) {
-    this.process?.stdin.write(text + "\n");
+    this.process?.stdin.write(`:{\n${text}\n:}\n`);
   }
 
   close() {
