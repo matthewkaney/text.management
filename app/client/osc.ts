@@ -39,10 +39,29 @@ export function listenForOSC(address: string, callback: OSCHandler) {
 }
 
 export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
-  if (socket.readyState === socket.OPEN) {
+  const send = () => {
     socket.send(message(address, ...args));
-    return true;
-  }
+  };
 
-  return false;
+  if (socket.readyState === socket.OPEN) {
+    send();
+    return true;
+  } else {
+    socket.addEventListener("open", send);
+    return false;
+  }
+}
+
+export function sendOSCWithResponse(
+  [address, ...args]: [string, ...OSCArgumentInputValue[]],
+  response: string
+): Promise<OSCMessage> {
+  return new Promise((resolve) => {
+    const unlisten = listenForOSC(response, (message) => {
+      unlisten();
+      resolve(message);
+    });
+
+    sendOSC(address, ...args);
+  });
 }

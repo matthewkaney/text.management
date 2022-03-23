@@ -11,7 +11,8 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { useCallback } from "react";
-import { sendOSC } from "../osc";
+import { listenForOSC, sendOSC } from "../osc";
+import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
 let commands: KeyBinding[] = [
@@ -44,32 +45,40 @@ function emptyLineDeco(view: EditorView) {
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      new EditorView({
-        state: EditorState.create({
-          extensions: [
-            basicSetup,
-            oneDark,
-            StreamLanguage.define(haskell),
-            keymap.of(commands),
-            ViewPlugin.fromClass(
-              class {
-                decorations: DecorationSet;
-                constructor(view: EditorView) {
-                  this.decorations = emptyLineDeco(view);
-                }
-                update(update: ViewUpdate) {
-                  if (update.docChanged || update.viewportChanged)
-                    this.decorations = emptyLineDeco(update.view);
-                }
-              },
-              {
-                decorations: (v) => v.decorations,
-              }
-            ),
-          ],
-        }),
-        parent: ref,
+      listenForOSC("/doc", ({ args: [version, doc] }) => {
+        if (typeof version === "number" && typeof doc === "string") {
+          new EditorView({
+            state: EditorState.create({
+              doc,
+              extensions: [
+                basicSetup,
+                oneDark,
+                StreamLanguage.define(haskell),
+                keymap.of(commands),
+                peerExtension(version),
+                ViewPlugin.fromClass(
+                  class {
+                    decorations: DecorationSet;
+                    constructor(view: EditorView) {
+                      this.decorations = emptyLineDeco(view);
+                    }
+                    update(update: ViewUpdate) {
+                      if (update.docChanged || update.viewportChanged)
+                        this.decorations = emptyLineDeco(update.view);
+                    }
+                  },
+                  {
+                    decorations: (v) => v.decorations,
+                  }
+                ),
+              ],
+            }),
+            parent: ref,
+          });
+        }
       });
+
+      sendOSC("/doc/get");
     }
   }, []);
 

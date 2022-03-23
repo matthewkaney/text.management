@@ -26,6 +26,8 @@ const server = app.listen(1234, () => {
 import { Server as WSServer } from "ws";
 import { GHCI } from "./ghci";
 
+import { getDocument, pullUpdates, pushUpdates } from "./authority";
+
 const wss = new WSServer({ server });
 
 wss.on("connection", (ws) => {
@@ -36,14 +38,26 @@ wss.on("connection", (ws) => {
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
       for (let osc of getMessages(data)) {
-        if (
-          "address" in osc &&
-          osc.address === "/tidal/code" &&
-          typeof osc.args[0] === "string"
-        ) {
+        console.log(`Received: ${osc.address}, ${JSON.stringify(osc.args)}`);
+        if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
           console.log(`UI: "${code}"`);
           ghci.send(code);
+        } else if (osc.address === "/doc/get") {
+          getDocument(ws);
+        } else if (
+          osc.address === "/doc/pull" &&
+          typeof osc.args[0] === "number"
+        ) {
+          pullUpdates(ws, osc.args[0]);
+        } else if (
+          osc.address === "/doc/push" &&
+          typeof osc.args[0] === "number"
+        ) {
+          let updates = osc.args.slice(1);
+          if (updates.every((u) => typeof u === "string")) {
+            pushUpdates(ws, osc.args[0], ...(updates as string[]));
+          }
         }
       }
     }
