@@ -15,6 +15,10 @@ body {
   flex: 1;
 }
 
+#editor {
+  width: 800px;
+}
+
 #terminal {
   font-size: 18px;
   font-size: 18px;
