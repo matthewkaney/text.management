@@ -28,12 +28,16 @@ import { GHCI } from "./ghci";
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
 
+const ghci = new GHCI();
+
 const wss = new WSServer({ server });
 
 wss.on("connection", (ws) => {
-  const ghci = new GHCI((data) => {
+  function GHCIHandler(data: Buffer) {
     ws.send(data);
-  });
+  }
+
+  ghci.on("message", GHCIHandler);
 
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
@@ -64,6 +68,6 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    ghci.close();
+    ghci.off("message", GHCIHandler);
   });
 });

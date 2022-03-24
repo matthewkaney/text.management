@@ -1,21 +1,32 @@
+import EventEmitter from "events";
 import { createSocket } from "dgram";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { createInterface } from "readline";
-
-import { performance } from "perf_hooks";
 
 import { message } from "../osc/osc";
 
 import bootCode from "bundle-text:./BootTidal.hs";
 
-export class GHCI {
+export class GHCI extends EventEmitter {
   private socket;
   private process?: ChildProcessWithoutNullStreams;
+
+  private history: Buffer[] = [];
 
   private outBatch: string[] | null = null;
   private errBatch: string[] | null = null;
 
-  constructor(callback: (data: Buffer) => any) {
+  constructor() {
+    super();
+
+    this.on("newListener", (event, listener) => {
+      if (event === "message") {
+        for (let message of this.history) {
+          listener(message);
+        }
+      }
+    });
+
     this.socket = createSocket("udp4");
     this.socket.bind(0, "localhost", () => {
       this.process = spawn("ghci", ["-XOverloadedStrings"], {
@@ -44,9 +55,12 @@ export class GHCI {
                 const outBatch = this.outBatch;
                 this.outBatch = null;
 
-                callback(
-                  Buffer.from(message("/tidal/reply", outBatch.join("\n")))
+                let m = Buffer.from(
+                  message("/tidal/reply", outBatch.join("\n"))
                 );
+
+                this.history.push(m);
+                this.emit("message", m);
               }
             }, 20);
           }
@@ -65,9 +79,12 @@ export class GHCI {
                 const errBatch = this.errBatch;
                 this.errBatch = null;
 
-                callback(
-                  Buffer.from(message("/tidal/error", errBatch.join("\n")))
+                let m = Buffer.from(
+                  message("/tidal/error", errBatch.join("\n"))
                 );
+
+                this.history.push(m);
+                this.emit("message", m);
               }
             }, 20);
           }
@@ -81,7 +98,7 @@ export class GHCI {
 
     this.socket.on("message", (data) => {
       console.log("Received osc message");
-      callback(data);
+      this.emit("message", data);
     });
   }
 
