@@ -19,6 +19,20 @@ let commands: KeyBinding[] = [
   {
     key: "Shift-Enter",
     run: ({ state: { doc, selection } }) => {
+      let from, to;
+      if (selection.main.empty) {
+        ({ from, to } = doc.lineAt(selection.main.from));
+      } else {
+        ({ from, to } = selection.main);
+      }
+
+      let text = doc.sliceString(from, to);
+      return sendOSC("/tidal/code", text);
+    },
+  },
+  {
+    key: "Mod-Enter",
+    run: ({ state: { doc, selection } }) => {
       if (selection.main.empty) {
         let { text, number } = doc.lineAt(selection.main.from);
 
@@ -75,10 +89,10 @@ export function Editor() {
             state: EditorState.create({
               doc,
               extensions: [
+                keymap.of(commands),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
-                keymap.of(commands),
                 peerExtension(version),
                 ViewPlugin.fromClass(
                   class {
