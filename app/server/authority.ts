@@ -10,7 +10,7 @@ import { message } from "../osc/osc";
 let updates: Update[] = [];
 
 // The current document
-let doc = Text.of(["Start document"]);
+let doc = Text.of([""]);
 
 let pending: ((value: string[]) => void)[] = [];
 
