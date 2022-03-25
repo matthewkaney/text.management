@@ -1,4 +1,5 @@
 import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
+import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { RangeSetBuilder } from "@codemirror/rangeset";
 import { StreamLanguage } from "@codemirror/stream-parser";
@@ -15,7 +16,7 @@ import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
-let commands: KeyBinding[] = [
+let tidalCommands: KeyBinding[] = [
   {
     key: "Shift-Enter",
     run: ({ state: { doc, selection } }) => {
@@ -95,7 +96,7 @@ export function Editor() {
             state: EditorState.create({
               doc,
               extensions: [
-                keymap.of(commands),
+                keymap.of([indentWithTab, ...tidalCommands]),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
