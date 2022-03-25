@@ -62,6 +62,12 @@ let commands: KeyBinding[] = [
       }
     },
   },
+  {
+    key: "Mod-.",
+    run: () => {
+      return sendOSC("/tidal/code", "hush");
+    },
+  },
 ];
 
 const emptyLine = Decoration.line({
