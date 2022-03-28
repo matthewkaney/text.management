@@ -11,6 +11,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
+import { evaluateSelection } from "./highlight";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
@@ -19,21 +20,31 @@ import { oneDark } from "./theme";
 let tidalCommands: KeyBinding[] = [
   {
     key: "Shift-Enter",
-    run: ({ state: { doc, selection } }) => {
+    run: (target) => {
+      let {
+        state: { doc, selection },
+      } = target;
       let from, to;
+
       if (selection.main.empty) {
         ({ from, to } = doc.lineAt(selection.main.from));
       } else {
         ({ from, to } = selection.main);
       }
 
+      evaluateSelection(target, from, to);
       let text = doc.sliceString(from, to);
       return sendOSC("/tidal/code", text);
     },
   },
   {
     key: "Mod-Enter",
-    run: ({ state: { doc, selection } }) => {
+    run: (target) => {
+      let {
+        state: { doc, selection },
+      } = target;
+      let from, to;
+
       if (selection.main.empty) {
         let { text, number } = doc.lineAt(selection.main.from);
 
@@ -52,15 +63,15 @@ let tidalCommands: KeyBinding[] = [
           toL += 1;
         }
 
-        let { from } = doc.line(fromL);
-        let { to } = doc.line(toL);
-        text = doc.sliceString(from, to);
-        return sendOSC("/tidal/code", text);
+        ({ from } = doc.line(fromL));
+        ({ to } = doc.line(toL));
       } else {
-        let { from, to } = selection.main;
-        let text = doc.sliceString(from, to);
-        return sendOSC("/tidal/code", text);
+        ({ from, to } = selection.main);
       }
+
+      evaluateSelection(target, from, to);
+      let text = doc.sliceString(from, to);
+      return sendOSC("/tidal/code", text);
     },
   },
   {
