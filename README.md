@@ -4,7 +4,7 @@ This is an experiment in making an editor for live coding (or at least useful co
 
 As such, the goal for this project is to create an editor that's maximally configurable, while also generating useful features and components that can be used by the broader community of live coders and toolmakers.
 
-In its initial form, this is a webserver-based editor for the Tidal Cycles language. It requires Node JS and Tidal to be installed independently. It can be installed like so:
+In its initial form, this is a webserver-based editor for the Tidal Cycles language. It requires [Node JS](https://nodejs.dev/) and [Tidal](https://tidalcycles.org/) to be installed independently. It can be installed like so:
 
 1. Clone this repository.
 2. Run the command `npm install` to set up dependencies.
