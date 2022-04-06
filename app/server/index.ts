@@ -1,3 +1,7 @@
+import { program } from "./cli";
+
+let { defaultBoot, boot = [] } = program.opts();
+
 import express from "express";
 import { join } from "path";
 
@@ -28,7 +32,7 @@ import { GHCI } from "./ghci";
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
 
-const ghci = new GHCI();
+const ghci = new GHCI({ defaultBoot, customBootfiles: boot });
 
 const wss = new WSServer({ server });
 

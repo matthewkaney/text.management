@@ -8,6 +8,16 @@ import { createReadStream } from "fs";
 
 import { message } from "../osc/osc";
 
+interface GHCIOptions {
+  defaultBoot: boolean;
+  customBootfiles: string[];
+}
+
+const defaultOpts: GHCIOptions = {
+  defaultBoot: true,
+  customBootfiles: [],
+};
+
 export class GHCI extends EventEmitter {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
@@ -17,11 +27,11 @@ export class GHCI extends EventEmitter {
   private outBatch: string[] | null = null;
   private errBatch: string[] | null = null;
 
-  constructor() {
+  constructor(opts: GHCIOptions = defaultOpts) {
     super();
 
     this.socket = this.initSocket();
-    this.process = this.initProcess();
+    this.process = this.initProcess(opts);
 
     this.on("newListener", (event, listener) => {
       if (event === "message") {
@@ -45,7 +55,7 @@ export class GHCI extends EventEmitter {
     });
   }
 
-  private async initProcess() {
+  private async initProcess({ defaultBoot, customBootfiles }: GHCIOptions) {
     const port = (await this.socket).address().port.toString();
 
     const child = spawn("ghci", ["-XOverloadedStrings"], {
@@ -60,13 +70,25 @@ export class GHCI extends EventEmitter {
     const out = createInterface({ input: child.stdout });
     const err = createInterface({ input: child.stderr });
 
-    const { stdout: path } = await promisify(exec)(
-      "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
-    );
-    const bootPath = join(path, "BootTidal.hs");
-    console.log(`Loading Tidal Bootfile: ${bootPath}`);
+    const loadFile = (path: string) =>
+      new Promise<void>((resolve) => {
+        const stream = createReadStream(path);
 
-    createReadStream(bootPath).pipe(child.stdin, { end: false });
+        stream.on("close", () => {
+          console.log(`Loaded bootfile: ${path}`);
+          resolve();
+        });
+
+        stream.pipe(child.stdin, { end: false });
+      });
+
+    if (defaultBoot) {
+      await loadFile(await this.defaultBootfile());
+    }
+
+    for (let path of customBootfiles) {
+      await loadFile(path);
+    }
 
     out.on("line", (data) => {
       if (!data.endsWith("> ")) {
@@ -117,6 +139,12 @@ export class GHCI extends EventEmitter {
     });
 
     return child;
+  }
+
+  private defaultBootfile() {
+    return promisify(exec)(
+      "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
+    ).then(({ stdout }) => join(stdout, "BootTidal.hs"));
   }
 
   async send(text: string) {
