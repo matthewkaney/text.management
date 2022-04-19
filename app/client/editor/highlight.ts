@@ -1,41 +1,57 @@
-import { EditorView, Decoration, DecorationSet } from "@codemirror/view";
-import { StateField, StateEffect } from "@codemirror/state";
+import {
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  Decoration,
+} from "@codemirror/view";
+import { StateEffect, Transaction } from "@codemirror/state";
 
-const evaluate =
-  StateEffect.define<{ from: number; to: number; time: DOMHighResTimeStamp }>();
+const evaluate = StateEffect.define<{ from: number; to: number }>();
 
-const evaluationField = StateField.define<DecorationSet>({
-  create() {
-    return Decoration.none;
-  },
-  update(underlines, tr) {
-    underlines = underlines.map(tr.changes);
-    for (let e of tr.effects)
-      if (e.is(evaluate)) {
-        underlines = underlines.update({
-          add: [evaluationMark.range(e.value.from, e.value.to)],
-        });
-      }
-    return underlines;
-  },
-  provide: (f) => EditorView.decorations.from(f),
-});
+export function evaluationFlash() {
+  const lifespan = 2000;
 
-const evaluationMark = Decoration.mark({ class: "cm-evaluated" });
+  return [
+    ViewPlugin.fromClass(
+      class {
+        decorations = Decoration.none;
+
+        update({ transactions }: ViewUpdate) {
+          for (let tr of transactions) {
+            for (let e of tr.effects) {
+              if (e.is(evaluate) && e.value.from !== e.value.to) {
+                let { from, to } = e.value;
+                let evalMark = Decoration.mark({
+                  class: "evaluated",
+                  time: tr.annotation(Transaction.time),
+                });
+                this.decorations = this.decorations.update({
+                  add: [evalMark.range(from, to)],
+                });
+              }
+            }
+          }
+
+          this.decorations = this.decorations.update({
+            filter: (_f, _t, { spec: { time } }) => {
+              return typeof time === "number" && time + lifespan > Date.now();
+            },
+          });
+        }
+      },
+      { decorations: (v) => v.decorations }
+    ),
+    evaluationTheme,
+  ];
+}
 
 const evaluationTheme = EditorView.baseTheme({
-  ".cm-evaluated": { background: "rgba(255, 255, 255, 0.5)" },
+  ".evaluated": { background: "rgba(255, 255, 255, 0.5)" },
 });
 
 export function evaluateSelection(view: EditorView, from: number, to: number) {
-  let effects: StateEffect<unknown>[] = [
-    evaluate.of({ from, to, time: performance.now() }),
-  ];
+  let effects = [evaluate.of({ from, to })];
 
-  if (!view.state.field(evaluationField, false))
-    effects.push(
-      StateEffect.appendConfig.of([evaluationField, evaluationTheme])
-    );
   view.dispatch({ effects });
   return true;
 }

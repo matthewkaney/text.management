@@ -11,7 +11,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import { evaluateSelection } from "./highlight";
+import { evaluateSelection, evaluationFlash } from "./highlight";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
@@ -112,6 +112,7 @@ export function Editor() {
                 oneDark,
                 StreamLanguage.define(haskell),
                 peerExtension(version),
+                evaluationFlash(),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;

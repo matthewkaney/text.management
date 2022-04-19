@@ -12,7 +12,6 @@ function App() {
 
   useEffect(() => {
     return listenForOSC("/tidal/reply", ({ args: [text], time }) => {
-      console.log(time);
       if (typeof text === "string") {
         setFeed((f) => [...f, { level: "log", source: "tidal", text, time }]);
       }
