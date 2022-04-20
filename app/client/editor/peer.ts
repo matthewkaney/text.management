@@ -7,7 +7,7 @@ import {
 } from "@codemirror/collab";
 import { ChangeSet } from "@codemirror/state";
 import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { sendOSC, sendOSCWithResponse } from "../osc";
+import { sendOSCWithResponse } from "../osc";
 
 async function pushUpdates(
   version: number,

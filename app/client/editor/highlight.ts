@@ -18,25 +18,23 @@ export function evaluationFlash() {
 
         update({ transactions }: ViewUpdate) {
           for (let tr of transactions) {
-            for (let e of tr.effects) {
-              if (e.is(evaluate) && e.value.from !== e.value.to) {
-                let { from, to } = e.value;
-                let evalMark = Decoration.mark({
-                  class: "evaluated",
-                  time: tr.annotation(Transaction.time),
-                });
-                this.decorations = this.decorations.update({
-                  add: [evalMark.range(from, to)],
-                });
-              }
-            }
-          }
+            this.decorations = this.decorations.map(tr.changes);
 
-          this.decorations = this.decorations.update({
-            filter: (_f, _t, { spec: { time } }) => {
-              return typeof time === "number" && time + lifespan > Date.now();
-            },
-          });
+            this.decorations = this.decorations.update({
+              add: tr.effects
+                .filter((e) => e.is(evaluate) && e.value.from !== e.value.to)
+                .map(({ value: { from, to } }) =>
+                  Decoration.mark({
+                    class: "evaluated",
+                    time: tr.annotation(Transaction.time),
+                  }).range(from, to)
+                ),
+              sort: true,
+              filter: (_f, _t, { spec: { time } }) => {
+                return typeof time === "number" && time + lifespan > Date.now();
+              },
+            });
+          }
         }
       },
       { decorations: (v) => v.decorations }
