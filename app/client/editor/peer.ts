@@ -9,6 +9,8 @@ import { ChangeSet } from "@codemirror/state";
 import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { sendOSC, sendOSCWithResponse } from "../osc";
 
+import { currentSelection } from "./peerCursors";
+
 async function pushUpdates(
   version: number,
   fullUpdates: readonly Update[]
@@ -84,5 +86,5 @@ export function peerExtension(startVersion: number) {
       }
     }
   );
-  return [collab({ startVersion }), plugin];
+  return [collab({ startVersion, sharedEffects: currentSelection }), plugin];
 }
