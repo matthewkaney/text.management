@@ -11,69 +11,13 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import { evaluateSelection, evaluationFlash } from "./highlight";
+import { evaluation } from "../../codemirror/evaluate";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
 let tidalCommands: KeyBinding[] = [
-  {
-    key: "Shift-Enter",
-    run: (target) => {
-      let {
-        state: { doc, selection },
-      } = target;
-      let from, to;
-
-      if (selection.main.empty) {
-        ({ from, to } = doc.lineAt(selection.main.from));
-      } else {
-        ({ from, to } = selection.main);
-      }
-
-      evaluateSelection(target, from, to);
-      let text = doc.sliceString(from, to);
-      return sendOSC("/tidal/code", text);
-    },
-  },
-  {
-    key: "Mod-Enter",
-    run: (target) => {
-      let {
-        state: { doc, selection },
-      } = target;
-      let from, to;
-
-      if (selection.main.empty) {
-        let { text, number } = doc.lineAt(selection.main.from);
-
-        if (text.trim().length === 0) {
-          // Do nothing
-          return true;
-        }
-
-        let fromL, toL;
-        fromL = toL = number;
-
-        while (fromL > 1 && doc.line(fromL - 1).text.trim().length > 0) {
-          fromL -= 1;
-        }
-        while (toL < doc.lines && doc.line(toL + 1).text.trim().length > 0) {
-          toL += 1;
-        }
-
-        ({ from } = doc.line(fromL));
-        ({ to } = doc.line(toL));
-      } else {
-        ({ from, to } = selection.main);
-      }
-
-      evaluateSelection(target, from, to);
-      let text = doc.sliceString(from, to);
-      return sendOSC("/tidal/code", text);
-    },
-  },
   {
     key: "Mod-.",
     run: () => {
@@ -108,11 +52,11 @@ export function Editor() {
               doc,
               extensions: [
                 keymap.of([indentWithTab, ...tidalCommands]),
+                evaluation(),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
                 peerExtension(version),
-                evaluationFlash(),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;
