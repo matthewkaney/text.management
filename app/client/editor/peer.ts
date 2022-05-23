@@ -4,12 +4,13 @@ import {
   sendableUpdates,
   collab,
   getSyncedVersion,
+  getClientID,
 } from "@codemirror/collab";
-import { ChangeSet } from "@codemirror/state";
+import { ChangeSet, SelectionRange } from "@codemirror/state";
 import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { sendOSCWithResponse } from "../osc";
+import { sendOSC, sendOSCWithResponse } from "../osc";
 
-import { currentSelection } from "./peerCursors";
+import { currentSelection, cursorPlugin } from "./peerCursors";
 
 async function pushUpdates(
   version: number,
@@ -86,5 +87,41 @@ export function peerExtension(startVersion: number) {
       }
     }
   );
-  return [collab({ startVersion, sharedEffects: currentSelection }), plugin];
+  return [
+    collab({ startVersion, sharedEffects: currentSelection }),
+    plugin,
+    peerCursor,
+    cursorPlugin,
+  ];
 }
+
+const peerCursor = ViewPlugin.fromClass(
+  class {
+    constructor(private view: EditorView) {
+      console.log("Constructor");
+      console.log(getClientID(view.state));
+      let { from, to } = view.state.selection.main;
+      sendOSC("/cursor/push", getClientID(view.state), from, to);
+      console.log(view.state.selection.main);
+    }
+
+    update(update: ViewUpdate) {
+      if (update.selectionSet) {
+        let selection: SelectionRange | null = null;
+
+        for (let tr of update.transactions) {
+          if (tr.selection) {
+            selection = tr.selection.main;
+          }
+
+          if (selection) {
+            let { from, to } = selection;
+            sendOSC("/cursor/push", getClientID(update.startState), from, to);
+          }
+        }
+      }
+    }
+
+    destroy() {}
+  }
+);

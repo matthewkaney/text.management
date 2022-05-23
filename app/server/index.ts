@@ -23,7 +23,7 @@ const server = app.listen(1234, () => {
   }
 });
 
-import { Server as WSServer } from "ws";
+import WebSocket, { Server as WSServer } from "ws";
 import { GHCI } from "./ghci";
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
@@ -31,6 +31,14 @@ import { getDocument, pullUpdates, pushUpdates } from "./authority";
 const ghci = new GHCI();
 
 const wss = new WSServer({ server });
+
+interface UserCursor {
+  from: number;
+  to: number;
+  socket: WebSocket;
+}
+
+const cursors: { [id: string]: UserCursor } = {};
 
 wss.on("connection", (ws) => {
   function GHCIHandler(data: Buffer) {
@@ -42,7 +50,6 @@ wss.on("connection", (ws) => {
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
       for (let osc of getMessages(data)) {
-        //console.log(`Received: ${osc.address}, ${JSON.stringify(osc.args)}`);
         if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
           console.log(`UI: "${code}"`);
@@ -62,6 +69,18 @@ wss.on("connection", (ws) => {
           if (updates.every((u) => typeof u === "string")) {
             pushUpdates(ws, osc.args[0], ...(updates as string[]));
           }
+        } else if (
+          osc.address === "/cursor/push" &&
+          typeof osc.args[0] === "string" &&
+          typeof osc.args[1] === "number" &&
+          typeof osc.args[2] === "number"
+        ) {
+          let [id, from, to] = osc.args;
+          console.log(`${id}: ${from} to ${to}`);
+          cursors[id] = { from, to, socket: ws };
+        } else {
+          console.log("Unrecognized OSC Message");
+          console.log(osc);
         }
       }
     }
@@ -71,3 +90,21 @@ wss.on("connection", (ws) => {
     ghci.off("message", GHCIHandler);
   });
 });
+
+interface OSCArgMap {
+  s: string;
+  f: number;
+  i: number;
+}
+
+type foo = OSCArgMap["s"];
+
+function validate<k extends keyof OSCArgMap>(type: k, arg: any): OSCArgMap[k] {
+  if ((type as "s") === "s" && typeof arg === "string") {
+    return arg;
+  } else {
+    throw new Error();
+  }
+}
+
+let foo = validate("s", "hello world");
