@@ -6,11 +6,21 @@ import {
   getSyncedVersion,
   getClientID,
 } from "@codemirror/collab";
-import { ChangeSet, SelectionRange } from "@codemirror/state";
-import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { sendOSC, sendOSCWithResponse } from "../osc";
+import {
+  ChangeSet,
+  SelectionRange,
+  StateField,
+  StateEffect,
+} from "@codemirror/state";
+import {
+  Decoration,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+} from "@codemirror/view";
+import { sendOSC, sendOSCWithResponse, listenForOSC } from "../osc";
 
-import { currentSelection, cursorPlugin } from "./peerCursors";
+import { currentSelection } from "./peerCursors";
 
 async function pushUpdates(
   version: number,
@@ -90,19 +100,87 @@ export function peerExtension(startVersion: number) {
   return [
     collab({ startVersion, sharedEffects: currentSelection }),
     plugin,
+    CursorField,
+    cursorDecorations,
     peerCursor,
-    cursorPlugin,
   ];
 }
 
+interface RemoteCursor {
+  id: string;
+  from: number;
+  to: number;
+}
+
+interface RemoteCursorMap {
+  [id: string]: { from: number; to: number };
+}
+
+const SetCursorEffect = StateEffect.define<RemoteCursor>();
+const RemoveCursorEffect = StateEffect.define<string>();
+
+export const CursorField = StateField.define<RemoteCursorMap>({
+  create: (state) => {
+    return {};
+  },
+  update: (value, transaction) => {
+    for (let effect of transaction.effects) {
+      if (effect.is(SetCursorEffect)) {
+        let { id, from, to } = effect.value;
+        value = { ...value, [id]: { from, to } };
+      } else if (effect.is(RemoveCursorEffect)) {
+        let id = effect.value;
+        let _;
+        ({ [id]: _, ...value } = value);
+      }
+    }
+
+    return value;
+  },
+});
+
+import { WidgetType } from "@codemirror/view";
+
+class CursorWidget extends WidgetType {
+  toDOM() {
+    let cursor = document.createElement("span");
+    cursor.setAttribute("aria-hidden", "true");
+    cursor.style.borderLeft = "2px solid #888";
+    cursor.style.marginLeft = "-2px";
+    return cursor;
+  }
+}
+
+const Cursor = Decoration.widget({ widget: new CursorWidget(), side: 1 });
+
+const cursorDecorations = EditorView.decorations.from(
+  CursorField,
+  (cursors) => {
+    return Decoration.set(
+      Object.entries(cursors).map(([_, { from }]) => Cursor.range(from))
+    );
+  }
+);
+
 const peerCursor = ViewPlugin.fromClass(
   class {
+    private unloadListener;
+
     constructor(private view: EditorView) {
-      console.log("Constructor");
-      console.log(getClientID(view.state));
+      this.unloadListener = listenForOSC("/cursor/push", ({ args }) => {
+        let [id, from, to] = args;
+
+        if (
+          typeof id === "string" &&
+          typeof from === "number" &&
+          typeof to === "number"
+        ) {
+          view.dispatch({ effects: [SetCursorEffect.of({ id, from, to })] });
+        }
+      });
+
       let { from, to } = view.state.selection.main;
       sendOSC("/cursor/push", getClientID(view.state), from, to);
-      console.log(view.state.selection.main);
     }
 
     update(update: ViewUpdate) {
@@ -122,6 +200,8 @@ const peerCursor = ViewPlugin.fromClass(
       }
     }
 
-    destroy() {}
+    destroy() {
+      this.unloadListener();
+    }
   }
 );

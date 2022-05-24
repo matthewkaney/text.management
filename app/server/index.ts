@@ -1,7 +1,7 @@
 import express from "express";
 import { join } from "path";
 
-import { getMessages } from "../osc/osc";
+import { message, getMessages } from "../osc/osc";
 
 const app = express();
 
@@ -47,6 +47,8 @@ wss.on("connection", (ws) => {
 
   ghci.on("message", GHCIHandler);
 
+  let socketId: string;
+
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
       for (let osc of getMessages(data)) {
@@ -76,8 +78,14 @@ wss.on("connection", (ws) => {
           typeof osc.args[2] === "number"
         ) {
           let [id, from, to] = osc.args;
-          console.log(`${id}: ${from} to ${to}`);
+          socketId = id;
           cursors[id] = { from, to, socket: ws };
+
+          for (let [listenerId, { socket }] of Object.entries(cursors)) {
+            if (listenerId !== id) {
+              socket.send(message("/cursor/push", id, from, to));
+            }
+          }
         } else {
           console.log("Unrecognized OSC Message");
           console.log(osc);
@@ -90,21 +98,3 @@ wss.on("connection", (ws) => {
     ghci.off("message", GHCIHandler);
   });
 });
-
-interface OSCArgMap {
-  s: string;
-  f: number;
-  i: number;
-}
-
-type foo = OSCArgMap["s"];
-
-function validate<k extends keyof OSCArgMap>(type: k, arg: any): OSCArgMap[k] {
-  if ((type as "s") === "s" && typeof arg === "string") {
-    return arg;
-  } else {
-    throw new Error();
-  }
-}
-
-let foo = validate("s", "hello world");
