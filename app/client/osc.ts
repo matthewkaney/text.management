@@ -79,3 +79,17 @@ export function listenForOSC(address: string, callback: OSCHandler) {
 export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
   return dispatch(message(address, ...args));
 }
+
+export function sendOSCWithResponse(
+  [address, ...args]: [string, ...OSCArgumentInputValue[]],
+  response: string
+): Promise<OSCMessage> {
+  return new Promise((resolve) => {
+    const unlisten = listenForOSC(response, (message) => {
+      unlisten();
+      resolve(message);
+    });
+
+    sendOSC(address, ...args);
+  });
+}

@@ -5,7 +5,7 @@ hSetEncoding stdout utf8
 
 import System.Environment (getEnv)
 
-midiPort <- read <$> getEnv "midi_port" :: IO Int
+midiPort <- read <$> getEnv "editor_port" :: IO Int
 
 :{
 let midiTarget =

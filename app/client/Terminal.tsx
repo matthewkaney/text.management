@@ -5,6 +5,7 @@ export interface TerminalMessage {
   level: "log" | "error";
   source: string;
   text: string;
+  time: DOMHighResTimeStamp;
 }
 
 interface TerminalProps {

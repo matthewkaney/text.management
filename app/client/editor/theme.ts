@@ -35,7 +35,7 @@ export const oneDarkTheme = EditorView.theme(
 
     ".cm-content": { padding: 0 },
 
-    "&.cm-focused": { outline: "none" },
+    "&.cm-editor.cm-focused": { outline: "none" },
     "&.cm-focused .cm-cursor": {
       borderLeftColor: cursor,
       borderLeftWidth: "2px",

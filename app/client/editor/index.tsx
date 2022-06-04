@@ -1,4 +1,5 @@
 import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
+import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { RangeSetBuilder } from "@codemirror/rangeset";
 import { StreamLanguage } from "@codemirror/stream-parser";
@@ -10,17 +11,17 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
+import { evaluation } from "../../codemirror/evaluate";
 import { useCallback } from "react";
-import { sendOSC } from "../osc";
+import { listenForOSC, sendOSC } from "../osc";
+import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
-let commands: KeyBinding[] = [
+let tidalCommands: KeyBinding[] = [
   {
-    key: "Shift-Enter",
-    run: ({ state }) => {
-      let { from } = state.selection.main;
-      let { text } = state.doc.lineAt(from);
-      return sendOSC("/code", text);
+    key: "Mod-.",
+    run: () => {
+      return sendOSC("/tidal/code", "hush");
     },
   },
 ];
@@ -44,32 +45,41 @@ function emptyLineDeco(view: EditorView) {
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      new EditorView({
-        state: EditorState.create({
-          extensions: [
-            basicSetup,
-            oneDark,
-            StreamLanguage.define(haskell),
-            keymap.of(commands),
-            ViewPlugin.fromClass(
-              class {
-                decorations: DecorationSet;
-                constructor(view: EditorView) {
-                  this.decorations = emptyLineDeco(view);
-                }
-                update(update: ViewUpdate) {
-                  if (update.docChanged || update.viewportChanged)
-                    this.decorations = emptyLineDeco(update.view);
-                }
-              },
-              {
-                decorations: (v) => v.decorations,
-              }
-            ),
-          ],
-        }),
-        parent: ref,
+      listenForOSC("/doc", ({ args: [version, doc] }) => {
+        if (typeof version === "number" && typeof doc === "string") {
+          new EditorView({
+            state: EditorState.create({
+              doc,
+              extensions: [
+                keymap.of([indentWithTab, ...tidalCommands]),
+                evaluation(),
+                basicSetup,
+                oneDark,
+                StreamLanguage.define(haskell),
+                peerExtension(version),
+                ViewPlugin.fromClass(
+                  class {
+                    decorations: DecorationSet;
+                    constructor(view: EditorView) {
+                      this.decorations = emptyLineDeco(view);
+                    }
+                    update(update: ViewUpdate) {
+                      if (update.docChanged || update.viewportChanged)
+                        this.decorations = emptyLineDeco(update.view);
+                    }
+                  },
+                  {
+                    decorations: (v) => v.decorations,
+                  }
+                ),
+              ],
+            }),
+            parent: ref,
+          });
+        }
       });
+
+      sendOSC("/doc/get");
     }
   }, []);
 

@@ -1,95 +1,129 @@
-import { createSocket } from "dgram";
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
+import EventEmitter from "events";
+import { promisify } from "util";
+import { Socket, createSocket } from "dgram";
+import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { createInterface } from "readline";
-
-import { performance } from "perf_hooks";
+import { join } from "path";
+import { createReadStream } from "fs";
 
 import { message } from "../osc/osc";
 
-import bootCode from "bundle-text:./BootTidal.hs";
+export class GHCI extends EventEmitter {
+  private socket: Promise<Socket>;
+  private process: Promise<ChildProcessWithoutNullStreams>;
 
-export class GHCI {
-  private socket;
-  private process?: ChildProcessWithoutNullStreams;
+  private history: Buffer[] = [];
 
   private outBatch: string[] | null = null;
   private errBatch: string[] | null = null;
 
-  constructor(callback: (data: Buffer) => any) {
-    this.socket = createSocket("udp4");
-    this.socket.bind(0, "localhost", () => {
-      this.process = spawn("ghci", ["-XOverloadedStrings"], {
-        env: {
-          ...process.env,
-          midi_port: this.socket.address().port.toString(),
-        },
-      });
+  constructor() {
+    super();
 
-      this.process.stdin.write(':set prompt ""\n:set prompt-cont ""\n');
+    this.socket = this.initSocket();
+    this.process = this.initProcess();
 
-      const out = createInterface({ input: this.process.stdout });
-      const err = createInterface({ input: this.process.stderr });
-
-      this.process.stdin.write(bootCode);
-
-      out.on("line", (data) => {
-        if (!data.endsWith("> ")) {
-          if (this.outBatch) {
-            this.outBatch.push(data);
-          } else {
-            this.outBatch = [data];
-
-            setTimeout(() => {
-              if (this.outBatch) {
-                const outBatch = this.outBatch;
-                this.outBatch = null;
-
-                callback(
-                  Buffer.from(message("/tidal/reply", outBatch.join("\n")))
-                );
-              }
-            }, 20);
-          }
+    this.on("newListener", (event, listener) => {
+      if (event === "message") {
+        for (let message of this.history) {
+          listener(message);
         }
-      });
-
-      err.on("line", (data) => {
-        if (data !== "") {
-          if (this.errBatch) {
-            this.errBatch.push(data);
-          } else {
-            this.errBatch = [data];
-
-            setTimeout(() => {
-              if (this.errBatch) {
-                const errBatch = this.errBatch;
-                this.errBatch = null;
-
-                callback(
-                  Buffer.from(message("/tidal/error", errBatch.join("\n")))
-                );
-              }
-            }, 20);
-          }
-        }
-      });
-
-      this.process.on("close", (code) => {
-        console.log(`child process exited with code ${code}`);
-      });
-    });
-
-    this.socket.on("message", (data) => {
-      console.log("Received osc message");
-      callback(data);
+      }
     });
   }
 
-  send(text: string) {
-    this.process?.stdin.write(text + "\n");
+  private initSocket() {
+    return new Promise<Socket>((resolve) => {
+      const socket = createSocket("udp4");
+      socket.bind(0, "localhost", () => {
+        resolve(socket);
+      });
+
+      socket.on("message", (data) => {
+        this.emit("message", data);
+      });
+    });
   }
 
-  close() {
-    this.process?.kill();
+  private async initProcess() {
+    const port = (await this.socket).address().port.toString();
+
+    const child = spawn("ghci", ["-XOverloadedStrings"], {
+      env: {
+        ...process.env,
+        editor_port: port,
+      },
+    });
+
+    child.stdin.write(':set prompt ""\n:set prompt-cont ""\n');
+
+    const out = createInterface({ input: child.stdout });
+    const err = createInterface({ input: child.stderr });
+
+    const { stdout: path } = await promisify(exec)(
+      "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
+    );
+    const bootPath = join(path, "BootTidal.hs");
+    console.log(`Loading Tidal Bootfile: ${bootPath}`);
+
+    createReadStream(bootPath).pipe(child.stdin, { end: false });
+
+    out.on("line", (data) => {
+      if (!data.endsWith("> ")) {
+        if (this.outBatch) {
+          this.outBatch.push(data);
+        } else {
+          this.outBatch = [data];
+
+          setTimeout(() => {
+            if (this.outBatch) {
+              const outBatch = this.outBatch;
+              this.outBatch = null;
+
+              let m = Buffer.from(message("/tidal/reply", outBatch.join("\n")));
+
+              this.history.push(m);
+              this.emit("message", m);
+            }
+          }, 20);
+        }
+      }
+    });
+
+    err.on("line", (data) => {
+      if (data !== "") {
+        if (this.errBatch) {
+          this.errBatch.push(data);
+        } else {
+          this.errBatch = [data];
+
+          setTimeout(() => {
+            if (this.errBatch) {
+              const errBatch = this.errBatch;
+              this.errBatch = null;
+
+              let m = Buffer.from(message("/tidal/error", errBatch.join("\n")));
+
+              this.history.push(m);
+              this.emit("message", m);
+            }
+          }, 20);
+        }
+      }
+    });
+
+    child.on("close", (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
+
+    return child;
+  }
+
+  async send(text: string) {
+    (await this.process).stdin.write(`:{\n${text}\n:}\n`);
+  }
+
+  async close() {
+    (await this.process).kill();
   }
 }
