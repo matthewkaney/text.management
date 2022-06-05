@@ -20,8 +20,12 @@
       import Hydra from "hydra-synth";
       import { getMessages } from "../../osc/osc";
 
+      console.log("Test");
+
       window.addEventListener("message", ({ data, ports }) => {
+        console.log("RECEIVED MESSAGE")
         if (data === "channel" && ports.length > 0) {
+          console.log("RECEIVED PORTS")
           let [port] = ports;
 
           port.addEventListener("message", ({ data }) => {
@@ -30,7 +34,9 @@
               address,
               args: [code],
             } of getMessages(data)) {
+              console.log(address, code);
               if (address === "/code" && typeof code === "string") {
+                console.log("codeeee");
                 try {
                   eval(code);
                 } catch (error) {

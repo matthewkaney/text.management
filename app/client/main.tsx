@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { render } from "react-dom";
 
+import { message } from "../osc/osc";
 import { listenForOSC } from "./osc";
 import { playMIDI } from "./midi";
 
@@ -10,6 +11,21 @@ import { Terminal, TerminalMessage } from "./Terminal";
 import { HydraCanvas } from "./hydra";
 
 function App() {
+  const channel = useMemo(() => new MessageChannel(), []);
+
+  useEffect(() => {
+    function respond(event: MessageEvent) {
+      console.log(event);
+    }
+
+    channel.port1.addEventListener("message", respond);
+    channel.port1.start();
+
+    return () => {
+      channel.port1.removeEventListener("message", respond);
+    };
+  }, [channel]);
+
   const [feed, setFeed] = useState<TerminalMessage[]>([]);
 
   useEffect(() => {
@@ -51,9 +67,14 @@ function App() {
 
   return (
     <>
-      <Editor />
+      <Editor
+        onEval={(c) => {
+          console.log(c);
+          channel.port1.postMessage(message("/code", c));
+        }}
+      />
       {feed.length > 0 && <Terminal feed={feed} />}
-      <HydraCanvas />
+      <HydraCanvas channel={channel} />
     </>
   );
 }

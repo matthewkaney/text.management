@@ -1,30 +1,28 @@
 import { useState, useEffect } from "react";
 
-//import { connectRemote } from "../osc";
+import pageSource from "bundle-text:../../languages/hydra/viewer.html";
 
-import pageSource from "bundle-text:./viewer.html";
+interface HydraCanvasProps {
+  channel: MessageChannel;
+}
 
-export function HydraCanvas() {
+export function HydraCanvas({ channel }: HydraCanvasProps) {
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     if (iframe) {
-      const channel = new MessageChannel();
-
       let onLoad = () => {
+        console.log("sent channel");
         iframe.contentWindow?.postMessage("channel", "*", [channel.port2]);
       };
-
-      //let disconnect = connectRemote(channel.port1);
 
       iframe.addEventListener("load", onLoad);
 
       return () => {
-        //disconnect();
         iframe.removeEventListener("load", onLoad);
       };
     }
-  }, [iframe]);
+  }, [iframe, channel]);
 
   return (
     <iframe
