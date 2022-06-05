@@ -24,7 +24,7 @@ const server = app.listen(1234, () => {
 });
 
 import { Server as WSServer } from "ws";
-import { GHCI } from "./ghci";
+import { GHCI } from "../languages/tidal/ghci";
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
 

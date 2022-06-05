@@ -1,4 +1,3 @@
-import EventEmitter from "events";
 import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
@@ -6,9 +5,11 @@ import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
 
-import { message } from "../osc/osc";
+import { Engine } from "../base/engine";
 
-export class GHCI extends EventEmitter {
+import { message } from "../../osc/osc";
+
+export class GHCI extends Engine {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
