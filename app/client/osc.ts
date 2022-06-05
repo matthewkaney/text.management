@@ -1,19 +1,28 @@
 import { message, getMessages } from "../osc/osc";
 import { OSCArgumentInputValue, OSCMessage } from "../osc/types";
 
-// let socket = new WebSocket(`ws://${window.location.host}/`);
-// socket.binaryType = "arraybuffer";
-
 type OSCHandler = (message: OSCMessage) => any;
 
 const listeners: Map<string, Set<OSCHandler>> = new Map();
 
 type Remote = WebSocket | MessagePort;
 
-let dispatch: (m: Uint8Array) => boolean = () => false;
+let dispatch: (m: Uint8Array) => void = () => {};
+
+let socket = new WebSocket(`ws://${window.location.host}/`);
+socket.binaryType = "arraybuffer";
+connectRemote(socket);
 
 export function connectRemote(remote: Remote) {
-  function handleData({ data }: MessageEvent<Uint8Array>) {
+  function handleData({ data }: MessageEvent) {
+    if (data instanceof ArrayBuffer) {
+      data = new Uint8Array(data);
+    }
+
+    if (!(data instanceof Uint8Array)) {
+      throw Error("Unrecognized data type");
+    }
+
     for (let message of getMessages(data)) {
       let listenersForAddress = listeners.get(message.address);
 
@@ -29,10 +38,11 @@ export function connectRemote(remote: Remote) {
     dispatch = (m) => {
       if (remote.readyState === remote.OPEN) {
         remote.send(m);
-        return true;
+      } else {
+        remote.addEventListener("open", () => {
+          remote.send(m);
+        });
       }
-
-      return false;
     };
 
     remote.addEventListener("message", handleData);
@@ -44,7 +54,6 @@ export function connectRemote(remote: Remote) {
   } else if (remote instanceof MessagePort) {
     dispatch = (m) => {
       remote.postMessage(m);
-      return true;
     };
 
     remote.addEventListener("message", handleData);
@@ -52,7 +61,7 @@ export function connectRemote(remote: Remote) {
     remote.start();
 
     return () => {
-      dispatch = () => false;
+      dispatch = () => {};
       remote.removeEventListener("message", handleData);
     };
   }
@@ -77,7 +86,7 @@ export function listenForOSC(address: string, callback: OSCHandler) {
 }
 
 export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
-  return dispatch(message(address, ...args));
+  dispatch(message(address, ...args));
 }
 
 export function sendOSCWithResponse(

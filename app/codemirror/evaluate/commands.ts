@@ -1,29 +1,18 @@
 import { EditorView, KeyBinding } from "@codemirror/view";
 
 import { evaluate } from "./highlight";
-import { sendOSC } from "../../client/osc";
 
 export function evaluateSelection({ state, dispatch }: EditorView) {
   if (state.selection.main.empty) return false;
 
   dispatch({ effects: evaluate.of(state.selection.main) });
-  //return true;
-
-  //TODO: Move this away
-  let { from, to } = state.selection.main;
-  let text = state.doc.sliceString(from, to);
-  return sendOSC("/tidal/code", text);
+  return true;
 }
 
 export function evaluateLine({ state, dispatch }: EditorView) {
   const line = state.doc.lineAt(state.selection.main.from);
   dispatch({ effects: evaluate.of(line) });
-  //return true;
-
-  //TODO: Move this away
-  let { from, to } = line;
-  let text = state.doc.sliceString(from, to);
-  return sendOSC("/tidal/code", text);
+  return true;
 }
 
 export function evaluateBlock({ state, dispatch }: EditorView) {
@@ -46,11 +35,7 @@ export function evaluateBlock({ state, dispatch }: EditorView) {
   let { to } = doc.line(toL);
 
   dispatch({ effects: evaluate.of({ from, to }) });
-  //return true;
-
-  //TODO: Move this away
-  text = state.doc.sliceString(from, to);
-  return sendOSC("/tidal/code", text);
+  return true;
 }
 
 export const evaluationKeymap: KeyBinding[] = [

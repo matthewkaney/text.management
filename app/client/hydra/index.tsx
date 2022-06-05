@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import { connectRemote } from "../osc";
+//import { connectRemote } from "../osc";
 
 import pageSource from "bundle-text:./viewer.html";
 
@@ -15,12 +15,12 @@ export function HydraCanvas() {
         iframe.contentWindow?.postMessage("channel", "*", [channel.port2]);
       };
 
-      let disconnect = connectRemote(channel.port1);
+      //let disconnect = connectRemote(channel.port1);
 
       iframe.addEventListener("load", onLoad);
 
       return () => {
-        disconnect();
+        //disconnect();
         iframe.removeEventListener("load", onLoad);
       };
     }

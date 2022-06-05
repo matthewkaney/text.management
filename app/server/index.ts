@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
       for (let osc of getMessages(data)) {
-        //console.log(`Received: ${osc.address}, ${JSON.stringify(osc.args)}`);
+        console.log(`Received: ${osc.address}, ${JSON.stringify(osc.args)}`);
         if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
           console.log(`UI: "${code}"`);

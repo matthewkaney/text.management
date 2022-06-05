@@ -21,7 +21,8 @@ let tidalCommands: KeyBinding[] = [
   {
     key: "Mod-.",
     run: () => {
-      return sendOSC("/tidal/code", "hush");
+      sendOSC("/tidal/code", "hush");
+      return true;
     },
   },
 ];
@@ -52,7 +53,7 @@ export function Editor() {
               doc,
               extensions: [
                 keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(),
+                evaluation((c) => console.log(c)),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
