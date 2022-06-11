@@ -9,7 +9,7 @@ import { getMessages } from "../osc/osc";
 
 const app = express();
 
-app.use(express.static(join(__dirname, "../client")));
+app.use(express.static(join(__dirname, "../../dist/client")));
 
 import { networkInterfaces } from "os";
 

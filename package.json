@@ -1,7 +1,8 @@
 {
-  "name": "@mindofmatthew/cyclist",
+  "name": "@management/text",
   "version": "0.0.1",
-  "description": "Experimental Tidal Cycles editor",
+  "private": "true",
+  "description": "Experimental livecode editor",
   "scripts": {
     "build": "parcel build .",
     "start": "node dist/server/index.js"
@@ -20,14 +21,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mindofmatthew/untitled.git"
+    "url": "git+https://github.com/mindofmatthew/text.management.git"
   },
   "author": "Matthew Kaney",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/mindofmatthew/untitled/issues"
+    "url": "https://github.com/mindofmatthew/text.management/issues"
   },
-  "homepage": "https://github.com/mindofmatthew/untitled#readme",
+  "homepage": "https://github.com/mindofmatthew/text.management#readme",
   "dependencies": {
     "@codemirror/basic-setup": "^0.19.1",
     "@codemirror/collab": "^0.19.0",
