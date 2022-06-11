@@ -1,4 +1,4 @@
-# untitled live code editor
+# text.management
 
 This is an experiment in making an editor for live coding (or at least useful constituent parts for such an editor). It's motivated by the idea that live coding is 1) a coding practice with unique idioms and affordances not necessarily supported by traditional code editors, and 2) a performance, where the visual appearance of the code and editor is a potential space for creative expression.
 
