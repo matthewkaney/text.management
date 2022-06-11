@@ -12,7 +12,6 @@ export function HydraCanvas({ channel }: HydraCanvasProps) {
   useEffect(() => {
     if (iframe) {
       let onLoad = () => {
-        console.log("sent channel");
         iframe.contentWindow?.postMessage("channel", "*", [channel.port2]);
       };
 
