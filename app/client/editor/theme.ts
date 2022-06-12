@@ -1,6 +1,7 @@
 import { EditorView } from "@codemirror/view";
 import { Extension } from "@codemirror/state";
-import { HighlightStyle, tags as t } from "@codemirror/highlight";
+import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
+import { tags as t } from "@lezer/highlight";
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
@@ -148,4 +149,7 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
 
 /// Extension to enable the One Dark theme (both the editor theme and
 /// the highlight style).
-export const oneDark: Extension = [oneDarkTheme, oneDarkHighlightStyle];
+export const oneDark: Extension = [
+  oneDarkTheme,
+  syntaxHighlighting(oneDarkHighlightStyle),
+];

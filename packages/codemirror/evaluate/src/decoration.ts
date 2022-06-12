@@ -1,9 +1,9 @@
 import { ViewPlugin, ViewUpdate, Decoration } from "@codemirror/view";
-import { StateEffect, Transaction } from "@codemirror/state";
+import { Transaction } from "@codemirror/state";
 
-export const evaluate = StateEffect.define<{ from: number; to: number }>();
+import { evalEffect } from "./evaluate";
 
-export function evaluationFlash() {
+export function evalDecoration() {
   const lifespan = 500;
 
   return ViewPlugin.fromClass(
@@ -16,7 +16,7 @@ export function evaluationFlash() {
 
           this.decorations = this.decorations.update({
             add: tr.effects
-              .filter((e) => e.is(evaluate) && e.value.from !== e.value.to)
+              .filter((e) => e.is(evalEffect) && e.value.from !== e.value.to)
               .map(({ value: { from, to } }) =>
                 Decoration.mark({
                   class: "evaluated",

@@ -1,0 +1,14 @@
+{
+  "name": "@management/cm-evaluate",
+  "version": "0.1.0",
+  "description": "",
+  "source": "src/index.ts",
+  "browser": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Matthew Kaney",
+  "license": "MIT",
+  "dependencies": {
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0"
+  }
+}

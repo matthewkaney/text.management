@@ -1,6 +1,6 @@
 import { EditorView } from "@codemirror/view";
 
-export const evaluationTheme = EditorView.theme({
+export const evalTheme = EditorView.theme({
   "@keyframes flash": {
     from: { backgroundColor: "#FFFFFF" },
     to: { backgroundColor: "#FFFFFF00" },
