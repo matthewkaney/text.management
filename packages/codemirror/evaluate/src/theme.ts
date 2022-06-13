@@ -1,9 +1,9 @@
 import { EditorView } from "@codemirror/view";
 
 export const evalTheme = EditorView.theme({
-  "@keyframes flash": {
+  "@keyframes cm-eval-flash": {
     from: { backgroundColor: "#FFFFFF" },
     to: { backgroundColor: "#FFFFFF00" },
   },
-  ".evaluated": { animation: "flash 0.5s" },
+  "& .cm-evaluated": { animation: "cm-eval-flash 0.5s" },
 });

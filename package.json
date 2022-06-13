@@ -7,7 +7,8 @@
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
-    "build": "parcel build .",
+    "build-packages": "parcel build packages/codemirror/* --no-cache",
+    "build": "npm run build-packages && parcel build .",
     "start": "node dist/server/index.js"
   },
   "client": "dist/client/index.html",
