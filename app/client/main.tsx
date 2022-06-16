@@ -69,7 +69,6 @@ function App() {
     <>
       <Editor
         onEval={(c) => {
-          console.log(c);
           channel.port1.postMessage(message("/code", c));
         }}
       />

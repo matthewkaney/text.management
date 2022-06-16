@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 
-import pageSource from "bundle-text:../../languages/hydra/viewer.html";
-
 interface HydraCanvasProps {
   channel: MessageChannel;
 }
@@ -26,7 +24,7 @@ export function HydraCanvas({ channel }: HydraCanvasProps) {
   return (
     <iframe
       ref={setIframe}
-      srcDoc={pageSource}
+      src="./hydra"
       style={{
         position: "absolute",
         width: "100%",

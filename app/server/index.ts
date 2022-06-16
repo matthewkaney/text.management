@@ -24,21 +24,17 @@ const server = app.listen(1234, () => {
 });
 
 import { Server as WSServer } from "ws";
-import { GHCI } from "../languages/tidal/ghci";
+
+app.use(
+  "/hydra",
+  express.static(join(__dirname, "../languages/hydra/dist/index.html"))
+);
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
-
-const ghci = new GHCI();
 
 const wss = new WSServer({ server });
 
 wss.on("connection", (ws) => {
-  function GHCIHandler(data: Buffer) {
-    ws.send(data);
-  }
-
-  ghci.on("message", GHCIHandler);
-
   ws.on("message", (data) => {
     if (data instanceof Buffer) {
       for (let osc of getMessages(data)) {
@@ -46,7 +42,6 @@ wss.on("connection", (ws) => {
         if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
           console.log(`UI: "${code}"`);
-          ghci.send(code);
         } else if (osc.address === "/doc/get") {
           getDocument(ws);
         } else if (
@@ -68,6 +63,6 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    ghci.off("message", GHCIHandler);
+    //ghci.off("message", GHCIHandler);
   });
 });
