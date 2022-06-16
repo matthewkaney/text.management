@@ -15,6 +15,7 @@ import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
 import { extensions as hydra } from "../../languages/hydra/editor";
+import { externalViewer } from "../hydra/external";
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -48,6 +49,7 @@ export function Editor({ onEval }: EditorProps) {
                 hydra,
                 keymap.of([indentWithTab]),
                 evaluation((c) => onEval(c)),
+                externalViewer(),
                 basicSetup,
                 oneDark,
                 peerExtension(version),
