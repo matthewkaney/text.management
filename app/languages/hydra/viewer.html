@@ -19,6 +19,12 @@
       import Hydra from "hydra-synth";
       import { getMessages } from "../../osc/osc";
 
+      import * as utils from "./utils";
+
+      for (let name in utils) {
+        window[name] = utils[name];
+      }
+
       window.addEventListener("message", ({ data, ports }) => {
         if (data === "channel" && ports.length > 0) {
           let [port] = ports;
@@ -48,8 +54,6 @@
 
       window.addEventListener("load", () => {
         new Hydra({ detectAudio: false });
-        //@ts-ignore
-        osc(2).out();
       });
     </script>
   </head>

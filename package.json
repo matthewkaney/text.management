@@ -4,7 +4,7 @@
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
-    "build-hydra": "parcel build app/languages/hydra/ --no-cache",
+    "build-hydra": "parcel build app/languages/hydra/",
     "build": "parcel build .",
     "start": "node dist/server/index.js"
   },
