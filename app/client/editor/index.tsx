@@ -1,6 +1,6 @@
-import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
+import { basicSetup, EditorView } from "codemirror";
+import { EditorState, RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { RangeSetBuilder } from "@codemirror/rangeset";
 import {
   Decoration,
   DecorationSet,
@@ -8,7 +8,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import { evaluation } from "../../codemirror/evaluate";
+import { evaluation } from "@management/cm-evaluate";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
