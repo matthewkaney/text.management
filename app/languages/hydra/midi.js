@@ -14,12 +14,37 @@ navigator.requestMIDIAccess().then(
 //create an array to hold our cc values and init to a normalized value
 var cc_list = Array(128).fill(0.5);
 
+export function cc(num, low, high) {
+  if (high === undefined) {
+    if (low === undefined) {
+      low = 0;
+      high = 1;
+    } else {
+      high = low;
+      low = 0;
+    }
+  }
+
+  return () => {
+    return cc_list[num] * (high - low) + low;
+  };
+}
+
+// Current tick counter
+let current_tick = 0;
+
+export function currentTick() {
+  return current_tick;
+}
+
 function getMIDIMessage({ data }) {
   console.log(`Received midi: ${JSON.stringify(data)}`);
   if (data[0] === 0xf8) {
     // MIDI Clock
+    current_tick += 1;
   } else if (data[0] === 0xfa) {
     // MIDI Start
+    current_tick = -1;
   } else if (data[0] === 0xfb) {
     // MIDI Continue
   } else if (data[0] === 0xfc) {
@@ -27,13 +52,4 @@ function getMIDIMessage({ data }) {
   } else if ((data[0] & 0xf0) === 0xb0) {
     cc_list[data[1]] = data[2] / 127;
   }
-}
-
-export function cc(num, low, high) {
-  if (high === undefined) {
-    high = low === undefined ? 1 : low;
-    low = low || 0;
-  }
-
-  return cc_list[num] * (high - low) + low;
 }

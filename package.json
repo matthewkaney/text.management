@@ -1,6 +1,9 @@
 {
   "name": "@management/text",
   "version": "0.0.1",
+  "workspaces": [
+    "app/languages/hydra"
+  ],
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
