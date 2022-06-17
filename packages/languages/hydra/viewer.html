@@ -17,7 +17,7 @@
     <script type="module">
       //@ts-ignore
       import Hydra from "hydra-synth";
-      import { getMessages } from "../../osc/osc";
+      import { getMessages } from "../../../app/osc/osc";
 
       window.addEventListener("message", ({ data, ports }) => {
         if (data === "channel" && ports.length > 0) {

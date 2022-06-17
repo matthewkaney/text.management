@@ -14,7 +14,9 @@ import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
-import { extensions as hydra } from "../../languages/hydra/editor";
+import { extensions as hydra } from "../../../packages/languages/hydra/dist/editor";
+
+console.log(hydra);
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },

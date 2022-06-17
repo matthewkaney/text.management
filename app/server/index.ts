@@ -27,7 +27,9 @@ import { Server as WSServer } from "ws";
 
 app.use(
   "/hydra",
-  express.static(join(__dirname, "../languages/hydra/dist/index.html"))
+  express.static(
+    join(__dirname, "../../packages/languages/hydra/dist/index.html")
+  )
 );
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
