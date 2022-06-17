@@ -37,6 +37,33 @@ export function currentTick() {
   return current_tick;
 }
 
+// Note buffer
+let notes = [];
+
+export function note(low, high) {
+  if (high === undefined) {
+    if (low === undefined) {
+      low = 0;
+      high = 1;
+    } else {
+      high = low;
+      low = 0;
+    }
+  }
+
+  notes = [];
+
+  return () => {
+    if (notes.length > 0) {
+      let sum = notes.reduce((prev, cur) => prev + cur * (high - low) + low, 0);
+      notes = [];
+      return sum;
+    } else {
+      return;
+    }
+  };
+}
+
 function getMIDIMessage({ data }) {
   console.log(`Received midi: ${JSON.stringify(data)}`);
   if (data[0] === 0xf8) {
@@ -51,5 +78,7 @@ function getMIDIMessage({ data }) {
     // MIDI Stop
   } else if ((data[0] & 0xf0) === 0xb0) {
     cc_list[data[1]] = data[2] / 127;
+  } else if ((data[0] & 0xf0) === 0x90) {
+    notes.push(data[1] / 127);
   }
 }
