@@ -19,7 +19,7 @@ export function evalDecoration() {
               .filter((e) => e.is(evalEffect) && e.value.from !== e.value.to)
               .map(({ value: { from, to } }) =>
                 Decoration.mark({
-                  class: "evaluated",
+                  class: "cm-evaluated",
                   time: tr.annotation(Transaction.time),
                 }).range(from, to)
               ),
