@@ -1,26 +1,73 @@
 import { message, getMessages } from "../osc/osc";
 import { OSCArgumentInputValue, OSCMessage } from "../osc/types";
 
-let socket = new WebSocket(`ws://${window.location.host}/`);
-socket.binaryType = "arraybuffer";
-
 type OSCHandler = (message: OSCMessage) => any;
 
 const listeners: Map<string, Set<OSCHandler>> = new Map();
 
-socket.addEventListener("message", ({ data }) => {
-  let messageList = getMessages(new Uint8Array(data));
+type Remote = WebSocket | MessagePort;
 
-  for (let message of messageList) {
-    let listenersForAddress = listeners.get(message.address);
+let dispatch: (m: Uint8Array) => void = () => {};
 
-    if (listenersForAddress) {
-      for (let listener of listenersForAddress) {
-        listener(message);
+let socket = new WebSocket(`ws://${window.location.host}/`);
+socket.binaryType = "arraybuffer";
+connectRemote(socket);
+
+export function connectRemote(remote: Remote) {
+  function handleData({ data }: MessageEvent) {
+    if (data instanceof ArrayBuffer) {
+      data = new Uint8Array(data);
+    }
+
+    if (!(data instanceof Uint8Array)) {
+      throw Error("Unrecognized data type");
+    }
+
+    for (let message of getMessages(data)) {
+      let listenersForAddress = listeners.get(message.address);
+
+      if (listenersForAddress) {
+        for (let listener of listenersForAddress) {
+          listener(message);
+        }
       }
     }
   }
-});
+
+  if (remote instanceof WebSocket) {
+    dispatch = (m) => {
+      if (remote.readyState === remote.OPEN) {
+        remote.send(m);
+      } else {
+        remote.addEventListener("open", () => {
+          remote.send(m);
+        });
+      }
+    };
+
+    remote.addEventListener("message", handleData);
+
+    return () => {
+      dispatch = () => false;
+      remote.removeEventListener("message", handleData);
+    };
+  } else if (remote instanceof MessagePort) {
+    dispatch = (m) => {
+      remote.postMessage(m);
+    };
+
+    remote.addEventListener("message", handleData);
+
+    remote.start();
+
+    return () => {
+      dispatch = () => {};
+      remote.removeEventListener("message", handleData);
+    };
+  }
+
+  throw Error("Unexpected remote type");
+}
 
 export function listenForOSC(address: string, callback: OSCHandler) {
   if (!listeners.has(address)) {
@@ -39,17 +86,7 @@ export function listenForOSC(address: string, callback: OSCHandler) {
 }
 
 export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
-  const send = () => {
-    socket.send(message(address, ...args));
-  };
-
-  if (socket.readyState === socket.OPEN) {
-    send();
-    return true;
-  } else {
-    socket.addEventListener("open", send);
-    return false;
-  }
+  dispatch(message(address, ...args));
 }
 
 export function sendOSCWithResponse(

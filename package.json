@@ -2,12 +2,13 @@
   "name": "@management/text",
   "version": "0.0.1",
   "workspaces": [
-    "packages/codemirror/*"
+    "packages/codemirror/*",
+    "packages/languages/*"
   ],
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
-    "build-packages": "parcel build packages/codemirror/* --no-cache",
+    "build-packages": "parcel build packages/{codemirror,languages}/*",
     "build": "npm run build-packages && parcel build .",
     "start": "node dist/server/index.js"
   },
@@ -36,7 +37,6 @@
   "dependencies": {
     "@codemirror/collab": "^6.0.0",
     "@codemirror/commands": "^6.0.0",
-    "@codemirror/lang-javascript": "^6.0.0",
     "@codemirror/language": "^6.0.0",
     "@codemirror/legacy-modes": "^6.0.0",
     "@codemirror/state": "^6.0.0",
@@ -59,6 +59,7 @@
     "@types/webmidi": "^2.0.6",
     "@types/ws": "^7.4.1",
     "parcel": "^2.4.0",
+    "process": "^0.11.10",
     "typescript": "^4.4.4"
   }
 }

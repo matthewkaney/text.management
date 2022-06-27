@@ -1,12 +1,9 @@
 import { basicSetup, EditorView } from "codemirror";
 import { EditorState, RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { haskell } from "@codemirror/legacy-modes/mode/haskell";
-import { StreamLanguage } from "@codemirror/language";
 import {
   Decoration,
   DecorationSet,
-  KeyBinding,
   keymap,
   ViewPlugin,
   ViewUpdate,
@@ -17,14 +14,9 @@ import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
-let tidalCommands: KeyBinding[] = [
-  {
-    key: "Mod-.",
-    run: () => {
-      return sendOSC("/tidal/code", "hush");
-    },
-  },
-];
+import { extensions as hydra } from "../../../packages/languages/hydra/dist/editor";
+
+console.log(hydra);
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -42,11 +34,11 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
-function sendCode(code: string) {
-  sendOSC("/tidal/code", code);
+interface EditorProps {
+  onEval: (code: string) => void;
 }
 
-export function Editor() {
+export function Editor({ onEval }: EditorProps) {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
       listenForOSC("/doc", ({ args: [version, doc] }) => {
@@ -55,11 +47,11 @@ export function Editor() {
             state: EditorState.create({
               doc,
               extensions: [
-                keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(sendCode),
+                hydra,
+                keymap.of([indentWithTab]),
+                evaluation((c) => onEval(c)),
                 basicSetup,
                 oneDark,
-                StreamLanguage.define(haskell),
                 peerExtension(version),
                 ViewPlugin.fromClass(
                   class {

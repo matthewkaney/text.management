@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style type="text/css">
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+    <script type="module">
+      //@ts-ignore
+      import Hydra from "hydra-synth";
+      import { getMessages } from "../../../app/osc/osc";
+
+      window.addEventListener("message", ({ data, ports }) => {
+        if (data === "channel" && ports.length > 0) {
+          let [port] = ports;
+
+          port.addEventListener("message", ({ data }) => {
+            for (let {
+              address,
+              args: [code],
+            } of getMessages(data)) {
+              if (address === "/code" && typeof code === "string") {
+                try {
+                  eval(code);
+                } catch (error) {
+                  console.log(error.message);
+                }
+              }
+            }
+          });
+
+          port.addEventListener("messageerror", (event) => {
+            console.error(event);
+          });
+
+          port.start();
+        }
+      });
+
+      window.addEventListener("load", () => {
+        new Hydra({ detectAudio: false });
+        //@ts-ignore
+        osc(2).out();
+      });
+    </script>
+  </head>
+</html>
