@@ -1,3 +1,7 @@
+import { program } from "./cli";
+
+let { defaultBoot, boot = [] } = program.opts();
+
 import express from "express";
 import { join } from "path";
 
@@ -33,6 +37,10 @@ app.use(
 );
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
+
+import { GHCI } from "../../app/languages/tidal/ghci";
+
+const ghci = new GHCI({ defaultBoot, customBootfiles: boot });
 
 const wss = new WSServer({ server });
 
