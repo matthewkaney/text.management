@@ -14,6 +14,57 @@ let doc = Text.of([""]);
 
 let pending: ((value: string[]) => void)[] = [];
 
+import { readFile } from "fs/promises";
+
+class Document {
+  private path: string | undefined;
+  private doc: Promise<Text>;
+
+  private writing = false;
+  private debounceTimer?: number;
+
+  constructor(path?: string) {
+    this.path = path;
+    this.doc = this.loadDocument(path);
+  }
+
+  async loadDocument(path?: string) {
+    if (path) {
+      try {
+        return Text.of([await readFile(path, { encoding: "utf-8" })]);
+      } catch (err) {
+        if (err.code === "ENOENT") {
+          return Text.of([""]);
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      return Text.of([""]);
+    }
+  }
+
+  get contents() {
+    return this.doc.then((doc) => doc.toString());
+  }
+
+  async applyChanges(changes: ChangeSet) {
+    let newDoc = changes.apply(await this.doc);
+
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = undefined;
+    }
+
+    setTimeout(async () => {
+      this.debounceTimer = undefined;
+
+      if (this.writing) {
+      }
+    }, 1000);
+  }
+}
+
 export function getDocument(ws: WebSocket) {
   // Version, Document Contents
   ws.send(message("/doc", updates.length, doc.toString()));
