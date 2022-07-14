@@ -1,8 +1,8 @@
-import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
+import { basicSetup, EditorView } from "codemirror";
+import { EditorState, RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
-import { RangeSetBuilder } from "@codemirror/rangeset";
-import { StreamLanguage } from "@codemirror/stream-parser";
+import { StreamLanguage } from "@codemirror/language";
 import {
   Decoration,
   DecorationSet,
@@ -11,7 +11,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
-import { evaluation } from "../../codemirror/evaluate";
+import { evaluation } from "@management/cm-evaluate";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
@@ -42,6 +42,10 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
+function sendCode(code: string) {
+  sendOSC("/tidal/code", code);
+}
+
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
@@ -52,7 +56,7 @@ export function Editor() {
               doc,
               extensions: [
                 keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(),
+                evaluation(sendCode),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
