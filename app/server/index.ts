@@ -36,6 +36,13 @@ app.use(
   )
 );
 
+app.use(
+  "/three",
+  express.static(
+    join(__dirname, "../../packages/languages/three/dist/index.html")
+  )
+);
+
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
 
 import { GHCI } from "../../app/languages/tidal/ghci";

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style type="text/css">
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+    <script type="module">
+      import * as THREE from "three";
+
+      const scene = new THREE.Scene();
+			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+			const renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			const geometry = new THREE.SphereGeometry( 1, 1, 1 );
+			const material = new THREE.MeshLambertMaterial( { color: 0x00ff00 } );
+			const cube = new THREE.Mesh( geometry, material );
+
+      const light = new THREE.HemisphereLight(0xffffff, 0x333333, 1);
+      scene.add(light);
+
+			scene.add( cube );
+
+			camera.position.z = 5;
+
+			function animate() {
+				requestAnimationFrame( animate );
+
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+
+      window.color = (color) => {
+        console.log("NEW COLOR: " + color);
+        material.color = new THREE.Color(color);
+      }
+
+      import { getMessages } from "../../../app/osc/osc";
+
+      window.addEventListener("message", ({ data, ports }) => {
+        if (data === "channel" && ports.length > 0) {
+          let [port] = ports;
+
+          port.addEventListener("message", ({ data }) => {
+            for (let {
+              address,
+              args: [code],
+            } of getMessages(data)) {
+              if (address === "/code" && typeof code === "string") {
+                try {
+                  eval(code);
+                } catch (error) {
+                  console.log(error.message);
+                }
+              }
+            }
+          });
+
+          port.addEventListener("messageerror", (event) => {
+            console.error(event);
+          });
+
+          port.start();
+        }
+      });
+    </script>
+  </head>
+</html>

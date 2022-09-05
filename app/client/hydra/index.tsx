@@ -24,7 +24,7 @@ export function HydraCanvas({ channel }: HydraCanvasProps) {
   return (
     <iframe
       ref={setIframe}
-      src="./hydra"
+      src="./three"
       style={{
         position: "absolute",
         width: "100%",

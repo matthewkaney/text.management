@@ -1,0 +1,26 @@
+{
+  "name": "@management/engine-three",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "browser": "dist/editor.js",
+  "viewer": "dist/index.html",
+  "targets": {
+    "browser": {
+      "source": "./editor.ts"
+    },
+    "viewer": {
+      "context": "browser",
+      "source": "./viewer.html"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Kaney",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.0.0",
+    "three": "^0.144.0"
+  }
+}
