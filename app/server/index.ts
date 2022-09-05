@@ -38,7 +38,7 @@ app.use(
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
 
-import { GHCI } from "../../app/languages/tidal/ghci";
+import { GHCI } from "../../packages/languages/tidal/ghci";
 
 const ghci = new GHCI({ defaultBoot, customBootfiles: boot });
 
