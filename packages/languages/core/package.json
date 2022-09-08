@@ -1,0 +1,16 @@
+{
+  "name": "@management/engine-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/engine.js",
+  "targets": {
+    "main": {
+      "source": "./engine.ts"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later"
+}

@@ -2,9 +2,9 @@ import { Socket, createSocket } from "dgram";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { createInterface } from "readline";
 
-import { Engine } from "../base/engine";
+import { Engine } from "../core/engine";
 
-import { message } from "../../osc/osc";
+import { message } from "../../../app/osc/osc";
 
 export class SCLang extends Engine {
   private socket: Promise<Socket>;

@@ -5,9 +5,9 @@ import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
 
-import { Engine } from "../base/engine";
+import { Engine } from "../core/engine";
 
-import { message } from "../../osc/osc";
+import { message } from "../../../app/osc/osc";
 interface GHCIOptions {
   defaultBoot: boolean;
   customBootfiles: string[];
