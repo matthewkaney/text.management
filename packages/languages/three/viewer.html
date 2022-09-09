@@ -17,39 +17,83 @@
     <script type="module">
       import * as THREE from "three";
 
-      const scene = new THREE.Scene();
-			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+      window.THREE = THREE;
 
-			const renderer = new THREE.WebGLRenderer();
+			const renderer = new THREE.WebGLRenderer({ alpha: true });
 			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer.domElement );
 
-			const geometry = new THREE.SphereGeometry( 1, 1, 1 );
-			const material = new THREE.MeshLambertMaterial( { color: 0x00ff00 } );
-			const cube = new THREE.Mesh( geometry, material );
+      window.scene = new THREE.Scene();
 
-      const light = new THREE.HemisphereLight(0xffffff, 0x333333, 1);
-      scene.add(light);
+      window.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
+      camera.position.y = 4;
+      camera.position.z = 5;
+      camera.rotation.x = -0.3;
 
-			scene.add( cube );
+      window.makeLight = (name, color = "white", x = 0, y = 0, z = 0) => {
+        if (scene.children.includes(window[name])) {
+          scene.remove(window[name]);
+        }
+        
+        window[name] = new THREE.PointLight(new THREE.Color(color));
+        window[name].position.set(x, y, z);
+        scene.add(window[name]);
+      };
 
-			camera.position.z = 5;
+      window.lights = (top = "pink", bottom = "lightblue") => {
+        if (scene.children.includes(window.hemi)) {
+          scene.remove(window.hemi);
+        }
 
-			function animate() {
+        if (!top) {
+          return;
+        }
+        
+        window.hemi = new THREE.HemisphereLight(new THREE.Color(top), new THREE.Color(bottom));
+        scene.add(window.hemi);
+      };
+
+      window.makeSphere = (name, color = "white", scale = 1, x = 0, y = 0, z = 0) => {
+        if (scene.children.includes(window[name])) {
+          scene.remove(window[name]);
+        }
+
+        window[name] = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), new THREE.MeshStandardMaterial({ color: new THREE.Color(color) }));
+        window[name].position.set(x, y, z);
+        window[name].scale.set(scale, scale, scale);
+        scene.add(window[name]);
+      };
+
+      import Hydra from "hydra-synth";
+
+      const hydra = new Hydra({ autoLoop: false });
+      s0.init({ src: renderer.domElement });
+
+      let lastTime = performance.now();
+
+      let updater = () => {};
+
+      window.move = (updateFunc) => {
+        updater = updateFunc;
+      };
+
+      function animate(thisTime) {
 				requestAnimationFrame( animate );
 
-				cube.rotation.x += 0.01;
-				cube.rotation.y += 0.01;
+        let dt = thisTime - lastTime;
+        lastTime = thisTime;
+
+        try {
+				  updater(thisTime);
+        } catch (e) {
+          console.log(e);
+        }
 
 				renderer.render( scene, camera );
+
+        hydra.tick(dt);
 			};
 
-			animate();
-
-      window.color = (color) => {
-        console.log("NEW COLOR: " + color);
-        material.color = new THREE.Color(color);
-      }
+			animate(lastTime);
 
       import { getMessages } from "../../../app/osc/osc";
 

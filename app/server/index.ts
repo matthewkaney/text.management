@@ -31,16 +31,12 @@ import { Server as WSServer } from "ws";
 
 app.use(
   "/hydra",
-  express.static(
-    join(__dirname, "../../packages/languages/hydra/dist/index.html")
-  )
+  express.static(join(__dirname, "../../packages/languages/hydra/dist"))
 );
 
 app.use(
   "/three",
-  express.static(
-    join(__dirname, "../../packages/languages/three/dist/index.html")
-  )
+  express.static(join(__dirname, "../../packages/languages/three/dist"))
 );
 
 import { getDocument, pullUpdates, pushUpdates } from "./authority";

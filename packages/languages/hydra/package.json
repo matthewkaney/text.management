@@ -10,6 +10,7 @@
     },
     "viewer": {
       "context": "browser",
+      "publicUrl": "/hydra/",
       "source": "./viewer.html"
     }
   },
