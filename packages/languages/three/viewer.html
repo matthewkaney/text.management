@@ -20,6 +20,8 @@
       window.THREE = THREE;
 
 			const renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 			renderer.setSize( window.innerWidth, window.innerHeight );
 
       window.scene = new THREE.Scene();
@@ -36,6 +38,7 @@
         
         window[name] = new THREE.PointLight(new THREE.Color(color));
         window[name].position.set(x, y, z);
+        window[name].castShadow = true;
         scene.add(window[name]);
       };
 
@@ -60,7 +63,37 @@
         window[name] = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), new THREE.MeshStandardMaterial({ color: new THREE.Color(color) }));
         window[name].position.set(x, y, z);
         window[name].scale.set(scale, scale, scale);
+        window[name].castShadow = true;
+        window[name].receiveShadow = true;
         scene.add(window[name]);
+      };
+
+      window.makeDonut = (name, color = "white", scale = 1, tube = 0.5, x = 0, y = 0, z = 0) => {
+        if (scene.children.includes(window[name])) {
+          scene.remove(window[name]);
+        }
+
+        window[name] = new THREE.Mesh(new THREE.TorusGeometry(scale, scale * tube, 20, 60), new THREE.MeshStandardMaterial({ color: new THREE.Color(color) }));
+        window[name].position.set(x, y, z);
+        window[name].scale.set(scale, scale, scale);
+        window[name].castShadow = true;
+        window[name].receiveShadow = true;
+        scene.add(window[name]);
+      };
+
+      window.ground = (color = "white") => {
+        if (scene.children.includes(window.gnd)) {
+          scene.remove(window.gnd);
+        }
+
+        if (! color) {
+          return;
+        }
+
+        window.gnd = new THREE.Mesh(new THREE.CircleGeometry(30, 60), new THREE.MeshStandardMaterial({ color: new THREE.Color(color) }));
+        window.gnd.rotation.x = -Math.PI / 2;
+        window.gnd.receiveShadow = true;
+        scene.add(window.gnd);
       };
 
       import Hydra from "hydra-synth";
