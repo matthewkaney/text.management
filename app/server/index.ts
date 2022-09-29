@@ -1,3 +1,5 @@
+import program from "./cli";
+
 import express from "express";
 import { join } from "path";
 
@@ -26,7 +28,14 @@ const server = app.listen(1234, () => {
 import { Server as WSServer } from "ws";
 import { GHCI } from "./ghci";
 
+import { Document } from "./authority";
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
+
+let doc = new Document(program.args[0]);
+
+doc.contents.then((contents) => {
+  console.log(contents);
+});
 
 const ghci = new GHCI();
 

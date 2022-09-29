@@ -14,21 +14,21 @@ let doc = Text.of([""]);
 
 let pending: ((value: string[]) => void)[] = [];
 
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 
-class Document {
+export class Document {
   private path: string | undefined;
   private doc: Promise<Text>;
 
   private writing = false;
-  private debounceTimer?: number;
+  private debounceTimer?: number | string | NodeJS.Timeout;
 
   constructor(path?: string) {
     this.path = path;
     this.doc = this.loadDocument(path);
   }
 
-  async loadDocument(path?: string) {
+  private async loadDocument(path?: string) {
     if (path) {
       try {
         return Text.of([await readFile(path, { encoding: "utf-8" })]);
@@ -48,20 +48,34 @@ class Document {
     return this.doc.then((doc) => doc.toString());
   }
 
-  async applyChanges(changes: ChangeSet) {
-    let newDoc = changes.apply(await this.doc);
+  update(changes: ChangeSet) {
+    this.doc = this.doc.then((doc) => changes.apply(doc));
 
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = undefined;
     }
 
-    setTimeout(async () => {
+    this.debounceTimer = setTimeout(async () => {
       this.debounceTimer = undefined;
 
-      if (this.writing) {
+      if (!this.writing) {
       }
     }, 1000);
+  }
+
+  private save() {
+    if (this.writing) {
+    } else {
+      this.writing = true;
+    }
+
+    async function write(path: string) {
+      /*while (this.writeRequest) {
+        this.writeRequest = false;
+        await writeFile(this.path, await this.doc);
+      }*/
+    }
   }
 }
 
