@@ -34,6 +34,7 @@ import { getDocument, pullUpdates, pushUpdates } from "./authority";
 let doc = new Document(program.args[0]);
 
 doc.contents.then((contents) => {
+  console.log("Contents:");
   console.log(contents);
 });
 
@@ -57,7 +58,7 @@ wss.on("connection", (ws) => {
           console.log(`UI: "${code}"`);
           ghci.send(code);
         } else if (osc.address === "/doc/get") {
-          getDocument(ws);
+          getDocument(doc, ws);
         } else if (
           osc.address === "/doc/pull" &&
           typeof osc.args[0] === "number"
@@ -69,7 +70,7 @@ wss.on("connection", (ws) => {
         ) {
           let updates = osc.args.slice(1);
           if (updates.every((u) => typeof u === "string")) {
-            pushUpdates(ws, osc.args[0], ...(updates as string[]));
+            pushUpdates(doc, ws, osc.args[0], ...(updates as string[]));
           }
         }
       }
