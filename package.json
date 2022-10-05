@@ -1,14 +1,17 @@
 {
   "name": "@management/text",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "workspaces": [
     "packages/codemirror/*"
   ],
   "private": "true",
   "description": "Experimental livecode editor",
+  "bin": {
+    "text.management": "dist/server/index.js"
+  },
   "scripts": {
     "build-packages": "parcel build packages/codemirror/* --no-cache",
-    "build": "npm run build-packages && parcel build .",
+    "prepare": "npm run build-packages && parcel build .",
     "start": "node dist/server/index.js"
   },
   "client": "dist/client/index.html",

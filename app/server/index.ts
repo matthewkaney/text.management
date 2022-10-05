@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import program from "./cli";
 
 import express from "express";
@@ -33,10 +35,11 @@ import { getDocument, pullUpdates, pushUpdates } from "./authority";
 
 let doc = new Document(program.args[0]);
 
-doc.contents.then((contents) => {
-  console.log("Contents:");
-  console.log(contents);
-});
+// Verbose logging
+// doc.contents.then((contents) => {
+//   console.log("Contents:");
+//   console.log(contents);
+// });
 
 const ghci = new GHCI();
 
