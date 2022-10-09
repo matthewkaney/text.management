@@ -58,7 +58,8 @@ wss.on("connection", (ws) => {
         //console.log(`Received: ${osc.address}, ${JSON.stringify(osc.args)}`);
         if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
-          console.log(`UI: "${code}"`);
+          // Verbose logging
+          // console.log(`UI: "${code}"`);
           ghci.send(code);
         } else if (osc.address === "/doc/get") {
           getDocument(doc, ws);
