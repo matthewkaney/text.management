@@ -2,7 +2,8 @@
   "name": "@management/text",
   "version": "0.1.0",
   "workspaces": [
-    "packages/codemirror/*"
+    "packages/codemirror/*",
+    "packages/text-management"
   ],
   "private": "true",
   "description": "Experimental livecode editor",
