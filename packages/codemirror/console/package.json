@@ -1,0 +1,29 @@
+{
+  "name": "@management/cm-console",
+  "version": "0.1.0",
+  "description": "Output console panel for Codemirror 6",
+  "source": "src/index.ts",
+  "browser": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mindofmatthew/text.management.git"
+  },
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/mindofmatthew/text.management/issues"
+  },
+  "homepage": "https://github.com/mindofmatthew/text.management#readme",
+  "dependencies": {
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0"
+  }
+}

@@ -12,10 +12,12 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
+import { console } from "@management/cm-console";
 import { useCallback } from "react";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
+import { consoleMessageEffect } from "@management/cm-console/src";
 
 let tidalCommands: KeyBinding[] = [
   {
@@ -46,6 +48,36 @@ function sendCode(code: string) {
   sendOSC("/tidal/code", code);
 }
 
+const consoleListener = ViewPlugin.define((view) => {
+  let unlistenReply = listenForOSC("/tidal/reply", ({ args: [text] }) => {
+    if (typeof text === "string") {
+      window.console.log(text);
+      view.dispatch({
+        effects: [
+          consoleMessageEffect.of({ level: "info", source: "Tidal", text }),
+        ],
+      });
+    }
+  });
+
+  let unlistenError = listenForOSC("/tidal/error", ({ args: [text] }) => {
+    if (typeof text === "string") {
+      view.dispatch({
+        effects: [
+          consoleMessageEffect.of({ level: "error", source: "Tidal", text }),
+        ],
+      });
+    }
+  });
+
+  return {
+    destroy() {
+      unlistenReply();
+      unlistenError();
+    },
+  };
+});
+
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
@@ -57,6 +89,8 @@ export function Editor() {
               extensions: [
                 keymap.of([indentWithTab, ...tidalCommands]),
                 evaluation(sendCode),
+                console(),
+                consoleListener,
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
