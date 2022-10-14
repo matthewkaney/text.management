@@ -4,10 +4,9 @@ import { ConsoleMessage, consoleState, consoleMessageEffect } from "./state";
 
 function consolePanelConstructor(view: EditorView): Panel {
   let consoleNode = document.createElement("div");
+  consoleNode.classList.add("cm-console");
 
-  let messages = view.state.field(consoleState, false) || [];
-
-  for (let message of messages) {
+  for (let message of view.state.field(consoleState, false) || []) {
     consoleNode.appendChild(messageConstructor(message));
   }
 
@@ -28,6 +27,7 @@ function consolePanelConstructor(view: EditorView): Panel {
 
 function messageConstructor(message: ConsoleMessage) {
   const messageNode = document.createElement("div");
+  messageNode.classList.add("cm-console-message");
   messageNode.innerText = message.text;
   return messageNode;
 }
