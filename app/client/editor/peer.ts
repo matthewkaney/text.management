@@ -11,6 +11,9 @@ import {
   SelectionRange,
   StateField,
   StateEffect,
+  Range,
+  RangeSet,
+  RangeValue,
 } from "@codemirror/state";
 import {
   Decoration,
@@ -106,37 +109,42 @@ export function peerExtension(startVersion: number) {
   ];
 }
 
-interface RemoteCursor {
+class PeerCursor extends RangeValue {
+  id: string;
+
+  constructor(id: string) {
+    super();
+    this.id = id;
+  }
+
+  eq(other: PeerCursor) {
+    return this.id === other.id;
+  }
+}
+
+const SetCursorEffect = StateEffect.define<{
   id: string;
   from: number;
   to: number;
-}
-
-interface RemoteCursorMap {
-  [id: string]: { from: number; to: number };
-}
-
-const SetCursorEffect = StateEffect.define<RemoteCursor>();
+}>();
 const RemoveCursorEffect = StateEffect.define<string>();
 
-export const CursorField = StateField.define<RemoteCursorMap>({
-  create: (state) => {
-    return {};
+export const CursorField = StateField.define<RangeSet<PeerCursor>>({
+  create: () => {
+    return RangeSet.empty;
   },
-  update: (value, transaction) => {
-    for (let effect of transaction.effects) {
-      if (effect.is(SetCursorEffect)) {
-        let { id, from, to } = effect.value;
-        value = { ...value, [id]: { from, to } };
-      } else if (effect.is(RemoveCursorEffect)) {
-        let id = effect.value;
-        let _;
-        ({ [id]: _, ...value } = value);
-      }
-    }
-
-    return value;
-  },
+  update: (value, { changes, effects }) =>
+    value.map(changes).update({
+      add: effects
+        .filter((e) => e.is(SetCursorEffect))
+        .map((e) => {
+          let { id, from, to } = e.value;
+          return new PeerCursor(id).range(from, to);
+        }),
+      sort: true,
+      filter: (_from, _to, value) =>
+        effects.some((e) => e.is(RemoveCursorEffect) && e.value === value.id),
+    }),
 });
 
 import { WidgetType } from "@codemirror/view";
@@ -156,9 +164,13 @@ const Cursor = Decoration.widget({ widget: new CursorWidget(), side: 1 });
 const cursorDecorations = EditorView.decorations.from(
   CursorField,
   (cursors) => {
-    return Decoration.set(
-      Object.entries(cursors).map(([_, { from }]) => Cursor.range(from))
-    );
+    let cursorDecs: Range<Decoration>[] = [];
+    let itr = cursors.iter();
+    while (itr.value) {
+      cursorDecs.push(Cursor.range(itr.from));
+      itr.next();
+    }
+    return Decoration.set(cursorDecs);
   }
 );
 
