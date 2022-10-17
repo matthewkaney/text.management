@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+import program from "./cli";
+
 import express from "express";
 import { join } from "path";
 
@@ -26,7 +30,16 @@ const server = app.listen(1234, () => {
 import WebSocket, { Server as WSServer } from "ws";
 import { GHCI } from "./ghci";
 
+import { Document } from "./authority";
 import { getDocument, pullUpdates, pushUpdates } from "./authority";
+
+let doc = new Document(program.args[0]);
+
+// Verbose logging
+// doc.contents.then((contents) => {
+//   console.log("Contents:");
+//   console.log(contents);
+// });
 
 const ghci = new GHCI();
 
@@ -54,10 +67,11 @@ wss.on("connection", (ws) => {
       for (let osc of getMessages(data)) {
         if (osc.address === "/tidal/code" && typeof osc.args[0] === "string") {
           let code = osc.args[0];
-          console.log(`UI: "${code}"`);
+          // Verbose logging
+          // console.log(`UI: "${code}"`);
           ghci.send(code);
         } else if (osc.address === "/doc/get") {
-          getDocument(ws);
+          getDocument(doc, ws);
         } else if (
           osc.address === "/doc/pull" &&
           typeof osc.args[0] === "number"
@@ -69,7 +83,7 @@ wss.on("connection", (ws) => {
         ) {
           let updates = osc.args.slice(1);
           if (updates.every((u) => typeof u === "string")) {
-            pushUpdates(ws, osc.args[0], ...(updates as string[]));
+            pushUpdates(doc, ws, osc.args[0], ...(updates as string[]));
           }
         } else if (
           osc.address === "/cursor/push" &&

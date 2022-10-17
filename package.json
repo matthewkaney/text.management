@@ -1,14 +1,17 @@
 {
   "name": "@management/text",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "workspaces": [
     "packages/codemirror/*"
   ],
   "private": "true",
   "description": "Experimental livecode editor",
+  "bin": {
+    "text.management": "dist/server/index.js"
+  },
   "scripts": {
     "build-packages": "parcel build packages/codemirror/* --no-cache",
-    "build": "npm run build-packages && parcel build .",
+    "prepare": "npm run build-packages && parcel build .",
     "start": "node dist/server/index.js"
   },
   "client": "dist/client/index.html",
@@ -44,6 +47,7 @@
     "@lezer/highlight": "^1.0.0",
     "clsx": "^1.1.1",
     "codemirror": "^6.0.0",
+    "commander": "^9.4.0",
     "express": "^4.17.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

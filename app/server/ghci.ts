@@ -64,7 +64,9 @@ export class GHCI extends EventEmitter {
       "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
     );
     const bootPath = join(path, "BootTidal.hs");
-    console.log(`Loading Tidal Bootfile: ${bootPath}`);
+
+    // Verbose Logging
+    // console.log(`Loading Tidal Bootfile: ${bootPath}`);
 
     createReadStream(bootPath).pipe(child.stdin, { end: false });
 
