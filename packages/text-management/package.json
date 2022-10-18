@@ -14,17 +14,27 @@
   "homepage": "https://github.com/mindofmatthew/text.management#readme",
   "bin": "dist/server/index.js",
   "client": "dist/client/index.html",
+  "files": ["/dist"],
   "targets": {
     "client": {
-      "source": "app/client/index.html",
+      "source": "src/client/index.html",
       "context": "browser"
     },
-    "server": {
-      "source": "app/server/index.ts",
+    "bin": {
+      "source": "src/server/index.ts",
       "context": "node"
     }
   },
   "dependencies": {
-    "@management/cm-evaluate": "^0.1.0"
+    "commander": "^9.4.0",
+    "express": "^4.17.1",
+    "ws": "^7.4.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/react": "^17.0.24",
+    "@types/react-dom": "^17.0.9",
+    "@types/webmidi": "^2.0.6",
+    "@types/ws": "^7.4.1"
   }
 }
