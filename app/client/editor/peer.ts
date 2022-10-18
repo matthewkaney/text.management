@@ -133,8 +133,10 @@ export const CursorField = StateField.define<RangeSet<PeerCursor>>({
   create: () => {
     return RangeSet.empty;
   },
-  update: (value, { changes, effects }) =>
-    value.map(changes).update({
+  update: (value, { changes, effects }) => {
+    console.log("Update ");
+    console.log(effects);
+    return value.map(changes).update({
       add: effects
         .filter((e) => e.is(SetCursorEffect))
         .map((e) => {
@@ -143,8 +145,13 @@ export const CursorField = StateField.define<RangeSet<PeerCursor>>({
         }),
       sort: true,
       filter: (_from, _to, value) =>
-        effects.some((e) => e.is(RemoveCursorEffect) && e.value === value.id),
-    }),
+        !effects.some(
+          (e) =>
+            (e.is(SetCursorEffect) || e.is(RemoveCursorEffect)) &&
+            e.value === value.id
+        ),
+    });
+  },
 });
 
 import { WidgetType } from "@codemirror/view";
@@ -181,6 +188,8 @@ const peerCursor = ViewPlugin.fromClass(
     constructor(private view: EditorView) {
       this.unloadListener = listenForOSC("/cursor/push", ({ args }) => {
         let [id, from, to] = args;
+
+        console.log("cursor push: ", JSON.stringify(args));
 
         if (
           typeof id === "string" &&

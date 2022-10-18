@@ -72,6 +72,9 @@ wss.on("connection", (ws) => {
           ghci.send(code);
         } else if (osc.address === "/doc/get") {
           getDocument(doc, ws);
+          for (let [id, { from, to }] of Object.entries(cursors)) {
+            ws.send(message("/cursor/push", id, from, to));
+          }
         } else if (
           osc.address === "/doc/pull" &&
           typeof osc.args[0] === "number"
