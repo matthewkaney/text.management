@@ -15,18 +15,6 @@
     "prepare": "npm run build-packages && parcel build .",
     "start": "node dist/server/index.js"
   },
-  "client": "dist/client/index.html",
-  "server": "dist/server/index.js",
-  "targets": {
-    "client": {
-      "source": "app/client/index.html",
-      "context": "browser"
-    },
-    "server": {
-      "source": "app/server/index.ts",
-      "context": "node"
-    }
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mindofmatthew/text.management.git"

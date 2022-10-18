@@ -1,20 +1,30 @@
 {
   "name": "text-management",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Web-based editor for live coded music and visuals. Intended for use both as a stand-alone application, and as an example for further custom editor development.",
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mindofmatthew/text.management.git"
   },
-  "author": "Matthew Kaney",
-  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/mindofmatthew/text.management/issues"
   },
-  "homepage": "https://github.com/mindofmatthew/text.management#readme"
+  "homepage": "https://github.com/mindofmatthew/text.management#readme",
+  "bin": "dist/server/index.js",
+  "client": "dist/client/index.html",
+  "targets": {
+    "client": {
+      "source": "app/client/index.html",
+      "context": "browser"
+    },
+    "server": {
+      "source": "app/server/index.ts",
+      "context": "node"
+    }
+  },
+  "dependencies": {
+    "@management/cm-evaluate": "^0.1.0"
+  }
 }
