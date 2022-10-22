@@ -1,6 +1,6 @@
 {
   "name": "text-management",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Web-based editor for live coded music and visuals. Intended for use both as a stand-alone application, and as an example for further custom editor development.",
   "author": "Matthew Kaney",
   "license": "GPL-3.0-or-later",

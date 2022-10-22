@@ -1,9 +1,9 @@
-import { basicSetup, EditorView } from "codemirror";
 import { EditorState, RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
 import {
+  EditorView,
   Decoration,
   DecorationSet,
   KeyBinding,
@@ -13,6 +13,7 @@ import {
 } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { useCallback } from "react";
+import { basicSetup } from "./basicSetup";
 import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
