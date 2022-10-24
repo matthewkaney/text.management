@@ -18,6 +18,8 @@ import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
+import "../firebase/databasePeer";
+
 let tidalCommands: KeyBinding[] = [
   {
     key: "Mod-.",
