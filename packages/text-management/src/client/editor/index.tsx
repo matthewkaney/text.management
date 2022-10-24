@@ -18,7 +18,7 @@ import { listenForOSC, sendOSC } from "../osc";
 import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
-import "../firebase/databasePeer";
+import { firebaseCollab } from "../firebase/databasePeer";
 
 let tidalCommands: KeyBinding[] = [
   {
@@ -63,7 +63,8 @@ export function Editor() {
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
-                peerExtension(version),
+                firebaseCollab(version),
+                // peerExtension(version),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;
