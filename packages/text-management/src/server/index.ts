@@ -9,7 +9,10 @@ import { getMessages } from "../osc/osc";
 
 const app = express();
 
-app.use(express.static(join(__dirname, "../../dist/client")));
+app.get("/:sessionID?", (req, res) => {
+  res.sendFile(join(__dirname, "../../dist/client/index.html"));
+});
+app.use("/static", express.static(join(__dirname, "../../dist/client")));
 
 import { networkInterfaces } from "os";
 

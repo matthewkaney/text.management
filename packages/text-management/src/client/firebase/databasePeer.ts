@@ -5,85 +5,76 @@ import {
   push,
   child,
   onChildAdded,
-  runTransaction,
+  set,
+  DatabaseReference,
 } from "firebase/database";
 
+import { ChangeSet } from "@codemirror/state";
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
 import {
   collab,
   getSyncedVersion,
   sendableUpdates,
   receiveUpdates,
+  getClientID,
 } from "@codemirror/collab";
-import { version } from "process";
 
-console.log("Do database stuff...");
 const db = getDatabase();
 const sessionListRef = ref(db, "sessions");
-const sessionRef = push(sessionListRef, { initial: "", versions: {} });
-console.log(sessionRef);
+
+let sessionRef: DatabaseReference;
+
+if (window.location.pathname === "/") {
+  sessionRef = push(sessionListRef, {
+    initial: "",
+    versions: [],
+  });
+} else {
+  sessionRef = child(sessionListRef, window.location.pathname.slice(1));
+}
+
+history.replaceState(null, "", sessionRef.key);
 
 export function firebaseCollab(startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
-      private pushing = false;
-      private done = false;
-
       constructor(private view: EditorView) {
         this.view = view;
 
         onChildAdded(child(sessionRef, "versions"), (version) => {
-          if (version.val()) {
-          }
+          console.log("Child added...");
+          console.log(version);
+
+          let { changes, clientID } = version.val();
+
+          console.log(clientID);
+
+          this.view.dispatch(
+            receiveUpdates(this.view.state, [
+              { changes: ChangeSet.fromJSON(changes), clientID: clientID },
+            ])
+          );
         });
       }
 
       update(update: ViewUpdate) {
-        console.log(getSyncedVersion(this.view.state));
-        //if (update.docChanged) this.push();
+        if (update.docChanged || sendableUpdates(this.view.state).length) {
+          queueMicrotask(() => this.push());
+        }
       }
 
       push() {
-        let updates = sendableUpdates(this.view.state);
-        if (updates.length === 0) return;
+        if (!sendableUpdates(this.view.state).length) return;
 
-        for (let update of updates) {
-          push(child(sessionRef, "versions"), {
-            changes: update.changes.toJSON(),
-          });
-        }
-
-        // runTransaction(child(sessionRef, "versions"), (versions) => {
-        //   console.log("Run transaction...");
-        //   let updates = sendableUpdates(this.view.state);
-        // });
-        /*let updates = sendableUpdates(this.view.state);
-        if (!updates.length) return;
-
+        let [update] = sendableUpdates(this.view.state);
         let version = getSyncedVersion(this.view.state);
-        if (this.pushing || !updates.length) return;
-        this.pushing = true;
-        let version = getSyncedVersion(this.view.state);
-        await pushUpdates(version, updates);
-        this.pushing = false;
-        // Regardless of whether the push failed or new updates came in
-        // while it was running, try again if there's updates remaining
-        if (sendableUpdates(this.view.state).length)
-          setTimeout(() => this.push(), 100);*/
+        set(child(sessionRef, `versions/${version}`), {
+          changes: update.changes.toJSON(),
+          clientID: getClientID(this.view.state),
+        });
       }
-
-      /*async pull() {
-        while (!this.done) {
-          let version = getSyncedVersion(this.view.state);
-          let updates = await pullUpdates(version);
-          this.view.dispatch(receiveUpdates(this.view.state, updates));
-        }
-      }
-
-      destroy() {
-        this.done = true;
-      }*/
     }
   );
+
   return [collab({ startVersion }), plugin];
 }
