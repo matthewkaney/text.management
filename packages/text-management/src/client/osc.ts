@@ -1,14 +1,14 @@
 import { message, getMessages } from "../osc/osc";
 import { OSCArgumentInputValue, OSCMessage } from "../osc/types";
 
-let socket = new WebSocket(`ws://${window.location.host}/`);
-socket.binaryType = "arraybuffer";
+//let socket = new WebSocket(`ws://${window.location.host}/`);
+//socket.binaryType = "arraybuffer";
 
 type OSCHandler = (message: OSCMessage) => any;
 
 const listeners: Map<string, Set<OSCHandler>> = new Map();
 
-socket.addEventListener("message", ({ data }) => {
+/*socket.addEventListener("message", ({ data }) => {
   let messageList = getMessages(new Uint8Array(data));
 
   for (let message of messageList) {
@@ -20,7 +20,7 @@ socket.addEventListener("message", ({ data }) => {
       }
     }
   }
-});
+});*/
 
 export function listenForOSC(address: string, callback: OSCHandler) {
   if (!listeners.has(address)) {
@@ -39,7 +39,7 @@ export function listenForOSC(address: string, callback: OSCHandler) {
 }
 
 export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
-  const send = () => {
+  /*const send = () => {
     socket.send(message(address, ...args));
   };
 
@@ -49,7 +49,7 @@ export function sendOSC(address: string, ...args: OSCArgumentInputValue[]) {
   } else {
     socket.addEventListener("open", send);
     return false;
-  }
+  }*/
 }
 
 export function sendOSCWithResponse(

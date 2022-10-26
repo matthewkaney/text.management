@@ -24,7 +24,8 @@ let tidalCommands: KeyBinding[] = [
   {
     key: "Mod-.",
     run: () => {
-      return sendOSC("/tidal/code", "hush");
+      sendOSC("/tidal/code", "hush");
+      return true;
     },
   },
 ];
@@ -52,42 +53,41 @@ function sendCode(code: string) {
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      listenForOSC("/doc", ({ args: [version, doc] }) => {
-        if (typeof version === "number" && typeof doc === "string") {
-          new EditorView({
-            state: EditorState.create({
-              doc,
-              extensions: [
-                keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(sendCode),
-                basicSetup,
-                oneDark,
-                StreamLanguage.define(haskell),
-                firebaseCollab(version),
-                // peerExtension(version),
-                ViewPlugin.fromClass(
-                  class {
-                    decorations: DecorationSet;
-                    constructor(view: EditorView) {
-                      this.decorations = emptyLineDeco(view);
-                    }
-                    update(update: ViewUpdate) {
-                      if (update.docChanged || update.viewportChanged)
-                        this.decorations = emptyLineDeco(update.view);
-                    }
-                  },
-                  {
-                    decorations: (v) => v.decorations,
-                  }
-                ),
-              ],
-            }),
-            parent: ref,
-          });
-        }
+      //listenForOSC("/doc", ({ args: [version, doc] }) => {
+      //if (typeof version === "number" && typeof doc === "string") {
+      new EditorView({
+        state: EditorState.create({
+          extensions: [
+            keymap.of([indentWithTab, ...tidalCommands]),
+            evaluation(sendCode),
+            basicSetup,
+            oneDark,
+            StreamLanguage.define(haskell),
+            firebaseCollab(),
+            // peerExtension(version),
+            ViewPlugin.fromClass(
+              class {
+                decorations: DecorationSet;
+                constructor(view: EditorView) {
+                  this.decorations = emptyLineDeco(view);
+                }
+                update(update: ViewUpdate) {
+                  if (update.docChanged || update.viewportChanged)
+                    this.decorations = emptyLineDeco(update.view);
+                }
+              },
+              {
+                decorations: (v) => v.decorations,
+              }
+            ),
+          ],
+        }),
+        parent: ref,
       });
+      //}
+      //});
 
-      sendOSC("/doc/get");
+      //sendOSC("/doc/get");
     }
   }, []);
 

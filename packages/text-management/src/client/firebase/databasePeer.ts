@@ -1,13 +1,4 @@
-import "./app";
-import {
-  getDatabase,
-  ref,
-  push,
-  child,
-  onChildAdded,
-  set,
-  DatabaseReference,
-} from "firebase/database";
+import { child, DatabaseReference, onChildAdded, set } from "firebase/database";
 
 import { ChangeSet } from "@codemirror/state";
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
@@ -19,41 +10,40 @@ import {
   getClientID,
 } from "@codemirror/collab";
 
-const db = getDatabase();
-const sessionListRef = ref(db, "sessions");
+import { Session, getSession, createSession } from "./session";
 
-let sessionRef: DatabaseReference;
+let sessionRef: Promise<Session>;
+let id = window.location.pathname.slice(1);
 
-if (window.location.pathname === "/") {
-  sessionRef = push(sessionListRef, {
-    initial: "",
-    versions: [],
-  });
+if (id) {
+  sessionRef = getSession(id);
 } else {
-  sessionRef = child(sessionListRef, window.location.pathname.slice(1));
+  sessionRef = createSession();
+
+  sessionRef.then(({ id }) => {
+    history.replaceState(null, "", id);
+  });
 }
 
-history.replaceState(null, "", sessionRef.key);
-
-export function firebaseCollab(startVersion: number) {
+export function firebaseCollab() {
   let plugin = ViewPlugin.fromClass(
     class {
+      session?: DatabaseReference;
+
       constructor(private view: EditorView) {
         this.view = view;
 
-        onChildAdded(child(sessionRef, "versions"), (version) => {
-          console.log("Child added...");
-          console.log(version);
+        sessionRef.then((session) => {
+          this.session = session.ref;
 
-          let { changes, clientID } = version.val();
+          onChildAdded(child(this.session, "versions"), (version) => {
+            let { changes, clientID } = version.val();
+            changes = ChangeSet.fromJSON(JSON.parse(changes));
 
-          console.log(clientID);
-
-          this.view.dispatch(
-            receiveUpdates(this.view.state, [
-              { changes: ChangeSet.fromJSON(changes), clientID: clientID },
-            ])
-          );
+            this.view.dispatch(
+              receiveUpdates(this.view.state, [{ changes, clientID }])
+            );
+          });
         });
       }
 
@@ -64,17 +54,18 @@ export function firebaseCollab(startVersion: number) {
       }
 
       push() {
+        if (!this.session) return;
         if (!sendableUpdates(this.view.state).length) return;
 
         let [update] = sendableUpdates(this.view.state);
         let version = getSyncedVersion(this.view.state);
-        set(child(sessionRef, `versions/${version}`), {
-          changes: update.changes.toJSON(),
+        set(child(this.session, `versions/${version}`), {
+          changes: JSON.stringify(update.changes.toJSON()),
           clientID: getClientID(this.view.state),
         });
       }
     }
   );
 
-  return [collab({ startVersion }), plugin];
+  return [collab(), plugin];
 }
