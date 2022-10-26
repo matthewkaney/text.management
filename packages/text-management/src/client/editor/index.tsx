@@ -79,7 +79,7 @@ export function Editor() {
               doc: initial,
               extensions: [
                 keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(sendCode),
+                evaluation(),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
