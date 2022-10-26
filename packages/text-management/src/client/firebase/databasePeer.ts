@@ -10,40 +10,21 @@ import {
   getClientID,
 } from "@codemirror/collab";
 
-import { Session, getSession, createSession } from "./session";
-
-let sessionRef: Promise<Session>;
-let id = window.location.pathname.slice(1);
-
-if (id) {
-  sessionRef = getSession(id);
-} else {
-  sessionRef = createSession();
-
-  sessionRef.then(({ id }) => {
-    history.replaceState(null, "", id);
-  });
-}
-
-export function firebaseCollab() {
+export function firebaseCollab(session: DatabaseReference) {
   let plugin = ViewPlugin.fromClass(
     class {
-      session?: DatabaseReference;
+      session = session;
 
       constructor(private view: EditorView) {
         this.view = view;
 
-        sessionRef.then((session) => {
-          this.session = session.ref;
+        onChildAdded(child(this.session, "versions"), (version) => {
+          let { changes, clientID } = version.val();
+          changes = ChangeSet.fromJSON(JSON.parse(changes));
 
-          onChildAdded(child(this.session, "versions"), (version) => {
-            let { changes, clientID } = version.val();
-            changes = ChangeSet.fromJSON(JSON.parse(changes));
-
-            this.view.dispatch(
-              receiveUpdates(this.view.state, [{ changes, clientID }])
-            );
-          });
+          this.view.dispatch(
+            receiveUpdates(this.view.state, [{ changes, clientID }])
+          );
         });
       }
 

@@ -50,44 +50,61 @@ function sendCode(code: string) {
   sendOSC("/tidal/code", code);
 }
 
+import { Session, getSession, createSession } from "../firebase/session";
+import { get } from "firebase/database";
+
+let sessionRef: Promise<Session>;
+let id = window.location.pathname.slice(1);
+
+if (id) {
+  sessionRef = getSession(id);
+} else {
+  sessionRef = createSession();
+
+  sessionRef.then(({ id }) => {
+    history.replaceState(null, "", id);
+  });
+}
+
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      //listenForOSC("/doc", ({ args: [version, doc] }) => {
-      //if (typeof version === "number" && typeof doc === "string") {
-      new EditorView({
-        state: EditorState.create({
-          extensions: [
-            keymap.of([indentWithTab, ...tidalCommands]),
-            evaluation(sendCode),
-            basicSetup,
-            oneDark,
-            StreamLanguage.define(haskell),
-            firebaseCollab(),
-            // peerExtension(version),
-            ViewPlugin.fromClass(
-              class {
-                decorations: DecorationSet;
-                constructor(view: EditorView) {
-                  this.decorations = emptyLineDeco(view);
-                }
-                update(update: ViewUpdate) {
-                  if (update.docChanged || update.viewportChanged)
-                    this.decorations = emptyLineDeco(update.view);
-                }
-              },
-              {
-                decorations: (v) => v.decorations,
-              }
-            ),
-          ],
-        }),
-        parent: ref,
-      });
-      //}
-      //});
+      sessionRef
+        .then((session) => get(session.ref))
+        .then((session) => {
+          let { initial } = session.val();
 
-      //sendOSC("/doc/get");
+          new EditorView({
+            state: EditorState.create({
+              doc: initial,
+              extensions: [
+                keymap.of([indentWithTab, ...tidalCommands]),
+                evaluation(sendCode),
+                basicSetup,
+                oneDark,
+                StreamLanguage.define(haskell),
+                firebaseCollab(session.ref),
+                // peerExtension(version),
+                ViewPlugin.fromClass(
+                  class {
+                    decorations: DecorationSet;
+                    constructor(view: EditorView) {
+                      this.decorations = emptyLineDeco(view);
+                    }
+                    update(update: ViewUpdate) {
+                      if (update.docChanged || update.viewportChanged)
+                        this.decorations = emptyLineDeco(update.view);
+                    }
+                  },
+                  {
+                    decorations: (v) => v.decorations,
+                  }
+                ),
+              ],
+            }),
+            parent: ref,
+          });
+        });
     }
   }, []);
 
