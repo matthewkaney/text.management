@@ -8,11 +8,17 @@ import { createReadStream } from "fs";
 
 import { message } from "../osc/osc";
 
+export interface TerminalMessage {
+  level: "log" | "error";
+  source: string;
+  text: string;
+}
+
 export class GHCI extends EventEmitter {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
-  private history: Buffer[] = [];
+  private history: TerminalMessage[] = [];
 
   private outBatch: string[] | null = null;
   private errBatch: string[] | null = null;
@@ -82,7 +88,11 @@ export class GHCI extends EventEmitter {
               const outBatch = this.outBatch;
               this.outBatch = null;
 
-              let m = Buffer.from(message("/tidal/reply", outBatch.join("\n")));
+              let m: TerminalMessage = {
+                level: "log",
+                source: "Tidal",
+                text: outBatch.join("\n"),
+              };
 
               this.history.push(m);
               this.emit("message", m);
@@ -104,7 +114,11 @@ export class GHCI extends EventEmitter {
               const errBatch = this.errBatch;
               this.errBatch = null;
 
-              let m = Buffer.from(message("/tidal/error", errBatch.join("\n")));
+              let m: TerminalMessage = {
+                level: "error",
+                source: "Tidal",
+                text: errBatch.join("\n"),
+              };
 
               this.history.push(m);
               this.emit("message", m);

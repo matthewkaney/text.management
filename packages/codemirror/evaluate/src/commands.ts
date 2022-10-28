@@ -1,12 +1,13 @@
 import { EditorView, KeyBinding } from "@codemirror/view";
 
-import { evalEffect } from "./evaluate";
+import { commandEffect, evalEffect } from "./evaluate";
 
 export const evalKeymap: KeyBinding[] = [
   { key: "Shift-Enter", run: evalSelection },
   { key: "Mod-Enter", run: evalSelection },
   { key: "Shift-Enter", run: evalLine },
   { key: "Mod-Enter", run: evalBlock },
+  { key: "Mod-.", run: hush },
 ];
 
 export function evalSelection({ state, dispatch }: EditorView) {
@@ -42,5 +43,10 @@ export function evalBlock({ state, dispatch }: EditorView) {
   let { to } = doc.line(toL);
 
   dispatch({ effects: evalEffect.of({ from, to }) });
+  return true;
+}
+
+export function hush({ dispatch }: EditorView) {
+  dispatch({ effects: commandEffect.of({ method: "hush" }) });
   return true;
 }

@@ -1,6 +1,10 @@
 import { EditorState, StateEffect } from "@codemirror/state";
 
 export const evalEffect = StateEffect.define<{ from: number; to: number }>();
+export const commandEffect = StateEffect.define<{
+  method: string;
+  arg?: any;
+}>();
 
 export type evalHandler = (code: string) => void;
 

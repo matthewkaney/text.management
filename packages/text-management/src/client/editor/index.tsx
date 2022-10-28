@@ -1,12 +1,11 @@
-import { basicSetup, EditorView } from "codemirror";
 import { EditorState, RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
 import {
+  EditorView,
   Decoration,
   DecorationSet,
-  KeyBinding,
   keymap,
   ViewPlugin,
   ViewUpdate,
@@ -14,19 +13,12 @@ import {
 import { evaluation } from "@management/cm-evaluate";
 import { console } from "@management/cm-console";
 import { useCallback } from "react";
-import { listenForOSC, sendOSC } from "../osc";
-import { peerExtension } from "./peer";
+import { basicSetup } from "./basicSetup";
 import { oneDark } from "./theme";
-import { consoleMessageEffect } from "@management/cm-console/src";
 
-let tidalCommands: KeyBinding[] = [
-  {
-    key: "Mod-.",
-    run: () => {
-      return sendOSC("/tidal/code", "hush");
-    },
-  },
-];
+import { firebaseCollab } from "../firebase/databasePeer";
+import { get } from "firebase/database";
+import { session } from "../currentSession";
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -44,57 +36,25 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
-function sendCode(code: string) {
-  sendOSC("/tidal/code", code);
-}
-
-const consoleListener = ViewPlugin.define((view) => {
-  let unlistenReply = listenForOSC("/tidal/reply", ({ args: [text] }) => {
-    if (typeof text === "string") {
-      window.console.log(text);
-      view.dispatch({
-        effects: [
-          consoleMessageEffect.of({ level: "info", source: "Tidal", text }),
-        ],
-      });
-    }
-  });
-
-  let unlistenError = listenForOSC("/tidal/error", ({ args: [text] }) => {
-    if (typeof text === "string") {
-      view.dispatch({
-        effects: [
-          consoleMessageEffect.of({ level: "error", source: "Tidal", text }),
-        ],
-      });
-    }
-  });
-
-  return {
-    destroy() {
-      unlistenReply();
-      unlistenError();
-    },
-  };
-});
-
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      listenForOSC("/doc", ({ args: [version, doc] }) => {
-        if (typeof version === "number" && typeof doc === "string") {
+      session
+        .then((s) => get(s.ref))
+        .then((s) => {
+          let { initial } = s.val();
+
           new EditorView({
             state: EditorState.create({
-              doc,
+              doc: initial,
               extensions: [
-                keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(sendCode),
+                keymap.of([indentWithTab]),
+                evaluation(),
                 console(),
-                consoleListener,
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
-                peerExtension(version),
+                firebaseCollab(s.ref),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;
@@ -114,10 +74,7 @@ export function Editor() {
             }),
             parent: ref,
           });
-        }
-      });
-
-      sendOSC("/doc/get");
+        });
     }
   }, []);
 
