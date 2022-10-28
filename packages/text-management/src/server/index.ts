@@ -2,6 +2,7 @@
 
 import program from "./cli";
 
+/*
 import express from "express";
 import { join } from "path";
 
@@ -27,11 +28,12 @@ app.listen(1234, () => {
     }
   }
 });
+*/
 
 import { GHCI } from "./ghci";
 import { Document } from "./authority";
 
-const doc = new Document(program.args[0]);
+const doc = Document.create(program.args[0]);
 const ghci = new GHCI();
 
 import { startReplClient } from "./database";
@@ -40,5 +42,7 @@ if (program.opts().remote) {
   let id = program.opts().remote;
   id = typeof id === "string" ? id : undefined;
 
-  startReplClient(id, doc, ghci);
+  doc.then((d) => startReplClient(id, d, ghci));
+} else {
+  console.log("Please use the -r flag to connect to a remote session");
 }

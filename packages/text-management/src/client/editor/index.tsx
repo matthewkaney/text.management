@@ -19,6 +19,8 @@ import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
 import { firebaseCollab } from "../firebase/databasePeer";
+import { get } from "firebase/database";
+import { session } from "../currentSession";
 
 let tidalCommands: KeyBinding[] = [
   {
@@ -46,33 +48,13 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
-function sendCode(code: string) {
-  sendOSC("/tidal/code", code);
-}
-
-import { Session, getSession, createSession } from "../firebase/session";
-import { get } from "firebase/database";
-
-let sessionRef: Promise<Session>;
-let id = window.location.pathname.slice(1);
-
-if (id) {
-  sessionRef = getSession(id);
-} else {
-  sessionRef = createSession();
-
-  sessionRef.then(({ id }) => {
-    history.replaceState(null, "", id);
-  });
-}
-
 export function Editor() {
   const refCallback = useCallback((ref: HTMLElement | null) => {
     if (ref) {
-      sessionRef
-        .then((session) => get(session.ref))
-        .then((session) => {
-          let { initial } = session.val();
+      session
+        .then((s) => get(s.ref))
+        .then((s) => {
+          let { initial } = s.val();
 
           new EditorView({
             state: EditorState.create({
@@ -83,8 +65,7 @@ export function Editor() {
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
-                firebaseCollab(session.ref),
-                // peerExtension(version),
+                firebaseCollab(s.ref),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;

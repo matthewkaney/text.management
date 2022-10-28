@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "sessionIds": {
+      "$sessionId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "sessions": {
+      "$session": {
+        ".read": true,
+        ".write": "!data.exists()",
+        "versions": {
+          "$version": {
+            ".write": "!data.exists()"
+          }
+        },
+        "console": {
+          "$message": {
+            ".write": "!data.exists()"
+          }
+        }
+      }
+    }
+  }
+}

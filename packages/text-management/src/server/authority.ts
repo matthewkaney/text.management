@@ -3,47 +3,49 @@ import { ChangeSet, Text } from "@codemirror/state";
 import { readFile, writeFile } from "fs/promises";
 
 export class Document {
-  private path: string | undefined;
-  private doc: Promise<Text>;
-
-  private autosaveTime = 1000;
-
-  constructor(path?: string) {
-    this.path = path;
-    this.doc = this.loadDocument(path);
-  }
-
-  private async loadDocument(path?: string) {
+  public static async create(path?: string) {
     if (path) {
       try {
-        return Text.of(
-          (await readFile(path, { encoding: "utf-8" })).split("\n")
-        );
+        return new Document(await readFile(path, { encoding: "utf-8" }), path);
       } catch (err) {
         if (err.code === "ENOENT") {
-          return Text.of([""]);
+          return new Document("", path);
         } else {
           throw err;
         }
       }
     } else {
-      return Text.of([""]);
+      return new Document("");
     }
   }
 
+  private path: string | undefined;
+  private doc: Text;
+
+  private autosaveTime = 1000;
+
+  private constructor(docText: string, path?: string) {
+    this.path = path;
+    this.doc = Text.of(docText.split("\n"));
+  }
+
   get contents() {
-    return this.doc.then((doc) => doc.toString());
+    return this.doc.toString();
+  }
+
+  slice(from: number, to?: number) {
+    return this.doc.sliceString(from, to);
   }
 
   private autosaveTimer?: number | string | NodeJS.Timeout;
 
   replace(contents: string) {
-    this.doc = this.doc.then(() => Text.of(contents.split("\n")));
+    this.doc = Text.of(contents.split("\n"));
     this.save();
   }
 
   update(changes: ChangeSet) {
-    this.doc = this.doc.then((doc) => changes.apply(doc));
+    this.doc = changes.apply(this.doc);
 
     if (this.autosaveTimer) {
       clearTimeout(this.autosaveTimer);
@@ -64,7 +66,7 @@ export class Document {
       while (this.path && this.writeRequest) {
         this.writing = true;
         this.writeRequest = false;
-        await writeFile(this.path, (await this.doc).toString());
+        await writeFile(this.path, this.contents);
         this.writing = false;
       }
     };
