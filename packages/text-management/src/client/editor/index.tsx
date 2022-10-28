@@ -6,7 +6,6 @@ import {
   EditorView,
   Decoration,
   DecorationSet,
-  KeyBinding,
   keymap,
   ViewPlugin,
   ViewUpdate,
@@ -14,23 +13,11 @@ import {
 import { evaluation } from "@management/cm-evaluate";
 import { useCallback } from "react";
 import { basicSetup } from "./basicSetup";
-import { listenForOSC, sendOSC } from "../osc";
-import { peerExtension } from "./peer";
 import { oneDark } from "./theme";
 
 import { firebaseCollab } from "../firebase/databasePeer";
 import { get } from "firebase/database";
 import { session } from "../currentSession";
-
-let tidalCommands: KeyBinding[] = [
-  {
-    key: "Mod-.",
-    run: () => {
-      sendOSC("/tidal/code", "hush");
-      return true;
-    },
-  },
-];
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -60,7 +47,7 @@ export function Editor() {
             state: EditorState.create({
               doc: initial,
               extensions: [
-                keymap.of([indentWithTab, ...tidalCommands]),
+                keymap.of([indentWithTab]),
                 evaluation(),
                 basicSetup,
                 oneDark,

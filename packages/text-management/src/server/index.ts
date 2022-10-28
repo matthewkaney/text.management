@@ -2,7 +2,6 @@
 
 import program from "./cli";
 
-/*
 import express from "express";
 import { join } from "path";
 
@@ -28,7 +27,6 @@ app.listen(1234, () => {
     }
   }
 });
-*/
 
 import { GHCI } from "./ghci";
 import { Document } from "./authority";

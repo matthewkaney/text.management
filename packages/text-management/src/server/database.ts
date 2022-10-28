@@ -32,11 +32,20 @@ export async function startReplClient(
 
     if (evaluations) {
       for (let evaluation of evaluations as string[]) {
-        let [from, to] = JSON.parse(evaluation) as [number, number];
-        let code = document.slice(from, to);
-        console.log("Evaluate:");
-        console.log(code);
-        repl.send(code);
+        let instruction = JSON.parse(evaluation) as any[];
+        if (typeof instruction[0] === "number") {
+          let [from, to] = instruction as [number, number];
+          let code = document.slice(from, to);
+          console.log("Evaluate:");
+          console.log(code);
+          repl.send(code);
+        } else if (typeof instruction[0] === "string") {
+          let command = instruction[0];
+          if (command === "hush") {
+            console.log("Hush");
+            repl.send("hush");
+          }
+        }
       }
     }
   });

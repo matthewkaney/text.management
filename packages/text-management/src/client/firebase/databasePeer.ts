@@ -9,7 +9,7 @@ import {
   receiveUpdates,
   getClientID,
 } from "@codemirror/collab";
-import { evalEffect } from "@management/cm-evaluate";
+import { commandEffect, evalEffect } from "@management/cm-evaluate";
 
 export function firebaseCollab(session: DatabaseReference) {
   let plugin = ViewPlugin.fromClass(
@@ -25,7 +25,8 @@ export function firebaseCollab(session: DatabaseReference) {
 
           if (effects) {
             effects = (effects as string[])
-              .map((e) => JSON.parse(e) as [number, number])
+              .map((e) => JSON.parse(e) as any[])
+              .filter((args) => typeof args[0] === "number")
               .map(([from, to]) => evalEffect.of({ from, to }));
           }
 
@@ -48,12 +49,18 @@ export function firebaseCollab(session: DatabaseReference) {
         let [update] = sendableUpdates(this.view.state);
         let version = getSyncedVersion(this.view.state);
 
+        let evaluations = update.effects
+          ?.filter((e) => e.is(evalEffect) || e.is(commandEffect))
+          .map((e) =>
+            e.is(evalEffect)
+              ? JSON.stringify([e.value.from, e.value.to])
+              : JSON.stringify([e.value.method])
+          );
+
         set(child(this.session, `versions/${version}`), {
           clientID: getClientID(this.view.state),
           changes: JSON.stringify(update.changes.toJSON()),
-          eval: update.effects
-            ?.filter((e) => e.is(evalEffect))
-            .map(({ value: { from, to } }) => JSON.stringify([from, to])),
+          eval: evaluations,
         });
       }
     }
@@ -63,5 +70,5 @@ export function firebaseCollab(session: DatabaseReference) {
 }
 
 function evals(tr: Transaction) {
-  return tr.effects.filter((e) => e.is(evalEffect));
+  return tr.effects.filter((e) => e.is(evalEffect) || e.is(commandEffect));
 }
