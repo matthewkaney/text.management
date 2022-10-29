@@ -1,4 +1,9 @@
-import { EditorState, RangeSetBuilder } from "@codemirror/state";
+import {
+  ChangeSet,
+  EditorState,
+  RangeSetBuilder,
+  Text,
+} from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
@@ -41,18 +46,25 @@ export function Editor() {
       session
         .then((s) => get(s.ref))
         .then((s) => {
-          let { initial } = s.val();
+          let { initial, versions = [] } = s.val();
+
+          let doc = Text.of(initial.split("\n"));
+          let startVersion = 0;
+          for (let { changes } of versions) {
+            doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
+            startVersion += 1;
+          }
 
           new EditorView({
             state: EditorState.create({
-              doc: initial,
+              doc,
               extensions: [
                 keymap.of([indentWithTab]),
                 evaluation(),
                 basicSetup,
                 oneDark,
                 StreamLanguage.define(haskell),
-                firebaseCollab(s.ref),
+                firebaseCollab(s.ref, startVersion),
                 ViewPlugin.fromClass(
                   class {
                     decorations: DecorationSet;
