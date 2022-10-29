@@ -1,4 +1,11 @@
-import { child, DatabaseReference, onChildAdded, set } from "firebase/database";
+import {
+  child,
+  DatabaseReference,
+  DataSnapshot,
+  onChildAdded,
+  onChildChanged,
+  set,
+} from "firebase/database";
 
 import { ChangeSet, Transaction } from "@codemirror/state";
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
@@ -8,6 +15,7 @@ import {
   sendableUpdates,
   receiveUpdates,
   getClientID,
+  Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
 
@@ -19,8 +27,12 @@ export function firebaseCollab(session: DatabaseReference) {
       constructor(private view: EditorView) {
         this.view = view;
 
-        onChildAdded(child(this.session, "versions"), (version) => {
+        const onRemoteUpdate = (version: DataSnapshot) => {
           let { changes, clientID, eval: effects } = version.val();
+
+          // Ignore local updates
+          if (clientID === getClientID(this.view.state)) return;
+
           changes = ChangeSet.fromJSON(JSON.parse(changes));
 
           if (effects) {
@@ -30,23 +42,33 @@ export function firebaseCollab(session: DatabaseReference) {
               .map(([from, to]) => evalEffect.of({ from, to }));
           }
 
-          this.view.dispatch(
-            receiveUpdates(this.view.state, [{ changes, clientID, effects }])
-          );
-        });
+          if (version.key !== null) {
+            this.applyUpdate(parseInt(version.key), {
+              changes,
+              clientID,
+              effects,
+            });
+          }
+        };
+
+        onChildAdded(child(this.session, "versions"), onRemoteUpdate);
+        onChildChanged(child(this.session, "versions"), onRemoteUpdate);
       }
 
       update(update: ViewUpdate) {
         if (update.docChanged || sendableUpdates(this.view.state).length) {
-          queueMicrotask(() => this.push());
+          this.push();
         }
       }
 
-      push() {
-        if (!this.session) return;
-        if (!sendableUpdates(this.view.state).length) return;
+      private pushing = false;
 
-        let [update] = sendableUpdates(this.view.state);
+      private async push() {
+        let updates = sendableUpdates(this.view.state);
+        if (this.pushing || !updates.length) return;
+
+        this.pushing = true;
+        let update = updates[0];
         let version = getSyncedVersion(this.view.state);
 
         let evaluations = update.effects
@@ -57,11 +79,33 @@ export function firebaseCollab(session: DatabaseReference) {
               : JSON.stringify([e.value.method])
           );
 
-        set(child(this.session, `versions/${version}`), {
-          clientID: getClientID(this.view.state),
-          changes: JSON.stringify(update.changes.toJSON()),
-          eval: evaluations,
-        });
+        try {
+          await set(child(this.session, `versions/${version}`), {
+            clientID: getClientID(this.view.state),
+            changes: JSON.stringify(update.changes.toJSON()),
+            eval: evaluations,
+          });
+
+          this.pushing = false;
+          this.applyUpdate(version, update);
+        } catch (e) {
+          // TODO: Catch errors other than permission denied?
+          this.pushing = false;
+        }
+      }
+
+      private queuedUpdates: Map<number, Update> = new Map();
+
+      private applyUpdate(version: number, update: Update) {
+        this.queuedUpdates.set(version, update);
+
+        let next: Update | undefined;
+        let nextVersion = getSyncedVersion(this.view.state);
+
+        while ((next = this.queuedUpdates.get(nextVersion))) {
+          this.view.dispatch(receiveUpdates(this.view.state, [next]));
+          nextVersion = getSyncedVersion(this.view.state);
+        }
       }
     }
   );
