@@ -1,9 +1,4 @@
-import {
-  ChangeSet,
-  EditorState,
-  RangeSetBuilder,
-  Text,
-} from "@codemirror/state";
+import { RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
@@ -20,9 +15,9 @@ import { useCallback } from "react";
 import { basicSetup } from "./basicSetup";
 import { oneDark } from "./theme";
 
-import { firebaseCollab } from "../firebase/databasePeer";
 import { get } from "firebase/database";
 import { session } from "../currentSession";
+import { stateFromDatabase } from "../firebase/editorState";
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -41,49 +36,35 @@ function emptyLineDeco(view: EditorView) {
 }
 
 export function Editor() {
-  const refCallback = useCallback((ref: HTMLElement | null) => {
-    if (ref) {
+  const refCallback = useCallback((parent: HTMLElement | null) => {
+    if (parent) {
       session
         .then((s) => get(s.ref))
         .then((s) => {
-          let { initial, versions = [] } = s.val();
+          const state = stateFromDatabase(s, [
+            keymap.of([indentWithTab]),
+            evaluation(),
+            basicSetup,
+            oneDark,
+            StreamLanguage.define(haskell),
+            ViewPlugin.fromClass(
+              class {
+                decorations: DecorationSet;
+                constructor(view: EditorView) {
+                  this.decorations = emptyLineDeco(view);
+                }
+                update(update: ViewUpdate) {
+                  if (update.docChanged || update.viewportChanged)
+                    this.decorations = emptyLineDeco(update.view);
+                }
+              },
+              {
+                decorations: (v) => v.decorations,
+              }
+            ),
+          ]);
 
-          let doc = Text.of(initial.split("\n"));
-          let startVersion = 0;
-          for (let { changes } of versions) {
-            doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
-            startVersion += 1;
-          }
-
-          new EditorView({
-            state: EditorState.create({
-              doc,
-              extensions: [
-                keymap.of([indentWithTab]),
-                evaluation(),
-                basicSetup,
-                oneDark,
-                StreamLanguage.define(haskell),
-                firebaseCollab(s.ref, startVersion),
-                ViewPlugin.fromClass(
-                  class {
-                    decorations: DecorationSet;
-                    constructor(view: EditorView) {
-                      this.decorations = emptyLineDeco(view);
-                    }
-                    update(update: ViewUpdate) {
-                      if (update.docChanged || update.viewportChanged)
-                        this.decorations = emptyLineDeco(update.view);
-                    }
-                  },
-                  {
-                    decorations: (v) => v.decorations,
-                  }
-                ),
-              ],
-            }),
-            parent: ref,
-          });
+          new EditorView({ state, parent });
         });
     }
   }, []);
