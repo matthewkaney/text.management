@@ -1,9 +1,19 @@
-import { StateField, StateEffect } from "@codemirror/state";
+import { StateField, StateEffect, EditorState } from "@codemirror/state";
 
 export interface ConsoleMessage {
   level: "info" | "warn" | "error";
   source: string;
   text: string;
+}
+
+export function sendToConsole(state: EditorState, message: ConsoleMessage) {
+  let effects: StateEffect<unknown>[] = [consoleMessageEffect.of(message)];
+
+  if (!state.field(consoleState, false)) {
+    effects.push(StateEffect.appendConfig.of(consoleState));
+  }
+
+  return state.update({ effects });
 }
 
 export const consoleMessageEffect = StateEffect.define<ConsoleMessage>();

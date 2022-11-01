@@ -80,7 +80,10 @@ export const oneDarkTheme = EditorView.theme(
       color: "white",
       border: "none",
     },
-    ".cm-lineNumbers .cm-gutterElement": { color: "inherit" },
+    ".cm-lineNumbers .cm-gutterElement": {
+      color: "inherit",
+      padding: "0 0.5em",
+    },
 
     ".cm-foldPlaceholder": {
       backgroundColor: "transparent",
