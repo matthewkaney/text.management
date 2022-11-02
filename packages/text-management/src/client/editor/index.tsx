@@ -1,30 +1,23 @@
-import { basicSetup, EditorView } from "codemirror";
-import { EditorState, RangeSetBuilder } from "@codemirror/state";
+import { RangeSetBuilder } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
 import {
+  EditorView,
   Decoration,
   DecorationSet,
-  KeyBinding,
   keymap,
   ViewPlugin,
   ViewUpdate,
 } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { useCallback } from "react";
-import { listenForOSC, sendOSC } from "../osc";
-import { peerExtension } from "./peer";
+import { basicSetup } from "./basicSetup";
 import { oneDark } from "./theme";
 
-let tidalCommands: KeyBinding[] = [
-  {
-    key: "Mod-.",
-    run: () => {
-      return sendOSC("/tidal/code", "hush");
-    },
-  },
-];
+import { get } from "firebase/database";
+import { session } from "../currentSession";
+import { stateFromDatabase } from "../firebase/editorState";
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -42,48 +35,37 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
-function sendCode(code: string) {
-  sendOSC("/tidal/code", code);
-}
-
 export function Editor() {
-  const refCallback = useCallback((ref: HTMLElement | null) => {
-    if (ref) {
-      listenForOSC("/doc", ({ args: [version, doc] }) => {
-        if (typeof version === "number" && typeof doc === "string") {
-          new EditorView({
-            state: EditorState.create({
-              doc,
-              extensions: [
-                keymap.of([indentWithTab, ...tidalCommands]),
-                evaluation(sendCode),
-                basicSetup,
-                oneDark,
-                StreamLanguage.define(haskell),
-                peerExtension(version),
-                ViewPlugin.fromClass(
-                  class {
-                    decorations: DecorationSet;
-                    constructor(view: EditorView) {
-                      this.decorations = emptyLineDeco(view);
-                    }
-                    update(update: ViewUpdate) {
-                      if (update.docChanged || update.viewportChanged)
-                        this.decorations = emptyLineDeco(update.view);
-                    }
-                  },
-                  {
-                    decorations: (v) => v.decorations,
-                  }
-                ),
-              ],
-            }),
-            parent: ref,
-          });
-        }
-      });
+  const refCallback = useCallback((parent: HTMLElement | null) => {
+    if (parent) {
+      session
+        .then((s) => get(s.ref))
+        .then((s) => {
+          const state = stateFromDatabase(s, [
+            keymap.of([indentWithTab]),
+            evaluation(),
+            basicSetup,
+            oneDark,
+            StreamLanguage.define(haskell),
+            ViewPlugin.fromClass(
+              class {
+                decorations: DecorationSet;
+                constructor(view: EditorView) {
+                  this.decorations = emptyLineDeco(view);
+                }
+                update(update: ViewUpdate) {
+                  if (update.docChanged || update.viewportChanged)
+                    this.decorations = emptyLineDeco(update.view);
+                }
+              },
+              {
+                decorations: (v) => v.decorations,
+              }
+            ),
+          ]);
 
-      sendOSC("/doc/get");
+          new EditorView({ state, parent });
+        });
     }
   }, []);
 

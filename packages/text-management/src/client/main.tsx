@@ -1,51 +1,30 @@
 import { useState, useEffect } from "react";
 import { render } from "react-dom";
 
-import { listenForOSC } from "./osc";
-import { playMIDI } from "./midi";
-
 import { Editor } from "./editor";
 import { Terminal, TerminalMessage } from "./Terminal";
+
+import { child, onChildAdded } from "firebase/database";
+import { session } from "./currentSession";
 
 function App() {
   const [feed, setFeed] = useState<TerminalMessage[]>([]);
 
   useEffect(() => {
-    return listenForOSC("/tidal/reply", ({ args: [text], time }) => {
-      if (typeof text === "string") {
-        setFeed((f) => [...f, { level: "log", source: "tidal", text, time }]);
-      }
+    let cancelled = false;
+    let noListener = () => {};
+
+    session.then((s) => {
+      onChildAdded(child(s.ref, "console"), (child) => {
+        setFeed((f) => [...f, child.val() as TerminalMessage]);
+      });
     });
+
+    return () => {
+      cancelled = true;
+      noListener();
+    };
   }, []);
-
-  useEffect(() => {
-    return listenForOSC("/tidal/error", ({ args: [text], time }) => {
-      if (typeof text === "string") {
-        setFeed((f) => [...f, { level: "error", source: "tidal", text, time }]);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    return listenForOSC("/midi/play", playMIDI);
-  }, []);
-
-  const [lastDeleted, setLastDeleted] = useState(0);
-
-  useEffect(() => {
-    if (feed.length > 0) {
-      let { time } = feed[0];
-      let deletionTime = Math.max(lastDeleted + 500, time + 8000);
-      let timer = setTimeout(() => {
-        setLastDeleted(deletionTime);
-        setFeed((f) => f.slice(1));
-      }, deletionTime - performance.now());
-
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [feed, lastDeleted]);
 
   return (
     <>
