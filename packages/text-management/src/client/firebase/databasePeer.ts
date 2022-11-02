@@ -4,7 +4,9 @@ import {
   DataSnapshot,
   onChildAdded,
   onChildChanged,
+  query,
   set,
+  startAt,
 } from "firebase/database";
 
 import { ChangeSet, Transaction } from "@codemirror/state";
@@ -18,9 +20,11 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { sendToConsole } from "@management/cm-console";
 
-export function firebaseCollab(session: DatabaseReference) {
+export function firebaseCollab(
+  session: DatabaseReference,
+  startVersion: number
+) {
   let plugin = ViewPlugin.fromClass(
     class {
       session = session;
@@ -52,13 +56,12 @@ export function firebaseCollab(session: DatabaseReference) {
           }
         };
 
-        onChildAdded(child(this.session, "console"), (message) => {
-          console.log(message.val().text);
-          this.view.dispatch(sendToConsole(this.view.state, message.val()));
-        });
-
-        onChildAdded(child(this.session, "versions"), onRemoteUpdate);
-        onChildChanged(child(this.session, "versions"), onRemoteUpdate);
+        let versionQuery = query(
+          child(this.session, "versions"),
+          startAt(undefined, startVersion.toString())
+        );
+        onChildAdded(versionQuery, onRemoteUpdate);
+        onChildChanged(versionQuery, onRemoteUpdate);
       }
 
       update(update: ViewUpdate) {
@@ -116,7 +119,7 @@ export function firebaseCollab(session: DatabaseReference) {
     }
   );
 
-  return [collab({ sharedEffects: evals }), plugin];
+  return [collab({ startVersion, sharedEffects: evals }), plugin];
 }
 
 function evals(tr: Transaction) {
