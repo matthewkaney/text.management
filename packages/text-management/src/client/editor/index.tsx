@@ -11,14 +11,12 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
-import { console } from "@management/cm-console";
-import { useCallback } from "react";
 import { basicSetup } from "./basicSetup";
 import { oneDark } from "./theme";
 
 import { get } from "firebase/database";
-import { session } from "../currentSession";
 import { stateFromDatabase } from "../firebase/editorState";
+import { Session } from "../firebase/session";
 
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
@@ -36,39 +34,35 @@ function emptyLineDeco(view: EditorView) {
   return builder.finish();
 }
 
-export function Editor() {
-  const refCallback = useCallback((parent: HTMLElement | null) => {
-    if (parent) {
-      session
-        .then((s) => get(s.ref))
-        .then((s) => {
-          const state = stateFromDatabase(s, [
-            keymap.of([indentWithTab]),
-            evaluation(),
-            basicSetup,
-            oneDark,
-            StreamLanguage.define(haskell),
-            ViewPlugin.fromClass(
-              class {
-                decorations: DecorationSet;
-                constructor(view: EditorView) {
-                  this.decorations = emptyLineDeco(view);
-                }
-                update(update: ViewUpdate) {
-                  if (update.docChanged || update.viewportChanged)
-                    this.decorations = emptyLineDeco(update.view);
-                }
-              },
-              {
-                decorations: (v) => v.decorations,
+export class Editor {
+  constructor(session: Promise<Session>, parent: HTMLElement) {
+    session
+      .then((s) => get(s.ref))
+      .then((s) => {
+        const state = stateFromDatabase(s, [
+          keymap.of([indentWithTab]),
+          evaluation(),
+          basicSetup,
+          oneDark,
+          StreamLanguage.define(haskell),
+          ViewPlugin.fromClass(
+            class {
+              decorations: DecorationSet;
+              constructor(view: EditorView) {
+                this.decorations = emptyLineDeco(view);
               }
-            ),
-          ]);
+              update(update: ViewUpdate) {
+                if (update.docChanged || update.viewportChanged)
+                  this.decorations = emptyLineDeco(update.view);
+              }
+            },
+            {
+              decorations: (v) => v.decorations,
+            }
+          ),
+        ]);
 
-          new EditorView({ state, parent });
-        });
-    }
-  }, []);
-
-  return <section id="editor" ref={refCallback}></section>;
+        new EditorView({ state, parent });
+      });
+  }
 }
