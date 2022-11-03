@@ -1,5 +1,6 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
 import { DataSnapshot } from "firebase/database";
+import { firebaseCursors } from "./databaseCursors";
 import { firebaseCollab } from "./databasePeer";
 
 export function stateFromDatabase(
@@ -21,6 +22,6 @@ export function stateFromDatabase(
 
   return EditorState.create({
     doc,
-    extensions: [extensions, dbExtensions],
+    extensions: [extensions, dbExtensions, firebaseCursors(dataSnapshot)],
   });
 }
