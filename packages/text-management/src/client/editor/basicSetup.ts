@@ -16,8 +16,8 @@ import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 export const basicSetup = [
   lineNumbers(),
   drawSelection(),
-  highlightActiveLine(),
-  highlightActiveLineGutter(),
+  // highlightActiveLine(),
+  // highlightActiveLineGutter(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   bracketMatching(),
   closeBrackets(),
