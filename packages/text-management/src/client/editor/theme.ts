@@ -45,10 +45,6 @@ export const oneDarkTheme = EditorView.theme(
       backgroundColor: selection,
     },
 
-    ".cm-panels": { backgroundColor: darkBackground, color: ivory },
-    ".cm-panels.cm-panels-top": { borderBottom: "2px solid black" },
-    ".cm-panels.cm-panels-bottom": { borderTop: "2px solid black" },
-
     ".cm-line": {
       backgroundColor: haze,
       width: "fit-content",
@@ -100,6 +96,21 @@ export const oneDarkTheme = EditorView.theme(
         backgroundColor: highlightBackground,
         color: ivory,
       },
+    },
+
+    ".cm-panels": {
+      backgroundColor: "none",
+    },
+    ".cm-panels.cm-panels-bottom": {
+      marginTop: "1em",
+    },
+
+    ".cm-console": {
+      maxHeight: "14em",
+      overflowY: "scroll",
+    },
+    ".cm-console-message": {
+      backgroundColor: haze,
     },
   },
   { dark: true }

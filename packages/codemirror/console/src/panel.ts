@@ -32,4 +32,6 @@ function messageConstructor(message: ConsoleMessage) {
   return messageNode;
 }
 
-export const consolePanel = showPanel.of(consolePanelConstructor);
+export const consolePanel = showPanel.from(consoleState, (messages) =>
+  messages.length ? consolePanelConstructor : null
+);
