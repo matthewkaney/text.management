@@ -99,7 +99,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-panels": {
-      backgroundColor: "none",
+      backgroundColor: "transparent",
     },
     ".cm-panels.cm-panels-bottom": {
       marginTop: "1em",
@@ -110,8 +110,33 @@ export const oneDarkTheme = EditorView.theme(
       overflowY: "scroll",
     },
     ".cm-console-message": {
+      padding: "calc(0.5em - 2px) 0.5ch",
+      margin: "2px 0",
+      display: "flex",
+      flexDirection: "row-reverse",
+    },
+    ".cm-console-message-source": {
+      marginLeft: "1ch",
+    },
+    ".cm-console-message-content": {
+      flex: 1,
+    },
+
+    ".cm-console-message-info": {
       backgroundColor: haze,
     },
+    ".cm-console-message-info .cm-console-message-source": {
+      color: stone,
+    },
+
+    ".cm-console-message-warn, .cm-console-message-error": {
+      backgroundImage:
+        "repeating-linear-gradient(135deg, #6c000050 0px 10px, #a6020250 10px 20px)",
+    },
+    ".cm-console-message-warn .cm-console-message-source, .cm-console-message-error .cm-console-message-source":
+      {
+        color: coral,
+      },
   },
   { dark: true }
 );
