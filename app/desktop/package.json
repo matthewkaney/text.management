@@ -2,21 +2,31 @@
   "name": "desktop",
   "version": "1.0.0",
   "description": "",
-  "renderer": "dist/index.html",
-  "app": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "GPL-3.0-or-later",
+  "alias": {
+    "process": {
+      "renderer": "process/browser.js"
+    }
+  },
   "targets": {
     "renderer": {
       "source": "src/index.html",
-      "context": "electron-renderer"
+      "distDir": "dist",
+      "context": "browser",
+      "publicUrl": "./",
+      "includeNodeModules": true
     },
     "app": {
-      "source": "src/main.ts",
-      "context": "node"
+      "source": [
+        "src/main.ts",
+        "src/preload.js"
+      ],
+      "distDir": "dist",
+      "context": "electron-main"
     }
   },
   "devDependencies": {

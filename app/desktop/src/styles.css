@@ -1,0 +1,71 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex: 1;
+  background-color: #333;
+  margin: 0;
+}
+
+#editor,
+#terminal {
+  flex: 1;
+}
+
+#editor {
+  width: 800px;
+}
+
+#terminal {
+  font-size: 18px;
+  font-size: 18px;
+  font-family: monospace;
+  line-height: 1.4;
+  color: #fff;
+  max-width: 300px;
+  padding: 1em 2ch 1em 0;
+  box-sizing: border-box;
+  height: 100%;
+  word-break: break-word;
+}
+
+#terminal-contents {
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+#terminal-contents .item {
+  margin-top: 1.4em;
+  position: relative;
+  padding: 0 0.5ch;
+  background-size: 100% calc(100% + 12.5px);
+  background-position: 0 -12.5px;
+}
+
+#terminal-contents .item .source {
+  font-size: 9px;
+  position: absolute;
+  top: -12.5px;
+  left: 0;
+  padding: 0 1ch;
+  background-position: 0 12.5px;
+}
+
+#terminal-contents .item.log,
+#terminal-contents .item.log .source {
+  background-color: #00000050;
+}
+
+#terminal-contents .item.error,
+#terminal-contents .item.error .source {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #6c000050 0px,
+    #6c000050 10px,
+    #a6020250 10px 20px
+  );
+}

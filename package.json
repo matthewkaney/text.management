@@ -11,7 +11,9 @@
   "scripts": {
     "build-packages": "parcel build packages/codemirror/* --no-cache",
     "prepare": "npm run build-packages && parcel build packages/text-management",
-    "start": "node packages/text-management/dist/server/index.js"
+    "start": "node packages/text-management/dist/server/index.js",
+    "build:desktop": "parcel build app/desktop/ --target app --target renderer",
+    "start:desktop": "electron app/desktop/dist/main.js"
   },
   "repository": {
     "type": "git",
