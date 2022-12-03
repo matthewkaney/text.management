@@ -1,12 +1,12 @@
-const path = require("path");
-const { app, BrowserWindow } = require("electron");
+import { app, BrowserWindow } from "electron";
+import { fileURLToPath } from "url";
 
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: fileURLToPath(new URL("preload.ts", import.meta.url)),
     },
   });
 

@@ -7,11 +7,6 @@
   },
   "author": "",
   "license": "GPL-3.0-or-later",
-  "alias": {
-    "process": {
-      "renderer": "process/browser.js"
-    }
-  },
   "targets": {
     "renderer": {
       "source": "src/index.html",
@@ -21,10 +16,7 @@
       "includeNodeModules": true
     },
     "app": {
-      "source": [
-        "src/main.ts",
-        "src/preload.js"
-      ],
+      "source": "src/main.ts",
       "distDir": "dist",
       "context": "electron-main"
     }
