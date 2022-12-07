@@ -9,7 +9,7 @@ import { createReadStream } from "fs";
 import { message } from "../osc/osc";
 
 export interface TerminalMessage {
-  level: "log" | "error";
+  level: "info" | "error";
   source: string;
   text: string;
 }
@@ -89,7 +89,7 @@ export class GHCI extends EventEmitter {
               this.outBatch = null;
 
               let m: TerminalMessage = {
-                level: "log",
+                level: "info",
                 source: "Tidal",
                 text: outBatch.join("\n"),
               };

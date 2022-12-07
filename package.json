@@ -33,10 +33,7 @@
     "@codemirror/legacy-modes": "^6.0.0",
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
-    "@lezer/highlight": "^1.0.0",
-    "clsx": "^1.1.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@lezer/highlight": "^1.0.0"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.0",
