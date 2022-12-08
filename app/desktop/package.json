@@ -9,10 +9,10 @@
   "license": "GPL-3.0-or-later",
   "targets": {
     "renderer": {
-      "source": "src/index.html",
+      "source": "src/renderer/index.html",
       "distDir": "dist",
       "context": "browser",
-      "publicUrl": "./",
+      "publicUrl": "./..",
       "includeNodeModules": true
     },
     "app": {
