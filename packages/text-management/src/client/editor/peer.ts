@@ -1,88 +1,101 @@
+import { StateEffect, Transaction, ChangeSet } from "@codemirror/state";
+import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
 import {
-  Update,
-  receiveUpdates,
-  sendableUpdates,
   collab,
   getSyncedVersion,
+  sendableUpdates,
+  receiveUpdates,
+  getClientID,
+  Update,
 } from "@codemirror/collab";
-import { ChangeSet } from "@codemirror/state";
-import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { sendOSCWithResponse } from "../osc";
+import { commandEffect, evalEffect } from "@management/cm-evaluate";
+import { TextManagementAPI } from "../../api";
 
-async function pushUpdates(
-  version: number,
-  fullUpdates: readonly Update[]
-): Promise<boolean> {
-  // Strip off transaction data
-  let updates = fullUpdates.map((u) =>
-    JSON.stringify({
-      clientID: u.clientID,
-      changes: u.changes,
-    })
-  );
-  let msg = await sendOSCWithResponse(
-    ["/doc/push", version, ...updates],
-    "/doc/push/done"
-  );
-
-  if (typeof msg.args[0] === "boolean") {
-    return msg.args[0];
-  } else {
-    return false;
-  }
-}
-
-async function pullUpdates(version: number): Promise<readonly Update[]> {
-  let { args } = await sendOSCWithResponse(
-    ["/doc/pull", version],
-    "/doc/pull/done"
-  );
-
-  return (args as string[]).map((arg) => {
-    let u = JSON.parse(arg);
-    return { changes: ChangeSet.fromJSON(u.changes), clientID: u.clientID };
-  });
-}
-
-export function peerExtension(startVersion: number) {
+export function peer(api: TextManagementAPI, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
-      private pushing = false;
-      private done = false;
-
       constructor(private view: EditorView) {
-        this.pull();
+        this.view = view;
+
+        api.onUpdate(startVersion, (update) => {
+          let { version, clientID, changes, evaluations } = update;
+
+          changes = ChangeSet.fromJSON(changes);
+
+          // Ignore local updates
+          if (clientID === getClientID(this.view.state)) return;
+
+          let effects: StateEffect<any>[] = [];
+
+          if (evaluations) {
+            effects = (evaluations as any[])
+              .filter((args) => typeof args[0] === "number")
+              .map(([from, to]) => evalEffect.of({ from, to }));
+          }
+
+          this.applyUpdate(version, {
+            changes,
+            clientID,
+            effects,
+          });
+        });
       }
 
       update(update: ViewUpdate) {
-        if (update.docChanged) this.push();
-      }
-
-      async push() {
-        let updates = sendableUpdates(this.view.state);
-        if (this.pushing || !updates.length) return;
-        this.pushing = true;
-        let version = getSyncedVersion(this.view.state);
-        await pushUpdates(version, updates);
-        this.pushing = false;
-        // Regardless of whether the push failed or new updates came in
-        // while it was running, try again if there's updates remaining
-        if (sendableUpdates(this.view.state).length)
-          setTimeout(() => this.push(), 100);
-      }
-
-      async pull() {
-        while (!this.done) {
-          let version = getSyncedVersion(this.view.state);
-          let updates = await pullUpdates(version);
-          this.view.dispatch(receiveUpdates(this.view.state, updates));
+        if (update.docChanged || sendableUpdates(this.view.state).length) {
+          this.push();
         }
       }
 
-      destroy() {
-        this.done = true;
+      private pushing = false;
+
+      private async push() {
+        let updates = sendableUpdates(this.view.state);
+        if (this.pushing || !updates.length) return;
+
+        this.pushing = true;
+        let version = getSyncedVersion(this.view.state);
+        let update = updates[0];
+        let { changes, clientID, effects } = update;
+
+        let evaluations: ([number, number] | [string])[] | undefined = effects
+          ?.filter((e) => e.is(evalEffect) || e.is(commandEffect))
+          .map((e) =>
+            e.is(evalEffect) ? [e.value.from, e.value.to] : [e.value.method]
+          );
+
+        let success = await api.pushUpdate({
+          version,
+          changes: changes.toJSON(),
+          clientID,
+          evaluations,
+        });
+
+        this.pushing = false;
+        if (success) {
+          this.applyUpdate(version, update);
+        }
+      }
+
+      private queuedUpdates: Map<number, Update> = new Map();
+
+      private applyUpdate(version: number, update: Update) {
+        this.queuedUpdates.set(version, update);
+
+        let next: Update | undefined;
+        let nextVersion = getSyncedVersion(this.view.state);
+
+        while ((next = this.queuedUpdates.get(nextVersion))) {
+          this.view.dispatch(receiveUpdates(this.view.state, [next]));
+          nextVersion = getSyncedVersion(this.view.state);
+        }
       }
     }
   );
-  return [collab({ startVersion }), plugin];
+
+  return [collab({ startVersion, sharedEffects: evals }), plugin];
+}
+
+function evals(tr: Transaction) {
+  return tr.effects.filter((e) => e.is(evalEffect) || e.is(commandEffect));
 }

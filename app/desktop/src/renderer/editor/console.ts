@@ -6,11 +6,15 @@ import {
   console,
 } from "@management/cm-console";
 
-export function electronConsole() {
+import { TextManagementAPI } from "../../../../../packages/text-management/src/api";
+
+export function electronConsole(api: TextManagementAPI) {
   let initialConsole: ConsoleMessage[] = [];
 
   const consoleListener = ViewPlugin.define((view) => {
-    const unlisten = window.api.listenForConsole((message) => {
+    window.console.log(api);
+    window.console.log(typeof api.listenForConsole);
+    const unlisten = api.listenForConsole((message) => {
       view.dispatch(sendToConsole(view.state, message));
     });
 

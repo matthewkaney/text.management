@@ -120,6 +120,7 @@ export const oneDarkTheme = EditorView.theme(
     },
     ".cm-console-message-content": {
       flex: 1,
+      overflowWrap: "anywhere",
     },
 
     ".cm-console-message-info": {

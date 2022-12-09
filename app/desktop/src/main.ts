@@ -1,7 +1,14 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "url";
 
 import { GHCI } from "../../../packages/text-management/src/server/ghci";
+import { Authority } from "./authority";
+
+interface Engine {
+  process: GHCI;
+  authority: Authority;
+}
+const engineMap = new Map<number, Engine>();
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -14,7 +21,13 @@ const createWindow = () => {
 
   win.loadFile("./renderer/index.html");
 
+  let authority = new Authority();
+
   let tidal = new GHCI();
+
+  authority.on("code", (code) => {
+    tidal.send(code);
+  });
 
   tidal.on("message", (m) => {
     win.webContents.send("console-message", m);
@@ -23,6 +36,8 @@ const createWindow = () => {
   win.on("closed", () => {
     tidal.close();
   });
+
+  engineMap.set(win.webContents.id, { process: tidal, authority });
 };
 
 app.whenReady().then(() => {
@@ -31,4 +46,14 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+ipcMain.handle("push-update", (event, update) => {
+  let engine = engineMap.get(event.sender.id);
+
+  if (engine) {
+    return engine.authority.pushUpdate(update);
+  } else {
+    return false;
+  }
 });

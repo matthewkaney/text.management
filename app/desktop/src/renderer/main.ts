@@ -6,22 +6,27 @@ import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "../../../../packages/text-management/src/client/editor/basicSetup";
 import { oneDark } from "../../../../packages/text-management/src/client/editor/theme";
 import { decorateEmptyLines } from "../../../../packages/text-management/src/client/editor/emptyLines";
+import { peer } from "../../../../packages/text-management/src/client/editor/peer";
 
-import { Session } from "../../../../packages/text-management/src/client/firebase/session";
-
-import { session } from "../../../../packages/text-management/src/client/currentSession";
 import { EditorState, Text } from "@codemirror/state";
 
 import { electronConsole } from "./editor/console";
 
+import { TextManagementAPI } from "../../../../packages/text-management/src/api";
+
+const { api } = window as Window &
+  typeof globalThis & { api: TextManagementAPI };
+
+console.log(api);
+
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
-  new Editor(session, parent);
+  new Editor(parent);
 });
 
 export class Editor {
-  constructor(session: Promise<Session>, parent: HTMLElement) {
+  constructor(parent: HTMLElement) {
     return new EditorView({
       state: EditorState.create({
         doc: Text.of([""]),
@@ -31,7 +36,8 @@ export class Editor {
           basicSetup,
           oneDark,
           StreamLanguage.define(haskell),
-          electronConsole(),
+          electronConsole(api),
+          peer(api, 0),
         ],
       }),
       parent,

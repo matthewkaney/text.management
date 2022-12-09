@@ -7,24 +7,21 @@ import { basicSetup } from "./basicSetup";
 import { oneDark } from "./theme";
 import { decorateEmptyLines } from "./emptyLines";
 
-import { get } from "firebase/database";
 import { stateFromDatabase } from "../firebase/editorState";
 import { Session } from "../firebase/session";
 
-export class Editor {
-  constructor(session: Promise<Session>, parent: HTMLElement) {
-    session
-      .then((s) => get(s.ref))
-      .then((s) => {
-        const state = stateFromDatabase(s, [
-          keymap.of([indentWithTab]),
-          evaluation(),
-          basicSetup,
-          oneDark,
-          StreamLanguage.define(haskell),
-        ]);
+export async function createEditor(
+  session: Promise<Session>,
+  parent: HTMLElement
+) {
+  let { ref } = await session;
+  let state = await stateFromDatabase(ref, [
+    keymap.of([indentWithTab]),
+    evaluation(),
+    basicSetup,
+    oneDark,
+    StreamLanguage.define(haskell),
+  ]);
 
-        new EditorView({ state, parent });
-      });
-  }
+  new EditorView({ state, parent });
 }

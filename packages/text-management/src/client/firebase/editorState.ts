@@ -1,13 +1,15 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
-import { DataSnapshot } from "firebase/database";
-import { firebaseCollab } from "./databasePeer";
+import { get, DatabaseReference } from "firebase/database";
+import { peer } from "../editor/peer";
+import { getAPI } from "./api";
 
 import { firebaseConsole } from "./console";
 
-export function stateFromDatabase(
-  dataSnapshot: DataSnapshot,
+export async function stateFromDatabase(
+  reference: DatabaseReference,
   extensions: Extension[] = []
 ) {
+  let dataSnapshot = await get(reference);
   let data = dataSnapshot.val();
   let dbExtensions: Extension[] = [];
 
@@ -19,7 +21,7 @@ export function stateFromDatabase(
     doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
     startVersion += 1;
   }
-  dbExtensions.push(firebaseCollab(dataSnapshot.ref, startVersion));
+  dbExtensions.push(peer(getAPI(reference), startVersion));
 
   return EditorState.create({
     doc,

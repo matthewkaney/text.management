@@ -18,7 +18,8 @@
     "app": {
       "source": "src/main.ts",
       "distDir": "dist",
-      "context": "electron-main"
+      "context": "electron-main",
+      "includeNodeModules": true
     }
   },
   "devDependencies": {
