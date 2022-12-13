@@ -1,5 +1,5 @@
 {
-  "name": "@management/engine-tidal",
+  "name": "@management/lang-tidal",
   "version": "1.0.0",
   "description": "",
   "main": "dist/ghci.js",
@@ -12,5 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Matthew Kaney",
-  "license": "GPL-3.0-or-later"
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@codemirror/legacy-modes": "^6.0.0"
+  }
 }

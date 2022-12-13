@@ -28,7 +28,7 @@ app.listen(1234, () => {
   }
 });
 
-import { GHCI } from "./ghci";
+import { GHCI } from "../../../languages/tidal/ghci";
 import { Document } from "./authority";
 
 const doc = Document.create(program.args[0]);

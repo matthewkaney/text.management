@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "url";
 
-import { GHCI } from "../../../packages/text-management/src/server/ghci";
+import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
 
 interface Engine {

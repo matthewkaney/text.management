@@ -1,5 +1,5 @@
 import { KeyBinding, keymap } from "@codemirror/view";
-import { StreamLanguage } from "@codemirror/stream-parser";
+import { StreamLanguage } from "@codemirror/language";
 import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 
 let tidalCommands: KeyBinding[] = [

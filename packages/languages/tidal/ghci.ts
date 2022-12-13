@@ -5,9 +5,9 @@ import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
 
+import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { message } from "../../../app/osc/osc";
 interface GHCIOptions {
   defaultBoot: boolean;
   customBootfiles: string[];
@@ -22,7 +22,7 @@ export class GHCI extends Engine {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
-  private history: Buffer[] = [];
+  private history: TerminalMessage[] = [];
 
   private outBatch: string[] | null = null;
   private errBatch: string[] | null = null;
@@ -103,7 +103,11 @@ export class GHCI extends Engine {
               const outBatch = this.outBatch;
               this.outBatch = null;
 
-              let m = Buffer.from(message("/tidal/reply", outBatch.join("\n")));
+              let m: TerminalMessage = {
+                level: "info",
+                source: "Tidal",
+                text: outBatch.join("\n"),
+              };
 
               this.history.push(m);
               this.emit("message", m);
@@ -125,7 +129,11 @@ export class GHCI extends Engine {
               const errBatch = this.errBatch;
               this.errBatch = null;
 
-              let m = Buffer.from(message("/tidal/error", errBatch.join("\n")));
+              let m: TerminalMessage = {
+                level: "error",
+                source: "Tidal",
+                text: errBatch.join("\n"),
+              };
 
               this.history.push(m);
               this.emit("message", m);
@@ -142,10 +150,11 @@ export class GHCI extends Engine {
     return child;
   }
 
-  private defaultBootfile() {
-    return promisify(exec)(
+  private async defaultBootfile() {
+    const { stdout } = await promisify(exec)(
       "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
-    ).then(({ stdout }) => join(stdout, "BootTidal.hs"));
+    );
+    return join(stdout, "BootTidal.hs");
   }
 
   async send(text: string) {

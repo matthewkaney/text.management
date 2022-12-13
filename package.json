@@ -4,6 +4,7 @@
   "workspaces": [
     "app/*",
     "packages/codemirror/*",
+    "packages/languages/*",
     "packages/text-management"
   ],
   "alias": {
@@ -13,7 +14,7 @@
   "description": "Experimental livecode editor",
   "scripts": {
     "build-packages": "parcel build packages/codemirror/* --no-cache",
-    "prepare": "npm run build-packages && parcel build packages/text-management",
+    "prepare-old": "npm run build-packages && parcel build packages/text-management",
     "start:old": "node packages/text-management/dist/server/index.js",
     "build:desktop": "parcel build app/desktop/ --target app --target renderer",
     "start:desktop": "electron app/desktop/dist/main.js",
@@ -34,7 +35,6 @@
     "@codemirror/commands": "^6.0.0",
     "@codemirror/lang-javascript": "^6.0.0",
     "@codemirror/language": "^6.0.0",
-    "@codemirror/legacy-modes": "^6.0.0",
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
     "@lezer/highlight": "^1.0.0"

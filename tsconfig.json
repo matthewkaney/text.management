@@ -8,7 +8,8 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./",
     "paths": {
-      "@core/*": ["packages/text-management/src/*"]
+      "@core/*": ["packages/text-management/src/*"],
+      "@management/lang-tidal": ["packages/languages/tidal/ghci.ts"]
     }
   }
 }

@@ -4,7 +4,7 @@ import { ChangeSet } from "@codemirror/state";
 import { createSession, getSession, Session } from "../client/firebase/session";
 
 import { Document } from "./authority";
-import { GHCI } from "./ghci";
+import { GHCI } from "../../../languages/tidal/ghci";
 
 export async function startReplClient(
   id: string | undefined,

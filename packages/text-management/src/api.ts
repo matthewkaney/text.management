@@ -1,10 +1,14 @@
-import { TerminalMessage } from "./server/ghci";
-
 export interface DocUpdate {
   version: number;
   clientID: string;
   changes: any;
   evaluations?: ([number, number] | [string])[];
+}
+
+export interface TerminalMessage {
+  level: "info" | "error";
+  source: string;
+  text: string;
 }
 
 export interface TextManagementAPI {
