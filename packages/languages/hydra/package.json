@@ -1,0 +1,25 @@
+{
+  "name": "@management/engine-hydra",
+  "version": "1.0.0",
+  "description": "",
+  "browser": "dist/editor.js",
+  "viewer": "dist/index.html",
+  "targets": {
+    "browser": {
+      "source": "./editor.ts"
+    },
+    "viewer": {
+      "context": "browser",
+      "source": "./viewer.html"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Kaney",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.0.0",
+    "hydra-synth": "^1.3.18"
+  }
+}
