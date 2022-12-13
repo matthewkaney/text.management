@@ -8,6 +8,7 @@ interface Engine {
   process: GHCI;
   authority: Authority;
 }
+
 const engineMap = new Map<number, Engine>();
 
 const createWindow = () => {

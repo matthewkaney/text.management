@@ -3,17 +3,15 @@ import {
   ConsoleMessage,
   consoleState,
   sendToConsole,
-  console,
+  console as rootConsole,
 } from "@management/cm-console";
 
-import { TextManagementAPI } from "../../../../../packages/text-management/src/api";
+import { TextManagementAPI } from "@core/api";
 
-export function electronConsole(api: TextManagementAPI) {
+export function console(api: TextManagementAPI) {
   let initialConsole: ConsoleMessage[] = [];
 
   const consoleListener = ViewPlugin.define((view) => {
-    window.console.log(api);
-    window.console.log(typeof api.listenForConsole);
     const unlisten = api.listenForConsole((message) => {
       view.dispatch(sendToConsole(view.state, message));
     });
@@ -25,5 +23,9 @@ export function electronConsole(api: TextManagementAPI) {
     };
   });
 
-  return [consoleState.init(() => initialConsole), consoleListener, console()];
+  return [
+    consoleState.init(() => initialConsole),
+    consoleListener,
+    rootConsole(),
+  ];
 }

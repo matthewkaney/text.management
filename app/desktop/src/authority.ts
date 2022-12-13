@@ -2,7 +2,7 @@ import EventEmitter from "events";
 
 import { Text, ChangeSet } from "@codemirror/state";
 
-import { DocUpdate } from "../../../packages/text-management/src/api";
+import { DocUpdate } from "@core/api";
 
 export class Authority extends EventEmitter {
   versions: Omit<DocUpdate, "version">[] = [];

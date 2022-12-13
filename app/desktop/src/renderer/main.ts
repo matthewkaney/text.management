@@ -3,21 +3,18 @@ import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { StreamLanguage } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
-import { basicSetup } from "../../../../packages/text-management/src/client/editor/basicSetup";
-import { oneDark } from "../../../../packages/text-management/src/client/editor/theme";
-import { decorateEmptyLines } from "../../../../packages/text-management/src/client/editor/emptyLines";
-import { peer } from "../../../../packages/text-management/src/client/editor/peer";
+import { basicSetup } from "@core/client/editor/basicSetup";
+import { oneDark } from "@core/client/editor/theme";
+import { decorateEmptyLines } from "@core/client/editor/emptyLines";
 
 import { EditorState, Text } from "@codemirror/state";
 
-import { electronConsole } from "./editor/console";
-
-import { TextManagementAPI } from "../../../../packages/text-management/src/api";
+import { TextManagementAPI } from "@core/api";
+import { console as electronConsole } from "@core/extensions/console";
+import { peer } from "@core/extensions/peer";
 
 const { api } = window as Window &
   typeof globalThis & { api: TextManagementAPI };
-
-console.log(api);
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));

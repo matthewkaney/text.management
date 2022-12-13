@@ -5,6 +5,10 @@
     "module":"ESNext",
     "moduleResolution": "node",
     "jsx": "react-jsx",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "paths": {
+      "@core/*": ["packages/text-management/src/*"]
+    }
   }
 }

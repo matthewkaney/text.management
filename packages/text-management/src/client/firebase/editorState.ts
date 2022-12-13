@@ -1,9 +1,11 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
 import { get, DatabaseReference } from "firebase/database";
-import { peer } from "../editor/peer";
-import { getAPI } from "./api";
 
+import { peer } from "@core/extensions/peer";
+// import { console as firebaseConsole } from "@core/extensions/console";
 import { firebaseConsole } from "./console";
+
+import { getAPI } from "./api";
 
 export async function stateFromDatabase(
   reference: DatabaseReference,

@@ -9,7 +9,7 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { TextManagementAPI } from "../../api";
+import { TextManagementAPI } from "@core/api";
 
 export function peer(api: TextManagementAPI, startVersion: number) {
   let plugin = ViewPlugin.fromClass(

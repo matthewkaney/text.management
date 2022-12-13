@@ -1,9 +1,7 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-import { TextManagementAPI } from "../../../packages/text-management/src/api";
-import { TerminalMessage } from "../../../packages/text-management/src/server/ghci";
-
-contextBridge.exposeInMainWorld("electronApp", true);
+import { TextManagementAPI } from "@core/api";
+import { TerminalMessage } from "@core/server/ghci";
 
 // Electron implementation of Text.Management API
 const api: TextManagementAPI = {
