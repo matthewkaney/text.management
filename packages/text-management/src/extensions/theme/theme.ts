@@ -28,6 +28,10 @@ export const base = EditorView.theme({
     fontFamily: "monospace",
     height: "100%",
   },
+
+  ".cm-line": {
+    width: "fit-content",
+  },
 });
 
 export const layoutTheme = EditorView.theme({
@@ -36,7 +40,20 @@ export const layoutTheme = EditorView.theme({
   },
 
   ".cm-scroller": {
-    padding: "0.75em 1ch",
+    margin: "0.75em 1ch",
+  },
+
+  ".cm-line": {
+    padding: "0 .5ch",
+    margin: "0 1ch 0 1ch",
+  },
+
+  ".cm-emptyLine:not(.cm-activeLine)": {
+    padding: "0",
+  },
+
+  ".cm-panels-bottom .cm-panel:not(:first-child)": {
+    marginTop: "0.75em",
   },
 
   ".cm-toolbar": {
@@ -66,13 +83,6 @@ export const oneDarkTheme = EditorView.theme(
 
     ".cm-line": {
       backgroundColor: haze,
-      width: "fit-content",
-      padding: "0 .5ch",
-      margin: "0 1ch 0 1ch",
-    },
-
-    ".cm-emptyLine:not(.cm-activeLine)": {
-      padding: "0",
     },
 
     ".cm-searchMatch": {
@@ -120,9 +130,6 @@ export const oneDarkTheme = EditorView.theme(
     ".cm-panels": {
       backgroundColor: "transparent",
     },
-    ".cm-panels.cm-panels-bottom": {
-      marginTop: "1em",
-    },
 
     ".cm-console": {
       maxHeight: "14em",
@@ -158,7 +165,7 @@ export const oneDarkTheme = EditorView.theme(
         color: coral,
       },
     ".cm-toolbar": {
-      background: background,
+      background: haze,
     },
   },
   { dark: true }
