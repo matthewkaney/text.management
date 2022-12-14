@@ -22,13 +22,32 @@ const haze = "#00000050",
   selection = "#3E4451",
   cursor = "white";
 
+export const base = EditorView.theme({
+  "&": {
+    fontSize: "18px",
+    fontFamily: "monospace",
+    height: "100%",
+  },
+});
+
+export const layoutTheme = EditorView.theme({
+  "&": {
+    lineHeight: 1.5,
+  },
+
+  ".cm-scroller": {
+    padding: "0.75em 1ch",
+  },
+
+  ".cm-toolbar": {
+    padding: "0 1ch",
+  },
+});
+
 /// The editor theme styles for One Dark.
 export const oneDarkTheme = EditorView.theme(
   {
     "&": {
-      fontSize: "18px",
-      height: "100%",
-      padding: "1em 2ch",
       color: "#fff",
       "& ::selection": { backgroundColor: selection },
       caretColor: cursor,
@@ -138,6 +157,9 @@ export const oneDarkTheme = EditorView.theme(
       {
         color: coral,
       },
+    ".cm-toolbar": {
+      background: background,
+    },
   },
   { dark: true }
 );
@@ -190,6 +212,8 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
 /// Extension to enable the One Dark theme (both the editor theme and
 /// the highlight style).
 export const oneDark: Extension = [
+  base,
+  layoutTheme,
   oneDarkTheme,
   syntaxHighlighting(oneDarkHighlightStyle),
 ];
