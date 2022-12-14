@@ -161,6 +161,22 @@ export class GHCI extends Engine {
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 
+  private functions: Promise<string[]> | undefined;
+
+  getFunctions() {
+    if (!this.functions) {
+      this.functions = promisify(exec)(
+        "ghc -e ':browse Sound.Tidal.Context'"
+      ).then(({ stdout }) =>
+        [...stdout.matchAll(/^(?:\w+\.)+([^\s\.]+).*$/gm)].map(
+          ([_, name]) => name
+        )
+      );
+    }
+
+    return this.functions;
+  }
+
   async close() {
     (await this.process).kill();
   }
