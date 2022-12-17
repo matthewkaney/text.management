@@ -17,7 +17,7 @@
     "prepare-old": "npm run build-packages && parcel build packages/text-management",
     "start:old": "node packages/text-management/dist/server/index.js",
     "build:desktop": "parcel build app/desktop/ --target main --target renderer",
-    "start:desktop": "electron app/desktop/dist/main.js",
+    "start:desktop": "electron app/desktop",
     "build": ""
   },
   "repository": {

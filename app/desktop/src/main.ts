@@ -1,6 +1,10 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "url";
 
+import fixPath from "fix-path";
+
+fixPath();
+
 import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
 
@@ -20,7 +24,7 @@ const createWindow = () => {
     },
   });
 
-  win.loadFile("./renderer/index.html");
+  win.loadFile("./dist/renderer/index.html");
 
   let authority = new Authority();
 
