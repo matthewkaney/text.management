@@ -58,3 +58,15 @@ ipcMain.handle("push-update", (event, update) => {
     return false;
   }
 });
+
+import { dialog } from "electron";
+
+ipcMain.handle("open-file", (event) => {
+  let window = BrowserWindow.fromWebContents(event.sender);
+
+  if (window) {
+    return dialog.showOpenDialog(window, { properties: ["openFile"] });
+  } else {
+    return { cancelled: true };
+  }
+});

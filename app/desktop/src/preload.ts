@@ -1,9 +1,18 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
+import {
+  contextBridge,
+  ipcRenderer,
+  IpcRendererEvent,
+  OpenDialogOptions,
+} from "electron";
 
 import { TextManagementAPI, TerminalMessage } from "@core/api";
 
+interface FileAPI {
+  openFile: () => Promise<OpenDialogOptions>;
+}
+
 // Electron implementation of Text.Management API
-const api: TextManagementAPI = {
+const api: TextManagementAPI & FileAPI = {
   pushUpdate: (update) => ipcRenderer.invoke("push-update", update),
 
   onUpdate: (version, callback) => {
@@ -21,6 +30,8 @@ const api: TextManagementAPI = {
       ipcRenderer.off("console-message", wrappedCallback);
     };
   },
+
+  openFile: () => ipcRenderer.invoke("open-file"),
 };
 
 contextBridge.exposeInMainWorld("api", api);

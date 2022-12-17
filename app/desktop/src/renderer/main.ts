@@ -12,15 +12,29 @@ import { EditorState, Text } from "@codemirror/state";
 import { TextManagementAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
+import { OpenDialogOptions } from "electron";
 
 const { api } = window as Window &
-  typeof globalThis & { api: TextManagementAPI };
+  typeof globalThis & {
+    api: TextManagementAPI & { openFile: () => Promise<OpenDialogOptions> };
+  };
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
   new Editor(parent);
 });
+
+let fileKeymap = keymap.of([
+  {
+    key: "Mod-o",
+    run: () => {
+      console.log("HELLO!");
+      api.openFile();
+      return true;
+    },
+  },
+]);
 
 export class Editor {
   constructor(parent: HTMLElement) {
@@ -35,6 +49,7 @@ export class Editor {
           StreamLanguage.define(haskell),
           electronConsole(api),
           peer(api, 0),
+          fileKeymap,
         ],
       }),
       parent,
