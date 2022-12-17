@@ -12,6 +12,7 @@ import { EditorState, Text } from "@codemirror/state";
 import { TextManagementAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
+import { EditorLayout } from "@core/extensions/layout";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -21,7 +22,8 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    return new EditorView({
+    let layout = new EditorLayout(parent);
+    let editor = new EditorView({
       state: EditorState.create({
         doc: Text.of([""]),
         extensions: [
@@ -34,7 +36,7 @@ export class Editor {
           // peer(api, 0),
         ],
       }),
-      parent,
+      parent: layout.dom,
     });
   }
 }
