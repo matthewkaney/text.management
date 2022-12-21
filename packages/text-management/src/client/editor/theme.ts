@@ -149,6 +149,15 @@ export const oneDarkTheme = EditorView.theme(
       {
         color: coral,
       },
+    "*::-webkit-scrollbar": {
+      width: `${size}px`,
+    },
+    "*::-webkit-scrollbar-track-piece": {
+      backgroundColor: haze,
+    },
+    "*::-webkit-scrollbar-thumb": {
+      backgroundColor: haze,
+    },
   },
   { dark: true }
 );
