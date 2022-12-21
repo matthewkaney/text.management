@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "Fira Code";
+  src: local("Fira Code"), url("FiraCode-VF.woff2") format("woff2")
+}
+
 html,
 body {
   height: 100%;

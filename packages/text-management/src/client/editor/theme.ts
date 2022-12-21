@@ -32,6 +32,7 @@ export const oneDarkTheme = EditorView.theme(
       color: "#fff",
       "& ::selection": { backgroundColor: selection },
       caretColor: cursor,
+      fontFamily: "Fira Code, monospace",
     },
 
     ".cm-content": { padding: 0 },
@@ -43,6 +44,10 @@ export const oneDarkTheme = EditorView.theme(
     },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: selection,
+    },
+
+    "& .cm-scroller": {
+      fontFamily: "Fira Code, monospace",
     },
 
     ".cm-line": {
