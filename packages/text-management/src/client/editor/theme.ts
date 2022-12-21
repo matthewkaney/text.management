@@ -22,13 +22,16 @@ const haze = "#00000050",
   selection = "#3E4451",
   cursor = "white";
 
+const size = 12;
+
 /// The editor theme styles for One Dark.
 export const oneDarkTheme = EditorView.theme(
   {
     "&": {
-      fontSize: "18px",
+      fontSize: `${1.6363 * size}px`,
       height: "100%",
-      padding: "1em 2ch",
+      padding: `${1.5 * size}px`,
+      lineHeight: `${2.5 * size}px`,
       color: "#fff",
       "& ::selection": { backgroundColor: selection },
       caretColor: cursor,
@@ -48,13 +51,14 @@ export const oneDarkTheme = EditorView.theme(
 
     "& .cm-scroller": {
       fontFamily: "Fira Code, monospace",
+      lineHeight: "inherit",
     },
 
     ".cm-line": {
       backgroundColor: haze,
       width: "fit-content",
-      padding: "0 .5ch",
-      margin: "0 1ch 0 1ch",
+      padding: `0 ${0.5 * size}px`,
+      margin: `0 ${size}px`,
     },
 
     ".cm-emptyLine:not(.cm-activeLine)": {
@@ -83,7 +87,7 @@ export const oneDarkTheme = EditorView.theme(
     },
     ".cm-lineNumbers .cm-gutterElement": {
       color: "inherit",
-      padding: "0 0.5em",
+      padding: `0 ${0.5 * size}px`,
     },
 
     ".cm-foldPlaceholder": {
@@ -105,23 +109,25 @@ export const oneDarkTheme = EditorView.theme(
 
     ".cm-panels": {
       backgroundColor: "transparent",
+      fontSize: `${1.2727 * size}px`,
+      lineHeight: `${2 * size}px`,
     },
     ".cm-panels.cm-panels-bottom": {
-      marginTop: "1em",
+      marginTop: `${1.5 * size}px`,
     },
 
     ".cm-console": {
-      maxHeight: "14em",
+      maxHeight: `${20 * size}px`,
       overflowY: "scroll",
     },
     ".cm-console-message": {
-      padding: "calc(0.5em - 2px) 0.5ch",
+      padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
       margin: "2px 0",
       display: "flex",
       flexDirection: "row-reverse",
     },
     ".cm-console-message-source": {
-      marginLeft: "1ch",
+      marginLeft: `${size}px`,
     },
     ".cm-console-message-content": {
       flex: 1,

@@ -1,8 +1,9 @@
-import { ViewPlugin } from "@codemirror/view";
+import { keymap, ViewPlugin } from "@codemirror/view";
 import {
   ConsoleMessage,
   consoleState,
   sendToConsole,
+  clearConsole,
   console as rootConsole,
 } from "@management/cm-console";
 
@@ -27,5 +28,6 @@ export function console(api: TextManagementAPI) {
     consoleState.init(() => initialConsole),
     consoleListener,
     rootConsole(),
+    keymap.of([{ key: "Escape", run: clearConsole }]),
   ];
 }
