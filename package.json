@@ -18,7 +18,8 @@
     "start:old": "node packages/text-management/dist/server/index.js",
     "build:desktop": "parcel build app/desktop/ --target main --target renderer",
     "start:desktop": "electron app/desktop",
-    "build": ""
+    "build": "",
+    "version": "npm version --no-git-tag-version -w app/* -w packages/text-management $npm_package_version"
   },
   "repository": {
     "type": "git",
