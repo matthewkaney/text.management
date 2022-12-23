@@ -152,7 +152,7 @@ export class GHCI extends Engine {
 
   private async defaultBootfile() {
     const { stdout } = await promisify(exec)(
-      "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
+      'ghc -e "import Paths_tidal" -e "getDataDir>>=putStr"'
     );
     return join(stdout, "BootTidal.hs");
   }

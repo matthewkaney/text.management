@@ -1,4 +1,9 @@
 import { app, BrowserWindow, ipcMain } from "electron";
+
+// @ts-ignore
+import squirrelStartup from "electron-squirrel-startup";
+if (squirrelStartup) app.quit();
+
 import { fileURLToPath } from "url";
 
 import fixPath from "fix-path";
