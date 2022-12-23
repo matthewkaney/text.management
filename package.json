@@ -19,7 +19,7 @@
     "build:desktop": "parcel build app/desktop/ --target main --target renderer",
     "start:desktop": "electron app/desktop",
     "build": "",
-    "version": "npm version $npm_package_version --include-workspace-root --no-git-tag-version -w app/desktop -w app/web -w packages/text-management"
+    "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web -w packages/text-management"
   },
   "repository": {
     "type": "git",
