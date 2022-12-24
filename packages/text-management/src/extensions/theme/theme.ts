@@ -76,13 +76,13 @@ export const layoutTheme = EditorView.theme({
   },
 
   ".cm-console": {
-    marginTop: `${size}px`,
+    margin: `${size}px ${1.5 * size}px 0 ${1.5 * size}px`,
     maxHeight: `${20 * size}px`,
   },
 
   ".cm-console-message": {
     padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
-    margin: "0 6px 0 0",
+    margin: "0",
   },
 
   ".cm-console-message-source": {
@@ -91,7 +91,7 @@ export const layoutTheme = EditorView.theme({
 
   ".cm-toolbar": {
     marginTop: `${1.5 * size}px`,
-    padding: `${0.25 * size}px ${1.5 * size}px`,
+    padding: `${0.25 * size}px ${2 * size}px`,
   },
 
   "*::-webkit-scrollbar": {

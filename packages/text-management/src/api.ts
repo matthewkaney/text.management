@@ -20,6 +20,8 @@ export interface TextManagementAPI {
     callback: (update: DocUpdate) => void
   ) => () => void;
 
+  getTidalVersion: () => Promise<string>;
+
   // Console messages
   listenForConsole: (
     callback: (message: TerminalMessage) => void

@@ -1,17 +1,26 @@
 import { EditorView, showPanel, Panel } from "@codemirror/view";
+import { TextManagementAPI } from "@core/api";
 
-function toolbarConstructor(view: EditorView): Panel {
-  let consoleNode = document.createElement("div");
-  consoleNode.classList.add("cm-toolbar");
+export function toolbar(api: TextManagementAPI) {
+  function toolbarConstructor(view: EditorView): Panel {
+    let consoleNode = document.createElement("div");
+    consoleNode.classList.add("cm-toolbar");
 
-  let tidalInfo = consoleNode.appendChild(document.createElement("div"));
-  tidalInfo.innerText = "Tidal ()";
+    let tidalInfo = consoleNode.appendChild(document.createElement("div"));
+    tidalInfo.innerText = "Tidal (Disconnected)";
 
-  return {
-    dom: consoleNode,
-    update(update) {},
-    destroy() {},
-  };
+    api.getTidalVersion().then((v) => {
+      if (tidalInfo) {
+        tidalInfo.innerText = `Tidal (${v})`;
+      }
+    });
+
+    return {
+      dom: consoleNode,
+      update(update) {},
+      destroy() {},
+    };
+  }
+
+  return showPanel.of(toolbarConstructor);
 }
-
-export const toolbar = showPanel.of(toolbarConstructor);

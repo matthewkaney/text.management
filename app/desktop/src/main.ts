@@ -67,3 +67,11 @@ ipcMain.handle("push-update", (event, update) => {
     return false;
   }
 });
+
+ipcMain.handle("tidal-version", (event) => {
+  let engine = engineMap.get(event.sender.id);
+
+  if (engine) {
+    return engine.process.getVersion();
+  }
+});

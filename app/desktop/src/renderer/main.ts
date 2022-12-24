@@ -36,7 +36,7 @@ export class Editor {
           StreamLanguage.define(haskell),
           electronConsole(api),
           peer(api, 0),
-          toolbar,
+          toolbar(api),
         ],
       }),
       parent,
