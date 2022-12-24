@@ -30,6 +30,7 @@ export const oneDarkTheme = EditorView.theme(
     "&": {
       fontSize: `${1.6363 * size}px`,
       height: "100%",
+      width: "100%",
       padding: `${1.5 * size}px`,
       lineHeight: `${2.5 * size}px`,
       color: "#fff",
@@ -58,7 +59,6 @@ export const oneDarkTheme = EditorView.theme(
       backgroundColor: haze,
       width: "fit-content",
       padding: `0 ${0.5 * size}px`,
-      margin: `0 ${size}px`,
     },
 
     ".cm-emptyLine:not(.cm-activeLine)": {
@@ -84,6 +84,7 @@ export const oneDarkTheme = EditorView.theme(
       backgroundColor: haze,
       color: "white",
       border: "none",
+      marginRight: `${size}px`,
     },
     ".cm-lineNumbers .cm-gutterElement": {
       color: "inherit",
@@ -113,7 +114,7 @@ export const oneDarkTheme = EditorView.theme(
       lineHeight: `${2 * size}px`,
     },
     ".cm-panels.cm-panels-bottom": {
-      marginTop: `${1.5 * size}px`,
+      marginTop: `${size}px`,
     },
 
     ".cm-console": {
@@ -122,9 +123,18 @@ export const oneDarkTheme = EditorView.theme(
     },
     ".cm-console-message": {
       padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
-      margin: "2px 0",
+      margin: "0 6px 0 0",
       display: "flex",
       flexDirection: "row-reverse",
+    },
+    ".cm-console-message:not(:first-child)": {
+      clipPath: "inset(1px 0 0 0)",
+    },
+    ".cm-console-message:not(:last-child)": {
+      clipPath: "inset(0 0 1px 0)",
+    },
+    ".cm-console-message:not(:first-child):not(:last-child)": {
+      clipPath: "inset(1px 0)",
     },
     ".cm-console-message-source": {
       marginLeft: `${size}px`,
@@ -157,6 +167,9 @@ export const oneDarkTheme = EditorView.theme(
     },
     "*::-webkit-scrollbar-thumb": {
       backgroundColor: haze,
+    },
+    "*::-webkit-scrollbar-corner": {
+      backgroundColor: "transparent",
     },
   },
   { dark: true }
