@@ -26,7 +26,7 @@ const size = 12;
 
 export const base = EditorView.theme({
   "&": {
-    fontFamily: "monospace",
+    fontFamily: "Fira Code, monospace",
     width: "100%",
     height: "100%",
   },
@@ -34,17 +34,24 @@ export const base = EditorView.theme({
   ".cm-line": {
     width: "fit-content",
   },
+
+  ".cm-toolbar": {
+    textAlign: "right",
+  },
 });
 
 export const layoutTheme = EditorView.theme({
   "&": {
     fontSize: `${1.6363 * size}px`,
-    padding: `${1.5 * size}px`,
     lineHeight: `${2.5 * size}px`,
   },
 
   ".cm-scroller": {
-    margin: "0.75em 1ch",
+    margin: `${1.5 * size}px`,
+  },
+
+  ".cm-scroller:not(:last-child)": {
+    marginBottom: "0",
   },
 
   ".cm-line": {
@@ -68,14 +75,8 @@ export const layoutTheme = EditorView.theme({
     lineHeight: `${2 * size}px`,
   },
 
-  ".cm-panels.cm-panels-bottom": {
-    marginTop: `${size}px`,
-  },
-
-  // ".cm-panels-bottom .cm-panel:not(:first-child)": {
-  //   marginTop: "0.75em",
-  // },
   ".cm-console": {
+    marginTop: `${size}px`,
     maxHeight: `${20 * size}px`,
   },
 
@@ -89,7 +90,8 @@ export const layoutTheme = EditorView.theme({
   },
 
   ".cm-toolbar": {
-    padding: "0 1ch",
+    marginTop: `${1.5 * size}px`,
+    padding: `${0.25 * size}px ${1.5 * size}px`,
   },
 
   "*::-webkit-scrollbar": {
