@@ -1,12 +1,17 @@
 {
-  "name": "desktop",
-  "version": "1.0.0",
+  "name": "@management/text-management-desktop",
+  "productName": "Text Management",
+  "author": "Matthew Kaney",
+  "version": "0.5.0",
   "private": "true",
-  "description": "",
+  "description": "Live code editor",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
-  "author": "",
+  "main": "dist/main.js",
   "license": "GPL-3.0-or-later",
   "targets": {
     "renderer": {
@@ -16,7 +21,7 @@
       "publicUrl": "./..",
       "includeNodeModules": true
     },
-    "app": {
+    "main": {
       "source": "src/main.ts",
       "distDir": "dist",
       "context": "electron-main",
@@ -24,6 +29,14 @@
     }
   },
   "devDependencies": {
-    "electron": "^22.0.0"
+    "@electron-forge/cli": "^6.0.4",
+    "@electron-forge/maker-squirrel": "^6.0.4",
+    "@electron-forge/maker-zip": "^6.0.4",
+    "electron": "^22.0.0",
+    "electron-packager": "^17.1.1"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
+    "fix-path": "^4.0.0"
   }
 }

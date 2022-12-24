@@ -22,10 +22,12 @@ const haze = "#00000050",
   selection = "#3E4451",
   cursor = "white";
 
+const size = 12;
+
 export const base = EditorView.theme({
   "&": {
-    fontSize: "18px",
     fontFamily: "monospace",
+    width: "100%",
     height: "100%",
   },
 
@@ -36,7 +38,9 @@ export const base = EditorView.theme({
 
 export const layoutTheme = EditorView.theme({
   "&": {
-    lineHeight: 1.5,
+    fontSize: `${1.6363 * size}px`,
+    padding: `${1.5 * size}px`,
+    lineHeight: `${2.5 * size}px`,
   },
 
   ".cm-scroller": {
@@ -44,20 +48,52 @@ export const layoutTheme = EditorView.theme({
   },
 
   ".cm-line": {
-    padding: "0 .5ch",
-    margin: "0 1ch 0 1ch",
+    padding: `0 ${0.5 * size}px`,
   },
 
   ".cm-emptyLine:not(.cm-activeLine)": {
     padding: "0",
   },
 
-  ".cm-panels-bottom .cm-panel:not(:first-child)": {
-    marginTop: "0.75em",
+  ".cm-gutters": {
+    marginRight: `${size}px`,
+  },
+
+  ".cm-lineNumbers .cm-gutterElement": {
+    padding: `0 ${0.5 * size}px`,
+  },
+
+  ".cm-panels": {
+    fontSize: `${1.2727 * size}px`,
+    lineHeight: `${2 * size}px`,
+  },
+
+  ".cm-panels.cm-panels-bottom": {
+    marginTop: `${size}px`,
+  },
+
+  // ".cm-panels-bottom .cm-panel:not(:first-child)": {
+  //   marginTop: "0.75em",
+  // },
+  ".cm-console": {
+    maxHeight: `${20 * size}px`,
+  },
+
+  ".cm-console-message": {
+    padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
+    margin: "0 6px 0 0",
+  },
+
+  ".cm-console-message-source": {
+    marginLeft: `${size}px`,
   },
 
   ".cm-toolbar": {
     padding: "0 1ch",
+  },
+
+  "*::-webkit-scrollbar": {
+    width: `${size}px`,
   },
 });
 
@@ -68,6 +104,7 @@ export const oneDarkTheme = EditorView.theme(
       color: "#fff",
       "& ::selection": { backgroundColor: selection },
       caretColor: cursor,
+      fontFamily: "Fira Code, monospace",
     },
 
     ".cm-content": { padding: 0 },
@@ -79,6 +116,11 @@ export const oneDarkTheme = EditorView.theme(
     },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: selection,
+    },
+
+    "& .cm-scroller": {
+      fontFamily: "Fira Code, monospace",
+      lineHeight: "inherit",
     },
 
     ".cm-line": {
@@ -105,9 +147,9 @@ export const oneDarkTheme = EditorView.theme(
       color: "white",
       border: "none",
     },
+
     ".cm-lineNumbers .cm-gutterElement": {
       color: "inherit",
-      padding: "0 0.5em",
     },
 
     ".cm-foldPlaceholder": {
@@ -132,18 +174,23 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-console": {
-      maxHeight: "14em",
-      overflowY: "scroll",
+      overflowY: "auto",
     },
+
     ".cm-console-message": {
-      padding: "calc(0.5em - 2px) 0.5ch",
-      margin: "2px 0",
       display: "flex",
       flexDirection: "row-reverse",
     },
-    ".cm-console-message-source": {
-      marginLeft: "1ch",
+    ".cm-console-message:not(:first-child)": {
+      clipPath: "inset(1px 0 0 0)",
     },
+    ".cm-console-message:not(:last-child)": {
+      clipPath: "inset(0 0 1px 0)",
+    },
+    ".cm-console-message:not(:first-child):not(:last-child)": {
+      clipPath: "inset(1px 0)",
+    },
+
     ".cm-console-message-content": {
       flex: 1,
       overflowWrap: "anywhere",
@@ -166,6 +213,16 @@ export const oneDarkTheme = EditorView.theme(
       },
     ".cm-toolbar": {
       background: haze,
+    },
+
+    "*::-webkit-scrollbar-track-piece": {
+      backgroundColor: haze,
+    },
+    "*::-webkit-scrollbar-thumb": {
+      backgroundColor: haze,
+    },
+    "*::-webkit-scrollbar-corner": {
+      backgroundColor: "transparent",
     },
   },
   { dark: true }

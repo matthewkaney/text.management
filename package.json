@@ -1,6 +1,6 @@
 {
   "name": "@management/text",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "workspaces": [
     "app/*",
     "packages/codemirror/*",
@@ -13,12 +13,13 @@
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
-    "build-packages": "parcel build packages/codemirror/* --no-cache",
+    "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",
     "prepare-old": "npm run build-packages && parcel build packages/text-management",
     "start:old": "node packages/text-management/dist/server/index.js",
-    "build:desktop": "parcel build app/desktop/ --target app --target renderer",
-    "start:desktop": "electron app/desktop/dist/main.js",
-    "build": ""
+    "build:desktop": "parcel build app/desktop/ --target main --target renderer",
+    "start:desktop": "electron app/desktop",
+    "build": "",
+    "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web -w packages/text-management"
   },
   "repository": {
     "type": "git",

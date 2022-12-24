@@ -12,14 +12,16 @@ import {
 } from "@codemirror/language";
 import { defaultKeymap } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { decorateEmptyLines } from "./emptyLines";
 
 export const basicSetup = [
-  lineNumbers(),
+  // lineNumbers(),
   drawSelection(),
-  // highlightActiveLine(),
-  // highlightActiveLineGutter(),
+  highlightActiveLine(),
+  highlightActiveLineGutter(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   bracketMatching(),
   closeBrackets(),
-  // keymap.of([...defaultKeymap, ...closeBracketsKeymap]),
+  keymap.of([...defaultKeymap, ...closeBracketsKeymap]),
+  decorateEmptyLines(),
 ];
