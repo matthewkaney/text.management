@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Fira Code";
-  src: local("Fira Code"), url("FiraCode-VF.woff2") format("woff2")
+  src: local("Fira Code"), url("FiraCode-VF.woff2") format("woff2");
 }
 
 html,
@@ -10,7 +10,7 @@ body {
 }
 
 body {
-  background-color: #333;
+  background-color: #35312f;
   margin: 0;
 }
 

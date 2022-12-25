@@ -115,6 +115,7 @@ export const oneDarkTheme = EditorView.theme(
     "&.cm-focused .cm-cursor": {
       borderLeftColor: cursor,
       borderLeftWidth: "2px",
+      marginLeft: "-1px",
     },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: selection,
@@ -202,7 +203,7 @@ export const oneDarkTheme = EditorView.theme(
       backgroundColor: haze,
     },
     ".cm-console-message-info .cm-console-message-source": {
-      color: stone,
+      color: "#FFFFFFAA",
     },
 
     ".cm-console-message-warn, .cm-console-message-error": {
