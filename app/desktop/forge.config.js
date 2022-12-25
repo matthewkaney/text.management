@@ -2,7 +2,7 @@ const path = require("path");
 
 module.exports = {
   packagerConfig: {
-    icon: path.resolve(__dirname, "./assets/Icon"),
+    icon: path.resolve(__dirname, "./assets/TextManagement"),
   },
   makers: [
     {
@@ -11,8 +11,8 @@ module.exports = {
     {
       name: "@electron-forge/maker-squirrel",
       config: {
-        name: "TextManagement"
-      }
-    }
+        name: "TextManagement",
+      },
+    },
   ],
 };

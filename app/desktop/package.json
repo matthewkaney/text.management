@@ -25,7 +25,12 @@
       "source": "src/main.ts",
       "distDir": "dist",
       "context": "electron-main",
-      "includeNodeModules": true
+      "includeNodeModules": {
+        "electron": false,
+        "events": false,
+        "path": false,
+        "util": false
+      }
     }
   },
   "devDependencies": {

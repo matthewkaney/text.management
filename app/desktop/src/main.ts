@@ -12,6 +12,7 @@ fixPath();
 
 import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
+import { TerminalMessage } from "@core/api";
 
 interface Engine {
   process: GHCI;
@@ -39,11 +40,14 @@ const createWindow = () => {
     tidal.send(code);
   });
 
-  tidal.on("message", (m) => {
+  function dispatchMessage(m: TerminalMessage) {
     win.webContents.send("console-message", m);
-  });
+  }
+
+  tidal.on("message", dispatchMessage);
 
   win.on("closed", () => {
+    tidal.off("message", dispatchMessage);
     tidal.close();
   });
 
