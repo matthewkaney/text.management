@@ -13,7 +13,7 @@ module.exports = {
     {
       name: "@electron-forge/maker-squirrel",
       config: {
-        name: "TextManagement",
+        name: "text.management",
       },
     },
     {
