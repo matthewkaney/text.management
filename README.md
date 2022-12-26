@@ -7,7 +7,7 @@ This is an experiment in making an editor for livecoding. Ideally, such an edito
 
 In its initial form, this is an editor for the Tidal language. It requires [Tidal](https://tidalcycles.org/) to be installed independently.
 
-It's available as a desktop app for Mac/Windows/Linux. Builds (still in a pretty alpha state) can be downloaded from the [releases page](https://github.com/mindofmatthew/text.management/releases).
+It's available as a desktop app for Mac/Windows/Linux. Builds (still in a pretty alpha state) can be downloaded from the [releases page](https://github.com/mindofmatthew/text.management/releases). It's experimental free software, so obviously install at your own risk, and you'll have to dismiss the usual operating system warnings.
 
 ## Usage
 
