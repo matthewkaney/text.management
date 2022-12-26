@@ -2,7 +2,7 @@
   "name": "@management/text-management-desktop",
   "productName": "Text Management",
   "author": "Matthew Kaney",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": "true",
   "description": "Live code editor",
   "scripts": {
