@@ -4,7 +4,7 @@ import { StreamLanguage } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/client/editor/basicSetup";
-import { oneDark } from "@core/client/editor/theme";
+import { oneDark } from "@core/extensions/theme/theme";
 import { decorateEmptyLines } from "@core/client/editor/emptyLines";
 
 import { EditorState, Text } from "@codemirror/state";
@@ -12,6 +12,7 @@ import { EditorState, Text } from "@codemirror/state";
 import { TextManagementAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
+import { toolbar } from "@core/extensions/toolbar";
 
 const { api } = window as Window &
   typeof globalThis & { api: TextManagementAPI };
@@ -35,6 +36,7 @@ export class Editor {
           StreamLanguage.define(haskell),
           electronConsole(api),
           peer(api, 0),
+          toolbar(api),
         ],
       }),
       parent,

@@ -152,13 +152,25 @@ export class GHCI extends Engine {
 
   private async defaultBootfile() {
     const { stdout } = await promisify(exec)(
-      "ghc -e 'import Paths_tidal' -e 'getDataDir>>=putStr'"
+      'ghc -e "import Paths_tidal" -e "getDataDir>>=putStr"'
     );
     return join(stdout, "BootTidal.hs");
   }
 
   async send(text: string) {
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
+  }
+
+  private version: Promise<string> | undefined;
+
+  getVersion() {
+    if (!this.version) {
+      this.version = promisify(exec)(
+        "ghc -e 'import Sound.Tidal.Version' -e 'putStr tidal_version'"
+      ).then(({ stdout }) => stdout);
+    }
+
+    return this.version;
   }
 
   async close() {

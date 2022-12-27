@@ -4,7 +4,7 @@ import { StreamLanguage } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "./basicSetup";
-import { oneDark } from "./theme";
+import { oneDark } from "../../extensions/theme/theme";
 import { decorateEmptyLines } from "./emptyLines";
 
 import { stateFromDatabase } from "../firebase/editorState";

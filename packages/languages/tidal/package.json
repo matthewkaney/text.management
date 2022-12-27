@@ -2,12 +2,7 @@
   "name": "@management/lang-tidal",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/ghci.js",
-  "targets": {
-    "main": {
-      "source": "./ghci.ts"
-    }
-  },
+  "source": "./ghci.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
