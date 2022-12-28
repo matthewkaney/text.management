@@ -166,7 +166,7 @@ export class GHCI extends Engine {
   getVersion() {
     if (!this.version) {
       this.version = promisify(exec)(
-        "ghc -e 'import Sound.Tidal.Version' -e 'putStr tidal_version'"
+        'ghc -e "import Sound.Tidal.Version" -e "putStr tidal_version"'
       ).then(({ stdout }) => stdout);
     }
 
