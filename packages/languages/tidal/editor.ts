@@ -3,5 +3,5 @@ import { haskell } from "@codemirror/legacy-modes/mode/haskell";
 import { indentation } from "./indentation";
 
 export function tidal() {
-  return [StreamLanguage.define(haskell), indentation()];
+  return [indentation(), StreamLanguage.define(haskell)];
 }

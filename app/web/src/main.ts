@@ -1,11 +1,9 @@
 import { indentWithTab } from "@codemirror/commands";
-import { haskell } from "@codemirror/legacy-modes/mode/haskell";
-import { StreamLanguage } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/client/editor/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
-import { indentation } from "./indentation";
+import { tidal } from "@management/lang-tidal/editor";
 
 import { EditorState, Text } from "@codemirror/state";
 
@@ -26,14 +24,13 @@ export class Editor {
       state: EditorState.create({
         doc: Text.of([""]),
         extensions: [
+          tidal(),
           keymap.of([indentWithTab]),
           evaluation(),
           basicSetup,
           oneDark,
-          StreamLanguage.define(haskell),
           // electronConsole(api),
           // peer(api, 0),
-          indentation(),
           // toolbar(api),
         ],
       }),
