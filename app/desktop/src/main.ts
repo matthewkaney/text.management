@@ -1,8 +1,18 @@
 import { app, BrowserWindow, ipcMain } from "electron";
+
+// @ts-ignore
+import squirrelStartup from "electron-squirrel-startup";
+if (squirrelStartup) app.quit();
+
 import { fileURLToPath } from "url";
+
+import fixPath from "fix-path";
+
+fixPath();
 
 import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
+import { TerminalMessage } from "@core/api";
 
 interface Engine {
   process: GHCI;
@@ -20,7 +30,7 @@ const createWindow = () => {
     },
   });
 
-  win.loadFile("./renderer/index.html");
+  win.loadFile("./dist/renderer/index.html");
 
   let authority = new Authority();
 
@@ -30,11 +40,14 @@ const createWindow = () => {
     tidal.send(code);
   });
 
-  tidal.on("message", (m) => {
+  function dispatchMessage(m: TerminalMessage) {
     win.webContents.send("console-message", m);
-  });
+  }
+
+  tidal.on("message", dispatchMessage);
 
   win.on("closed", () => {
+    tidal.off("message", dispatchMessage);
     tidal.close();
   });
 
@@ -43,6 +56,10 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   createWindow();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
 });
 
 app.on("window-all-closed", () => {
@@ -56,5 +73,13 @@ ipcMain.handle("push-update", (event, update) => {
     return engine.authority.pushUpdate(update);
   } else {
     return false;
+  }
+});
+
+ipcMain.handle("tidal-version", (event) => {
+  let engine = engineMap.get(event.sender.id);
+
+  if (engine) {
+    return engine.process.getVersion();
   }
 });
