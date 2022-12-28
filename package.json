@@ -13,7 +13,7 @@
   "private": "true",
   "description": "Experimental livecode editor",
   "scripts": {
-    "build-packages": "parcel build packages/codemirror/* --no-cache",
+    "build-packages": "parcel build packages/codemirror/* packages/languages/tidal",
     "prepare-old": "npm run build-packages && parcel build packages/text-management",
     "start:old": "node packages/text-management/dist/server/index.js",
     "build:desktop": "parcel build app/desktop/ --target app --target renderer",

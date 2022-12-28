@@ -5,7 +5,7 @@ import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/client/editor/basicSetup";
 import { oneDark } from "@core/client/editor/theme";
-import { decorateEmptyLines } from "@core/client/editor/emptyLines";
+import { indentation } from "./indentation";
 
 import { EditorState, Text } from "@codemirror/state";
 
@@ -32,6 +32,7 @@ export class Editor {
           StreamLanguage.define(haskell),
           // electronConsole(api),
           // peer(api, 0),
+          indentation(),
         ],
       }),
       parent,
