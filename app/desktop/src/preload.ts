@@ -19,6 +19,8 @@ const api: TextManagementAPI & FileAPI = {
     return () => {};
   },
 
+  getTidalVersion: () => ipcRenderer.invoke("tidal-version"),
+
   listenForConsole: (callback) => {
     const wrappedCallback = (_: IpcRendererEvent, message: TerminalMessage) => {
       callback(message);
