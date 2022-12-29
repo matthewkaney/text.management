@@ -11,6 +11,7 @@ import { TextManagementAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { EditorLayout } from "@core/extensions/layout";
+import { SettingsPage } from "@core/extensions/settings";
 import { toolbar } from "@core/extensions/toolbar";
 
 window.addEventListener("load", () => {
@@ -22,6 +23,7 @@ window.addEventListener("load", () => {
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new EditorLayout(parent);
+    layout.dom.appendChild(new SettingsPage().dom);
     let editor = new EditorView({
       state: EditorState.create({
         doc: Text.of([""]),

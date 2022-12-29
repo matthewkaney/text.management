@@ -17,10 +17,16 @@ class TabRegion {
     this.dom = document.createElement("div");
     this.dom.classList.add("tab-region");
 
-    let tab = document.createElement("div");
-    tab.innerText = "Text.Management";
-    tab.classList.add("tab");
+    this.dom.appendChild(new Tab("untitled.tidal").dom);
+  }
+}
 
-    this.dom.appendChild(tab);
+class Tab {
+  dom: HTMLDivElement;
+
+  constructor(label: string) {
+    this.dom = document.createElement("div");
+    this.dom.innerText = label;
+    this.dom.classList.add("tab");
   }
 }
