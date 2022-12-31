@@ -5,7 +5,7 @@ import { peer } from "@core/extensions/peer";
 // import { console as firebaseConsole } from "@core/extensions/console";
 import { firebaseConsole } from "./console";
 
-import { getAPI } from "./api";
+import { FirebaseAPI } from "./api";
 
 export async function stateFromDatabase(
   reference: DatabaseReference,
@@ -23,7 +23,7 @@ export async function stateFromDatabase(
     doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
     startVersion += 1;
   }
-  dbExtensions.push(peer(getAPI(reference), startVersion));
+  dbExtensions.push(peer(new FirebaseAPI(reference), startVersion));
 
   return EditorState.create({
     doc,

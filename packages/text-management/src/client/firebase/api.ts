@@ -9,35 +9,47 @@ import {
   DataSnapshot,
 } from "firebase/database";
 
-import { TextManagementAPI } from "../../api";
+import { DocUpdate, TextManagementAPI } from "../../api";
 
 // Firebase implementation of Text.Management API
-export function getAPI(session: DatabaseReference): TextManagementAPI {
-  return {
-    pushUpdate: (update) => {
-      return new Promise(async (resolve) => {
-        let { version, clientID, changes, evaluations } = update;
+export class FirebaseAPI extends TextManagementAPI {
+  private session: DatabaseReference;
 
-        let evalStrings: string[] | undefined;
-        if (evaluations) {
-          evalStrings = evaluations.map((v) => JSON.stringify(v));
-        }
+  constructor(session: DatabaseReference) {
+    super();
 
-        try {
-          await set(child(session, `versions/${version}`), {
-            clientID,
-            changes: JSON.stringify(changes),
-            eval: evalStrings,
-          });
+    this.session = session;
+  }
 
-          resolve(true);
-        } catch (e) {
-          // TODO: Catch errors other than permission denied?
-          resolve(false);
-        }
+  async pushUpdate(update: DocUpdate) {
+    let { version, clientID, changes, evaluations } = update;
+
+    let evalStrings: string[] | undefined;
+    if (evaluations) {
+      evalStrings = evaluations.map((v) => JSON.stringify(v));
+    }
+
+    try {
+      await set(child(this.session, `versions/${version}`), {
+        clientID,
+        changes: JSON.stringify(changes),
+        eval: evalStrings,
       });
-    },
 
+      return true;
+    } catch (e) {
+      // TODO: Catch errors other than permission denied?
+      return false;
+    }
+  }
+
+  getTidalVersion() {
+    return new Promise<string>(() => {});
+  }
+}
+
+/*export function getAPI(session: DatabaseReference): TextManagementAPI {
+  return {
     onUpdate: (version, callback) => {
       const onRemoteUpdate = (snapshot: DataSnapshot) => {
         let { changes, clientID, eval: evaluations } = snapshot.val();
@@ -76,4 +88,4 @@ export function getAPI(session: DatabaseReference): TextManagementAPI {
       return () => {};
     },
   };
-}
+}*/
