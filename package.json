@@ -1,38 +1,36 @@
 {
-  "name": "@management/text",
+  "name": "text-management",
   "version": "0.6.0",
   "workspaces": [
     "app/*",
     "packages/codemirror/*",
-    "packages/languages/*",
-    "packages/text-management"
+    "packages/languages/*"
   ],
   "alias": {
-    "@core/*": "./packages/text-management/src/$1"
+    "@core/*": "./core/$1"
   },
-  "private": "true",
-  "description": "Experimental livecode editor",
   "scripts": {
     "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",
-    "prepare-old": "npm run build-packages && parcel build packages/text-management",
-    "start:old": "node packages/text-management/dist/server/index.js",
     "build:desktop": "parcel build app/desktop/ --target main --target preload --target renderer",
     "start:desktop": "electron app/desktop",
-    "build": "",
-    "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web -w packages/text-management",
+    "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web",
     "clean": "find . -name node_modules -prune -o -name dist -type d -prune -exec rm -rf {} \\;",
     "clean-branches": "git fetch -p && for branch in $(git for-each-ref --format '%(refname) %(upstream:track)' refs/heads | awk '$2 == \"[gone]\" {sub(\"refs/heads/\", \"\", $1); print $1}'); do git branch -D $branch; done"
   },
+  "description": "Web-based editor for live coded music and visuals. Intended for use both as a stand-alone application, and as an example for further custom editor development.",
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/mindofmatthew/text.management#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mindofmatthew/text.management.git"
   },
-  "author": "Matthew Kaney",
-  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/mindofmatthew/text.management/issues"
   },
-  "homepage": "https://github.com/mindofmatthew/text.management#readme",
+  "files": [
+    "/dist"
+  ],
   "dependencies": {
     "@codemirror/collab": "^6.0.0",
     "@codemirror/commands": "^6.0.0",
@@ -40,13 +38,14 @@
     "@codemirror/language": "^6.0.0",
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
-    "@lezer/highlight": "^1.0.0"
+    "@lezer/highlight": "^1.0.0",
+    "commander": "^9.4.0",
+    "firebase": "^9.12.1"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.0",
     "@parcel/transformer-typescript-types": "^2.8.0",
     "parcel": "^2.8.0",
-    "process": "^0.11.10",
     "typescript": "^4.4.4"
   }
 }
