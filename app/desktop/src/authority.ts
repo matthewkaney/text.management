@@ -1,12 +1,47 @@
-import EventEmitter from "events";
-
 import { Text, ChangeSet } from "@codemirror/state";
 
-import { DocUpdate } from "@core/api";
+import { EventEmitter } from "@core/events";
+import { Doc, DocUpdate } from "@core/api";
 
-export class Authority extends EventEmitter {
+interface AuthorityEvents {
+  doc: Doc;
+  code: string;
+}
+
+export class Authority extends EventEmitter<AuthorityEvents> {
   versions: Omit<DocUpdate, "version">[] = [];
-  doc = Text.of([""]);
+  doc = Text.of(["hola"]);
+  name = "untitled";
+
+  constructor() {
+    super();
+
+    this.onListener["doc"] = (listener) => {
+      listener({ name: this.name, doc: Promise.resolve(this.doc.toJSON()) });
+    };
+  }
+
+  reload(path?: string) {
+    if (path) {
+      this.versions = [];
+      this.name = path;
+      this.doc = Text.of(["hello"]);
+
+      this.emit("doc", {
+        name: this.name,
+        doc: Promise.resolve(this.doc.toJSON()),
+      });
+    } else {
+      this.versions = [];
+      this.name = "untitled";
+      this.doc = Text.of(["heya"]);
+
+      this.emit("doc", {
+        name: this.name,
+        doc: Promise.resolve(this.doc.toJSON()),
+      });
+    }
+  }
 
   pushUpdate(update: DocUpdate) {
     let { version, ...updateData } = update;

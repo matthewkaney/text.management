@@ -1,3 +1,10 @@
+import { EventEmitter } from "./events";
+
+export interface Doc {
+  name: string;
+  doc: Promise<string[]>;
+}
+
 export interface DocUpdate {
   version: number;
   clientID: string;
@@ -11,19 +18,18 @@ export interface TerminalMessage {
   text: string;
 }
 
-export interface TextManagementAPI {
+export interface TextManagementEvents {
+  doc: Doc;
+}
+
+export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
   // Document editing API
-  pushUpdate: (update: DocUpdate) => Promise<boolean>;
+  abstract pushUpdate(update: DocUpdate): Promise<boolean>;
 
-  onUpdate: (
-    firstVersion: number,
-    callback: (update: DocUpdate) => void
-  ) => () => void;
-
-  getTidalVersion: () => Promise<string>;
+  abstract getTidalVersion(): Promise<string>;
 
   // Console messages
-  listenForConsole: (
+  abstract listenForConsole(
     callback: (message: TerminalMessage) => void
-  ) => () => void;
+  ): () => void;
 }

@@ -1,10 +1,10 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
+
+import { resolve } from "path";
 
 // @ts-ignore
 import squirrelStartup from "electron-squirrel-startup";
 if (squirrelStartup) app.quit();
-
-import { fileURLToPath } from "url";
 
 import fixPath from "fix-path";
 
@@ -13,6 +13,8 @@ fixPath();
 import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
 import { TerminalMessage } from "@core/api";
+
+import { getTemplate } from "./menu";
 
 interface Engine {
   process: GHCI;
@@ -23,16 +25,27 @@ const engineMap = new Map<number, Engine>();
 
 const createWindow = () => {
   const win = new BrowserWindow({
+    show: false,
     width: 800,
     height: 600,
     webPreferences: {
-      preload: fileURLToPath(new URL("preload.ts", import.meta.url)),
+      preload: resolve(app.getAppPath(), "dist/preload.js"),
     },
+  });
+
+  win.on("ready-to-show", () => {
+    win.show();
   });
 
   win.loadFile("./dist/renderer/index.html");
 
   let authority = new Authority();
+
+  authority.on("doc", (loadedDoc) => {
+    let { doc, ...docParams } = loadedDoc;
+    win.webContents.send("doc", docParams);
+    doc.then((content) => win.webContents.send("doc-content", content));
+  });
 
   let tidal = new GHCI();
 
@@ -78,16 +91,6 @@ ipcMain.handle("push-update", (event, update) => {
 
 import { dialog } from "electron";
 
-ipcMain.handle("open-file", (event) => {
-  let window = BrowserWindow.fromWebContents(event.sender);
-
-  if (window) {
-    return dialog.showOpenDialog(window, { properties: ["openFile"] });
-  } else {
-    return { cancelled: true };
-  }
-});
-
 ipcMain.handle("tidal-version", (event) => {
   let engine = engineMap.get(event.sender.id);
 
@@ -95,3 +98,21 @@ ipcMain.handle("tidal-version", (event) => {
     return engine.process.getVersion();
   }
 });
+
+async function open(window: BrowserWindow | undefined) {
+  if (window) {
+    let result = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+    });
+
+    if (result.canceled) return;
+
+    engineMap.get(window.webContents.id)?.authority.reload(result.filePaths[0]);
+  } else {
+    dialog.showOpenDialog({ properties: ["openFile"] });
+  }
+}
+
+let menuTemplate = getTemplate(open);
+
+Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));

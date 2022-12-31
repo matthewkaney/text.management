@@ -1,27 +1,40 @@
-import {
-  contextBridge,
-  ipcRenderer,
-  IpcRendererEvent,
-  OpenDialogOptions,
-} from "electron";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-import { TextManagementAPI, TerminalMessage } from "@core/api";
-
-interface FileAPI {
-  openFile: () => Promise<OpenDialogOptions>;
-}
+import { TextManagementAPI, TerminalMessage, DocUpdate, Doc } from "@core/api";
 
 // Electron implementation of Text.Management API
-const api: TextManagementAPI & FileAPI = {
-  pushUpdate: (update) => ipcRenderer.invoke("push-update", update),
+class ElectronAPI extends TextManagementAPI {
+  constructor() {
+    super();
 
-  onUpdate: (version, callback) => {
-    return () => {};
-  },
+    // Loaded doc
+    ipcRenderer.on("doc", (_, docParams) => {
+      let thisDoc = {
+        ...docParams,
+        doc: new Promise((resolve) => {
+          ipcRenderer.once("doc-content", (_, content) => {
+            resolve(content);
+          });
+        }),
+      };
 
-  getTidalVersion: () => ipcRenderer.invoke("tidal-version"),
+      this.onListener["doc"] = (listener) => {
+        listener(thisDoc);
+      };
 
-  listenForConsole: (callback) => {
+      this.emit("doc", thisDoc);
+    });
+  }
+
+  pushUpdate(update: DocUpdate) {
+    return ipcRenderer.invoke("push-update", update);
+  }
+
+  getTidalVersion() {
+    return ipcRenderer.invoke("tidal-version");
+  }
+
+  listenForConsole(callback: (message: TerminalMessage) => void) {
     const wrappedCallback = (_: IpcRendererEvent, message: TerminalMessage) => {
       callback(message);
     };
@@ -31,9 +44,14 @@ const api: TextManagementAPI & FileAPI = {
     return () => {
       ipcRenderer.off("console-message", wrappedCallback);
     };
-  },
+  }
+}
 
-  openFile: () => ipcRenderer.invoke("open-file"),
-};
+const api = new ElectronAPI();
 
-contextBridge.exposeInMainWorld("api", api);
+contextBridge.exposeInMainWorld("api", {
+  on: api.on.bind(api),
+  pushUpdate: api.pushUpdate.bind(api),
+  getTidalVersion: api.getTidalVersion.bind(api),
+  listenForConsole: api.listenForConsole.bind(api),
+});
