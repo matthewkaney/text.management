@@ -17,28 +17,28 @@ export function peer(api: TextManagementAPI, startVersion: number) {
       constructor(private view: EditorView) {
         this.view = view;
 
-        api.onUpdate(startVersion, (update) => {
-          let { version, clientID, changes, evaluations } = update;
+        // api.on(startVersion, (update) => {
+        //   let { version, clientID, changes, evaluations } = update;
 
-          changes = ChangeSet.fromJSON(changes);
+        //   changes = ChangeSet.fromJSON(changes);
 
-          // Ignore local updates
-          if (clientID === getClientID(this.view.state)) return;
+        //   // Ignore local updates
+        //   if (clientID === getClientID(this.view.state)) return;
 
-          let effects: StateEffect<any>[] = [];
+        //   let effects: StateEffect<any>[] = [];
 
-          if (evaluations) {
-            effects = (evaluations as any[])
-              .filter((args) => typeof args[0] === "number")
-              .map(([from, to]) => evalEffect.of({ from, to }));
-          }
+        //   if (evaluations) {
+        //     effects = (evaluations as any[])
+        //       .filter((args) => typeof args[0] === "number")
+        //       .map(([from, to]) => evalEffect.of({ from, to }));
+        //   }
 
-          this.applyUpdate(version, {
-            changes,
-            clientID,
-            effects,
-          });
-        });
+        //   this.applyUpdate(version, {
+        //     changes,
+        //     clientID,
+        //     effects,
+        //   });
+        // });
       }
 
       update(update: ViewUpdate) {

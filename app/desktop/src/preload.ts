@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-import { TextManagementAPI, TerminalMessage, DocUpdate, Doc } from "@core/api";
+import { TextManagementAPI, TerminalMessage, DocUpdate } from "@core/api";
 
 // Electron implementation of Text.Management API
 class ElectronAPI extends TextManagementAPI {
@@ -24,6 +24,11 @@ class ElectronAPI extends TextManagementAPI {
 
       this.emit("doc", thisDoc);
     });
+
+    // Terminal Messages
+    ipcRenderer.on("console-message", (_, message: TerminalMessage) => {
+      this.emit("consoleMessage", message);
+    });
   }
 
   pushUpdate(update: DocUpdate) {
@@ -33,18 +38,6 @@ class ElectronAPI extends TextManagementAPI {
   getTidalVersion() {
     return ipcRenderer.invoke("tidal-version");
   }
-
-  listenForConsole(callback: (message: TerminalMessage) => void) {
-    const wrappedCallback = (_: IpcRendererEvent, message: TerminalMessage) => {
-      callback(message);
-    };
-
-    ipcRenderer.on("console-message", wrappedCallback);
-
-    return () => {
-      ipcRenderer.off("console-message", wrappedCallback);
-    };
-  }
 }
 
 const api = new ElectronAPI();
@@ -53,5 +46,4 @@ contextBridge.exposeInMainWorld("api", {
   on: api.on.bind(api),
   pushUpdate: api.pushUpdate.bind(api),
   getTidalVersion: api.getTidalVersion.bind(api),
-  listenForConsole: api.listenForConsole.bind(api),
 });

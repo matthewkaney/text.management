@@ -12,7 +12,6 @@ fixPath();
 
 import { GHCI } from "@management/lang-tidal";
 import { Authority } from "./authority";
-import { TerminalMessage } from "@core/api";
 
 import { getTemplate } from "./menu";
 
@@ -41,7 +40,7 @@ const createWindow = () => {
 
   let authority = new Authority();
 
-  authority.on("doc", (loadedDoc) => {
+  let unDoc = authority.on("doc", (loadedDoc) => {
     let { doc, ...docParams } = loadedDoc;
     win.webContents.send("doc", docParams);
     doc.then((content) => win.webContents.send("doc-content", content));
@@ -49,18 +48,18 @@ const createWindow = () => {
 
   let tidal = new GHCI();
 
-  authority.on("code", (code) => {
+  let unCode = authority.on("code", (code) => {
     tidal.send(code);
   });
 
-  function dispatchMessage(m: TerminalMessage) {
+  let unMessage = tidal.on("message", (m) => {
     win.webContents.send("console-message", m);
-  }
-
-  tidal.on("message", dispatchMessage);
+  });
 
   win.on("closed", () => {
-    tidal.off("message", dispatchMessage);
+    unDoc();
+    unCode();
+    unMessage();
     tidal.close();
   });
 
@@ -99,7 +98,13 @@ ipcMain.handle("tidal-version", (event) => {
   }
 });
 
-async function open(window: BrowserWindow | undefined) {
+async function newFile(window?: BrowserWindow) {
+  if (window) {
+    engineMap.get(window.webContents.id)?.authority.newDoc();
+  }
+}
+
+async function openFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showOpenDialog(window, {
       properties: ["openFile"],
@@ -107,12 +112,18 @@ async function open(window: BrowserWindow | undefined) {
 
     if (result.canceled) return;
 
-    engineMap.get(window.webContents.id)?.authority.reload(result.filePaths[0]);
+    engineMap
+      .get(window.webContents.id)
+      ?.authority.loadDoc(result.filePaths[0]);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }
 }
 
-let menuTemplate = getTemplate(open);
+async function saveFile(window?: BrowserWindow) {}
+
+async function saveAsFile(window?: BrowserWindow) {}
+
+let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));

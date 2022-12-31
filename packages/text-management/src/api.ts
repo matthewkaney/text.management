@@ -20,6 +20,7 @@ export interface TerminalMessage {
 
 export interface TextManagementEvents {
   doc: Doc;
+  consoleMessage: TerminalMessage;
 }
 
 export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
@@ -27,9 +28,4 @@ export abstract class TextManagementAPI extends EventEmitter<TextManagementEvent
   abstract pushUpdate(update: DocUpdate): Promise<boolean>;
 
   abstract getTidalVersion(): Promise<string>;
-
-  // Console messages
-  abstract listenForConsole(
-    callback: (message: TerminalMessage) => void
-  ): () => void;
 }

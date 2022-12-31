@@ -37,12 +37,16 @@ export class Document {
     return this.doc.sliceString(from, to);
   }
 
-  private autosaveTimer?: number | string | NodeJS.Timeout;
+  toJSON() {
+    return this.doc.toJSON();
+  }
 
   replace(contents: string) {
     this.doc = Text.of(contents.split("\n"));
     this.save();
   }
+
+  private autosaveTimer?: number | string | NodeJS.Timeout;
 
   update(changes: ChangeSet) {
     this.doc = changes.apply(this.doc);

@@ -29,7 +29,7 @@ app.listen(1234, () => {
 });
 
 import { GHCI } from "../../../languages/tidal/ghci";
-import { Document } from "./document";
+import { Document } from "../document";
 
 const doc = Document.create(program.args[0]);
 const ghci = new GHCI();

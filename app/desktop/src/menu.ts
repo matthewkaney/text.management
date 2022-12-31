@@ -1,19 +1,30 @@
-import { app, BrowserWindow, Menu, MenuItemConstructorOptions } from "electron";
+import { app, BrowserWindow, MenuItemConstructorOptions } from "electron";
 
 const isMac = process.platform === "darwin";
 
+interface MenuActions {
+  newFile: (window?: BrowserWindow) => void;
+  openFile: (window?: BrowserWindow) => void;
+  saveFile: (window?: BrowserWindow) => void;
+  saveAsFile: (window?: BrowserWindow) => void;
+}
+
 export function getTemplate(
-  open: (window: BrowserWindow | undefined) => void
+  actions: MenuActions
 ): MenuItemConstructorOptions[] {
   let template: MenuItemConstructorOptions[] = [
     {
       role: "fileMenu",
       submenu: [
-        { label: "New", accelerator: "Ctrl+N" },
+        {
+          label: "New",
+          accelerator: "Ctrl+N",
+          click: (_, window) => actions.newFile(window),
+        },
         {
           label: "Open",
           accelerator: "Ctrl+O",
-          click: (_, window) => open(window),
+          click: (_, window) => actions.openFile(window),
         },
         { label: "Save", accelerator: "Ctrl+S" },
         { label: "Save As", accelerator: "Ctrl+Shift+S" },

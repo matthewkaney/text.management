@@ -3,7 +3,7 @@ import { ChangeSet } from "@codemirror/state";
 
 import { createSession, getSession, Session } from "../client/firebase/session";
 
-import { Document } from "./document";
+import { Document } from "../document";
 import { GHCI } from "../../../languages/tidal/ghci";
 
 export async function startReplClient(
