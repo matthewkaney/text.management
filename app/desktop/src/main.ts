@@ -41,9 +41,11 @@ const createWindow = () => {
   let authority = new Authority();
 
   let unDoc = authority.on("doc", (loadedDoc) => {
-    let { doc, ...docParams } = loadedDoc;
-    win.webContents.send("doc", docParams);
-    doc.then((content) => win.webContents.send("doc-content", content));
+    if (!win.isDestroyed()) {
+      let { doc, ...docParams } = loadedDoc;
+      win.webContents.send("doc", docParams);
+      doc.then((content) => win.webContents.send("doc-content", content));
+    }
   });
 
   let tidal = new GHCI();
@@ -53,7 +55,9 @@ const createWindow = () => {
   });
 
   let unMessage = tidal.on("message", (m) => {
-    win.webContents.send("console-message", m);
+    if (!win.isDestroyed()) {
+      win.webContents.send("console-message", m);
+    }
   });
 
   win.on("closed", () => {

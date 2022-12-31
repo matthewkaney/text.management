@@ -25,6 +25,9 @@
       "source": "src/preload.ts",
       "distDir": "dist",
       "context": "electron-main",
+      "sourceMap": {
+        "inline": true
+      },
       "includeNodeModules": {
         "electron": false
       }
