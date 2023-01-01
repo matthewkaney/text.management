@@ -12,6 +12,8 @@
   "scripts": {
     "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",
     "build:desktop": "parcel build app/desktop/ --target main --target preload --target renderer",
+    "start:web": "parcel app/web",
+    "build:web": "parcel build app/web",
     "start:desktop": "electron app/desktop",
     "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web",
     "clean": "find . -name node_modules -prune -o -name dist -type d -prune -exec rm -rf {} \\;",
