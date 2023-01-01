@@ -18,7 +18,11 @@ const defaultOpts: GHCIOptions = {
   customBootfiles: [],
 };
 
-export class GHCI extends Engine {
+interface GHCIEvents {
+  message: TerminalMessage;
+}
+
+export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
@@ -33,13 +37,11 @@ export class GHCI extends Engine {
     this.socket = this.initSocket();
     this.process = this.initProcess(opts);
 
-    this.on("newListener", (event, listener) => {
-      if (event === "message") {
-        for (let message of this.history) {
-          listener(message);
-        }
+    this.onListener["message"] = (listener) => {
+      for (let message of this.history) {
+        listener(message);
       }
-    });
+    };
   }
 
   private initSocket() {
@@ -49,9 +51,9 @@ export class GHCI extends Engine {
         resolve(socket);
       });
 
-      socket.on("message", (data) => {
-        this.emit("message", data);
-      });
+      // socket.on("message", (data) => {
+      //   this.emit("message", data);
+      // });
     });
   }
 

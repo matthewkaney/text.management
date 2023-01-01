@@ -1,28 +1,49 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-import { TextManagementAPI, TerminalMessage } from "@core/api";
+import { TextManagementAPI, TerminalMessage, DocUpdate } from "@core/api";
 
 // Electron implementation of Text.Management API
-const api: TextManagementAPI = {
-  pushUpdate: (update) => ipcRenderer.invoke("push-update", update),
+class ElectronAPI extends TextManagementAPI {
+  constructor() {
+    super();
 
-  onUpdate: (version, callback) => {
-    return () => {};
-  },
+    // Loaded doc
+    ipcRenderer.on("doc", (_, docParams) => {
+      let thisDoc = {
+        ...docParams,
+        doc: new Promise((resolve) => {
+          ipcRenderer.once("doc-content", (_, content) => {
+            resolve(content);
+          });
+        }),
+      };
 
-  getTidalVersion: () => ipcRenderer.invoke("tidal-version"),
+      this.onListener["doc"] = (listener) => {
+        listener(thisDoc);
+      };
 
-  listenForConsole: (callback) => {
-    const wrappedCallback = (_: IpcRendererEvent, message: TerminalMessage) => {
-      callback(message);
-    };
+      this.emit("doc", thisDoc);
+    });
 
-    ipcRenderer.on("console-message", wrappedCallback);
+    // Terminal Messages
+    ipcRenderer.on("console-message", (_, message: TerminalMessage) => {
+      this.emit("consoleMessage", message);
+    });
+  }
 
-    return () => {
-      ipcRenderer.off("console-message", wrappedCallback);
-    };
-  },
-};
+  pushUpdate(update: DocUpdate) {
+    return ipcRenderer.invoke("push-update", update);
+  }
 
-contextBridge.exposeInMainWorld("api", api);
+  getTidalVersion() {
+    return ipcRenderer.invoke("tidal-version");
+  }
+}
+
+const api = new ElectronAPI();
+
+contextBridge.exposeInMainWorld("api", {
+  on: api.on.bind(api),
+  pushUpdate: api.pushUpdate.bind(api),
+  getTidalVersion: api.getTidalVersion.bind(api),
+});

@@ -13,7 +13,7 @@ export function console(api: TextManagementAPI) {
   let initialConsole: ConsoleMessage[] = [];
 
   const consoleListener = ViewPlugin.define((view) => {
-    const unlisten = api.listenForConsole((message) => {
+    const unlisten = api.on("consoleMessage", (message) => {
       view.dispatch(sendToConsole(view.state, message));
     });
 

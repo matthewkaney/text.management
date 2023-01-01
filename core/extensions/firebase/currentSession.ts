@@ -1,4 +1,4 @@
-import { Session, getSession, createSession } from "./firebase/session";
+import { Session, getSession, createSession } from "./session";
 
 let sessionRef: Promise<Session>;
 let id: string;

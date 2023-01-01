@@ -1,6 +1,6 @@
-import EventEmitter from "events";
+import { EventEmitter } from "@core/events";
 
-export class Engine extends EventEmitter {
+export class Engine<T> extends EventEmitter<T> {
   constructor() {
     super();
   }
