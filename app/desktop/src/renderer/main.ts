@@ -1,7 +1,7 @@
 import { indentWithTab } from "@codemirror/commands";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
-import { basicSetup } from "@core/client/editor/basicSetup";
+import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
