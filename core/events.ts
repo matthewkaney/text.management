@@ -2,18 +2,26 @@ type EventMap = Record<string, any>;
 
 type EventKey<T extends EventMap> = string & keyof T;
 
-type EventHandler<E> = (value: E) => void;
+export type EventHandler<E> = (value: E) => void;
 
-type EventDisconnect = () => void;
+export type EventDisconnect = () => void;
 
 export class EventEmitter<T extends EventMap> {
   private listeners: {
     [E in keyof EventMap]?: EventHandler<EventMap[E]>[];
   } = {};
 
+  private properties: {
+    [E in keyof EventMap]?: EventMap[E];
+  };
+
   protected onListener: {
     [E in keyof EventMap]?: (event: EventHandler<EventMap[E]>) => void;
   } = {};
+
+  constructor(properties: { [E in keyof EventMap]?: EventMap[E] } = {}) {
+    this.properties = properties;
+  }
 
   on<E extends EventKey<T>>(
     event: E,
@@ -39,7 +47,10 @@ export class EventEmitter<T extends EventMap> {
     listeners.push(handler);
 
     return () => {
-      listeners.indexOf(handler);
+      let index = listeners.indexOf(handler);
+      if (index != -1) {
+        listeners.splice(index, 1);
+      }
     };
   }
 

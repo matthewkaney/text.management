@@ -1,6 +1,6 @@
 import { ChangeSet, Text } from "@codemirror/state";
 
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, rename } from "fs/promises";
 import { EventEmitter } from "./events";
 
 interface DocumentEvents {
@@ -25,7 +25,7 @@ export class Document extends EventEmitter<DocumentEvents> {
     }
   }
 
-  private path: string | undefined;
+  private path: string | null = null;
   private doc: Text;
 
   private _changed = true;
@@ -48,7 +48,7 @@ export class Document extends EventEmitter<DocumentEvents> {
       listener(this.changed);
     };
 
-    this.path = path;
+    this.path = path || null;
     this.doc = doc;
     this.changed = changed;
 
@@ -116,6 +116,18 @@ export class Document extends EventEmitter<DocumentEvents> {
     } else {
       this.writeRequest = true;
       write();
+    }
+  }
+
+  async move(path: string) {
+    if (this.path) {
+      await rename(this.path, path);
+    }
+
+    this.path = path;
+
+    if (this.changed) {
+      this.save();
     }
   }
 

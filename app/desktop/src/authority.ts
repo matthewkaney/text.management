@@ -1,3 +1,5 @@
+import { basename } from "path";
+
 import { Text, ChangeSet } from "@codemirror/state";
 
 import { EventEmitter } from "@core/events";
@@ -39,7 +41,7 @@ export class Authority extends EventEmitter<AuthorityEvents> {
 
   loadDoc(path: string) {
     this.versions = [];
-    this.name = path;
+    this.name = basename(path);
     this.doc = Document.create(path);
 
     this.emit("doc", {
