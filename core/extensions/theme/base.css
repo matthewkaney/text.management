@@ -18,34 +18,3 @@ body {
   width: 100%;
   height: 100%;
 }
-
-.tab-region {
-  padding: 0 2ch;
-  color: white;
-  font-family: monospace;
-  font-size: 18px;
-  line-height: 1.4;
-}
-
-.tab-region::before {
-  content: "";
-  width: 2ch;
-  position: absolute;
-  left: 0;
-  height: 1.4em;
-  background: #00000050;
-}
-
-.tab-region::after {
-  content: "";
-  width: 1000px;
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 1.4em;
-  background: #00000050;
-}
-
-.tab {
-  padding: 0 0.5ch;
-}

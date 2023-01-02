@@ -23,7 +23,7 @@ window.addEventListener("load", () => {
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new EditorLayout(parent);
-    layout.dom.appendChild(new SettingsPage().dom);
+    // layout.dom.appendChild(new SettingsPage().dom);
     let editor = new EditorView({
       state: EditorState.create({
         doc: Text.of([""]),

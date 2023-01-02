@@ -8,6 +8,7 @@ import { tidal } from "@management/lang-tidal/editor";
 import { EditorState, Text } from "@codemirror/state";
 
 import { TextManagementAPI } from "@core/api";
+import { EditorLayout } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
@@ -25,32 +26,28 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let editor: EditorView | undefined;
+    let layout = new EditorLayout(parent);
 
     api.on("doc", ({ name, doc }) => {
-      document.title = name;
-
-      if (editor) {
-        editor.destroy();
-      }
-
       doc.then((contents) => {
-        editor = new EditorView({
-          state: EditorState.create({
-            doc: Text.of(contents),
-            extensions: [
-              tidal(),
-              keymap.of([indentWithTab]),
-              evaluation(),
-              basicSetup,
-              oneDark,
-              electronConsole(api),
-              peer(api, 0),
-              toolbar(api),
-            ],
-          }),
-          parent,
-        });
+        layout.addTab(
+          name,
+          new EditorView({
+            state: EditorState.create({
+              doc: Text.of(contents),
+              extensions: [
+                tidal(),
+                keymap.of([indentWithTab]),
+                evaluation(),
+                basicSetup,
+                oneDark,
+                electronConsole(api),
+                peer(api, 0),
+                toolbar(api),
+              ],
+            }),
+          })
+        );
       });
     });
   }

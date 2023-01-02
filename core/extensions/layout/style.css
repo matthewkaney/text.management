@@ -1,0 +1,32 @@
+.tab-region {
+  padding: calc(1.5 * 12px) calc(1.5 * 12px) 0;
+  color: white;
+  font-family: Fira Code, monospace;
+  font-size: calc(1.2727 * 12px);
+  line-height: calc(2.5 * 12px);
+  border-bottom: solid 2px #00000050;
+  margin-bottom: -1px;
+  display: flex;
+}
+
+.tab {
+  margin-bottom: -1px;
+  padding: 0 calc(0.5 * 12px);
+  background: #00000050;
+  clip-path: inset(
+    var(--in-top, 0) var(--in-right, 0) var(--in-bottom, 1px) var(--in-left, 0)
+  );
+}
+
+.tab:not(.current) {
+  --in-top: 2px;
+  --in-bottom: 3px;
+}
+
+.tab:not(:first-child) {
+  --in-left: 1px;
+}
+
+.tab:not(:last-child) {
+  --in-right: 1px;
+}
