@@ -33,6 +33,10 @@ export class EventEmitter<T extends EventMap> {
       onListener(handler);
     }
 
+    if (event in this.properties) {
+      handler(this.properties[event] as T[E]);
+    }
+
     let listeners: typeof handler[];
 
     let maybeListeners = this.listeners[event];
@@ -58,5 +62,12 @@ export class EventEmitter<T extends EventMap> {
     (this.listeners[event] || []).forEach((handler) => {
       handler(value);
     });
+  }
+
+  protected set<E extends EventKey<T>>(event: E, value: T[E]) {
+    if (this.properties[event] !== value) {
+      this.properties[event] = value;
+      this.emit(event, value);
+    }
   }
 }

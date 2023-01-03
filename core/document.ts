@@ -35,18 +35,14 @@ export class Document extends EventEmitter<DocumentEvents> {
   }
 
   protected set changed(changed) {
-    this.emit("changed", changed);
+    this.set("changed", changed);
     this._changed = changed;
   }
 
   private autosaveTime = 1000;
 
   private constructor(doc: Text, path?: string, changed: boolean = true) {
-    super();
-
-    this.onListener["changed"] = (listener) => {
-      listener(this.changed);
-    };
+    super({ changed });
 
     this.path = path || null;
     this.doc = doc;

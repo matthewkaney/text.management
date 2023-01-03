@@ -1,6 +1,8 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
+import { contextBridge, ipcRenderer } from "electron";
 
 import { TextManagementAPI, TerminalMessage, DocUpdate } from "@core/api";
+
+import { FileMetadata } from "./doc";
 
 // Electron implementation of Text.Management API
 class ElectronAPI extends TextManagementAPI {
@@ -16,20 +18,6 @@ class ElectronAPI extends TextManagementAPI {
             resolve(content);
           });
         }),
-
-        // onChanged: createEmitter<boolean>((emit) => {
-        //   const dispatch = (_: any, value: any) => {
-        //     if (typeof value === "boolean") {
-        //       emit(value);
-        //     }
-        //   };
-
-        //   ipcRenderer.on("doc-changed", dispatch);
-
-        //   return () => {
-        //     ipcRenderer.off("doc-changed", dispatch);
-        //   };
-        // }),
       };
 
       this.onListener["doc"] = (listener) => {

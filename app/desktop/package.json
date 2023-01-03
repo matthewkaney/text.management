@@ -22,7 +22,7 @@
       "includeNodeModules": true
     },
     "preload": {
-      "source": "src/preload.ts",
+      "source": "src/preload/index.ts",
       "distDir": "dist",
       "context": "electron-main",
       "sourceMap": {
