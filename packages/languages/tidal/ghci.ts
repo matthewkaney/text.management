@@ -1,6 +1,10 @@
 import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
+// import { Duplex } from "stream";
+//@ts-ignore
+import { Duplex, compose } from "stream";
+import { once } from "events";
 import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
@@ -65,30 +69,15 @@ export class GHCI extends Engine {
       },
     });
 
-    child.stdin.write(':set prompt ""\n:set prompt-cont ""\n');
-
     const out = createInterface({ input: child.stdout });
     const err = createInterface({ input: child.stderr });
 
-    const loadFile = (path: string) =>
-      new Promise<void>((resolve) => {
-        const stream = createReadStream(path);
-
-        stream.on("close", () => {
-          // Verbose Logging
-          // console.log(`Loaded bootfile: ${path}`);
-          resolve();
-        });
-
-        stream.pipe(child.stdin, { end: false });
-      });
-
     if (defaultBoot) {
-      await loadFile(await this.defaultBootfile());
+      await this.loadFile(await this.defaultBootfile(), child);
     }
 
     for (let path of customBootfiles) {
-      await loadFile(path);
+      await this.loadFile(path, child);
     }
 
     out.on("line", (data) => {
@@ -106,7 +95,7 @@ export class GHCI extends Engine {
               let m: TerminalMessage = {
                 level: "info",
                 source: "Tidal",
-                text: outBatch.join("\n"),
+                text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
               };
 
               this.history.push(m);
@@ -158,7 +147,42 @@ export class GHCI extends Engine {
   }
 
   async send(text: string) {
+    text = text
+      .split(/(?<=\r?\n)/)
+      .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
+      .join();
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
+  }
+
+  async loadFile(path: string, child: ChildProcessWithoutNullStreams) {
+    async function* process(source: AsyncIterable<string>) {
+      let remainder = "";
+
+      for await (let chunk of source) {
+        for (let line of chunk.split(/(?<=\r?\n)/)) {
+          line = remainder + line;
+          if (line.match(/.*?\r?\n$/)) {
+            if (!line.match(/^\s*:set\s+prompt.*/)) {
+              yield line;
+            }
+            remainder = "";
+          } else {
+            remainder = line;
+          }
+        }
+      }
+    }
+
+    const fileStream = compose(
+      createReadStream(path).setEncoding("utf8"),
+      process
+    ) as Duplex;
+
+    let completion = once(fileStream, "close");
+
+    fileStream.pipe(child.stdin, { end: false });
+
+    await completion;
   }
 
   private version: Promise<string> | undefined;
