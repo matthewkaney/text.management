@@ -1,4 +1,4 @@
-name: Build Desktop Apps
+name: Release
 
 on:
   push:
@@ -47,7 +47,9 @@ jobs:
       run: npm run build:desktop
     - name: Make Desktop App
       run: npx electron-forge make app/desktop
+    - run: ls -R out/make
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
+        draft: true
         files: ${{ matrix.files }}
