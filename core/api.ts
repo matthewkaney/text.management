@@ -1,6 +1,7 @@
 import { EventEmitter } from "./events";
 
 export interface Doc {
+  id: string;
   name: string;
   doc: Promise<string[]>;
 }
@@ -19,8 +20,12 @@ export interface TerminalMessage {
 }
 
 export interface TextManagementEvents {
-  doc: Doc;
+  open: Doc;
+  close: { id: string };
+  save: { id: string; state: boolean };
+  rename: { id: string; name: boolean };
   consoleMessage: TerminalMessage;
+  code: string;
 }
 
 export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {

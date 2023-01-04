@@ -2,6 +2,7 @@
   "name": "@management/lang-tidal",
   "version": "1.0.0",
   "description": "",
+  "source": "ghci.ts",
   "main": "dist/ghci.js",
   "browser": "dist/editor.js",
   "targets": {

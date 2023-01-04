@@ -1,0 +1,30 @@
+name: Linux CI
+
+on: workflow_dispatch
+#   push:
+#     tags:
+#       - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+        
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Node
+      uses: actions/setup-node@v3.5.1
+      with:
+         node-version: 18
+         cache: npm
+    - run: npm ci
+    - name: Build Packages
+      run: npm run prepare-old
+    - name: Build Desktop App
+      run: npm run build:desktop
+    - name: Make Desktop App
+      run: npx electron-forge make app/desktop
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+          files: |
+                  out/make/deb/x64/*.deb

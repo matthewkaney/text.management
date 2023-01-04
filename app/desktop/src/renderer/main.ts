@@ -28,7 +28,9 @@ export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new EditorLayout(parent);
 
-    api.on("doc", ({ name, doc }) => {
+    api.on("open", ({ name, doc }) => {
+      document.title = name;
+
       doc.then((contents) => {
         layout.addTab(
           name,
