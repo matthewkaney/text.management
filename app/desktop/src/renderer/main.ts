@@ -27,7 +27,7 @@ export class Editor {
   constructor(parent: HTMLElement) {
     let editor: EditorView | undefined;
 
-    api.on("doc", ({ name, doc }) => {
+    api.on("open", ({ name, doc }) => {
       document.title = name;
 
       if (editor) {

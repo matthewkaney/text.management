@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { TextManagementAPI, TerminalMessage, DocUpdate } from "@core/api";
+import { TextManagementAPI, TerminalMessage, DocUpdate, Doc } from "@core/api";
 
 import { FileMetadata } from "./doc";
 
@@ -10,21 +10,22 @@ class ElectronAPI extends TextManagementAPI {
     super();
 
     // Loaded doc
-    ipcRenderer.on("doc", (_, docParams) => {
-      let thisDoc = {
-        ...docParams,
+    ipcRenderer.on("open", (_, { name, id }) => {
+      let thisDoc: Doc = {
+        name,
+        id,
         doc: new Promise((resolve) => {
-          ipcRenderer.once("doc-content", (_, content) => {
+          ipcRenderer.once(`doc-${id}`, (_, content) => {
             resolve(content);
           });
         }),
       };
 
-      this.onListener["doc"] = (listener) => {
+      this.onListener["open"] = (listener) => {
         listener(thisDoc);
       };
 
-      this.emit("doc", thisDoc);
+      this.emit("open", thisDoc);
     });
 
     // Terminal Messages

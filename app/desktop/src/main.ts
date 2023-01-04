@@ -28,7 +28,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: resolve(app.getAppPath(), "dist/preload.js"),
+      preload: resolve(app.getAppPath(), "dist/preload/index.js"),
     },
   });
 
@@ -40,11 +40,11 @@ const createWindow = () => {
 
   let authority = new Authority();
 
-  let unDoc = authority.on("doc", (loadedDoc) => {
+  let unOpen = authority.on("open", (loadedDoc) => {
     if (!win.isDestroyed()) {
-      let { doc, ...docParams } = loadedDoc;
-      win.webContents.send("doc", docParams);
-      doc.then((content) => win.webContents.send("doc-content", content));
+      let { id, name, doc } = loadedDoc;
+      win.webContents.send("open", { id, name });
+      doc.then((content) => win.webContents.send(`doc-${id}`, content));
     }
   });
 
@@ -61,7 +61,7 @@ const createWindow = () => {
   });
 
   win.on("closed", () => {
-    unDoc();
+    unOpen();
     unCode();
     unMessage();
     tidal.close();

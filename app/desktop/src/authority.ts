@@ -1,20 +1,15 @@
 import { basename } from "path";
 
-import { Text, ChangeSet } from "@codemirror/state";
+import { ChangeSet } from "@codemirror/state";
 
-import { EventEmitter } from "@core/events";
-import { Doc, DocUpdate } from "@core/api";
+import { DocUpdate, TextManagementAPI } from "@core/api";
 import { Document } from "@core/document";
 
-interface AuthorityEvents {
-  doc: Doc;
-  code: string;
-}
-
-export class Authority extends EventEmitter<AuthorityEvents> {
+export class Authority extends TextManagementAPI {
   private versions: Omit<DocUpdate, "version">[];
   private doc: Promise<Document>;
   private name;
+  private docID = 0;
 
   constructor() {
     super();
@@ -23,7 +18,7 @@ export class Authority extends EventEmitter<AuthorityEvents> {
     this.name = "untitled";
     this.doc = Document.create();
 
-    this.onListener["doc"] = (listener) => {
+    this.onListener["open"] = (listener) => {
       listener({ name: this.name, doc: this.doc.then((d) => d.toJSON()) });
     };
   }
@@ -33,7 +28,8 @@ export class Authority extends EventEmitter<AuthorityEvents> {
     this.name = "untitled";
     this.doc = Document.create();
 
-    this.emit("doc", {
+    this.emit("open", {
+      id: this.getID(),
       name: this.name,
       doc: this.doc.then((d) => d.toJSON()),
     });
@@ -44,7 +40,8 @@ export class Authority extends EventEmitter<AuthorityEvents> {
     this.name = basename(path);
     this.doc = Document.create(path);
 
-    this.emit("doc", {
+    this.emit("open", {
+      id: this.getID(),
       name: this.name,
       doc: this.doc.then((d) => d.toJSON()),
     });
@@ -73,5 +70,15 @@ export class Authority extends EventEmitter<AuthorityEvents> {
     } else {
       return false;
     }
+  }
+
+  private getID() {
+    let id = this.docID;
+    this.docID = id + 1;
+    return id.toString();
+  }
+
+  getTidalVersion(): Promise<string> {
+    return new Promise(() => {});
   }
 }
