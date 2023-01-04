@@ -26,13 +26,13 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-            files: out/make/deb/x64/*.deb
+            files: app/desktop/out/make/deb/x64/*.deb
           - os: macos-latest
             name: Mac OS
-            files: out/make/zip/darwin/x64/*.zip
+            files: app/desktop/out/make/zip/darwin/x64/*.zip
           - os: windows-latest
             name: Windows
-            files: out\make\squirrel.windows\x64\*.exe
+            files: app\desktop\out\make\squirrel.windows\x64\*.exe
         
     steps:
     - uses: actions/checkout@v3
@@ -47,9 +47,10 @@ jobs:
       run: npm run build:desktop
     - name: Make Desktop App
       run: npx electron-forge make app/desktop
-    - run: ls -R out/make
+    - run: ls -R app/desktop/out/make
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
+        fail_on_unmatched_files: true
         files: ${{ matrix.files }}
