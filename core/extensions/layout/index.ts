@@ -9,21 +9,24 @@ export class EditorLayout {
   }
 
   private tabRegion = new TabRegion();
-  private child: EditorView | null = null;
+  private children: EditorView[] = [];
+  private current: number | null = null;
 
   constructor(parent: HTMLElement) {
+    this.dom.classList.add("editor-layout");
     this.dom.appendChild(this.tabRegion.dom);
 
     parent.appendChild(this.dom);
   }
 
   addTab(name: string, tab: EditorView) {
-    if (this.child) {
-      this.child.destroy();
+    if (typeof this.current === "number") {
+      this.dom.removeChild(this.children[this.current].dom);
     }
 
-    this.child = tab;
+    this.children.push(tab);
     this.dom.appendChild(tab.dom);
+    this.current = this.children.length - 1;
     this.tabRegion.addTab(name);
   }
 }
@@ -31,7 +34,7 @@ export class EditorLayout {
 class TabRegion {
   dom: HTMLDivElement;
 
-  private tab: Tab | null = null;
+  private tabs: Tab[] = [];
 
   constructor() {
     this.dom = document.createElement("div");
@@ -39,23 +42,34 @@ class TabRegion {
   }
 
   addTab(name: string) {
-    if (this.tab) {
-      this.dom.removeChild(this.tab.dom);
-      this.tab = null;
+    if (this.tabs.length) {
+      this.tabs.forEach((t) => (t.current = false));
     }
 
-    this.tab = new Tab(name, true);
-    this.dom.appendChild(this.tab.dom);
+    let tab = new Tab(name, true);
+    this.tabs.push(tab);
+    this.dom.appendChild(tab.dom);
   }
 }
 
 class Tab {
   dom: HTMLDivElement;
 
+  private _current = false;
+
+  get current() {
+    return this._current;
+  }
+
+  set current(value) {
+    this.dom.classList.toggle("current", value);
+    this._current = value;
+  }
+
   constructor(label: string, current = false) {
     this.dom = document.createElement("div");
     this.dom.innerText = label;
-    if (current) this.dom.classList.add("current");
     this.dom.classList.add("tab");
+    this.current = current;
   }
 }
