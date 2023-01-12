@@ -5,6 +5,8 @@ import { tags as t } from "@lezer/highlight";
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
+const col = (name: string) => `var(--col-${name})`;
+
 const haze = "#00000050",
   chalky = "#e5c07b",
   coral = "#e06c75",
@@ -103,20 +105,21 @@ export const layoutTheme = EditorView.theme({
 export const oneDarkTheme = EditorView.theme(
   {
     "&": {
-      color: "#fff",
+      color: col("text"),
       "& ::selection": { backgroundColor: selection },
       caretColor: cursor,
-      fontFamily: "Fira Code, monospace",
+      fontFamily: "inherit",
     },
 
     ".cm-content": { padding: 0 },
 
     "&.cm-editor.cm-focused": { outline: "none" },
     "&.cm-focused .cm-cursor": {
-      borderLeftColor: cursor,
+      borderLeftColor: col("text"),
       borderLeftWidth: "2px",
       marginLeft: "-1px",
     },
+
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: selection,
     },
@@ -127,7 +130,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-line": {
-      backgroundColor: haze,
+      backgroundColor: col("bg-overlay"),
     },
 
     ".cm-searchMatch": {
@@ -147,7 +150,7 @@ export const oneDarkTheme = EditorView.theme(
 
     ".cm-gutters": {
       backgroundColor: haze,
-      color: "white",
+      color: col("text"),
       border: "none",
     },
 
@@ -200,10 +203,10 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-console-message-info": {
-      backgroundColor: haze,
+      backgroundColor: col("bg-overlay"),
     },
     ".cm-console-message-info .cm-console-message-source": {
-      color: "#FFFFFFAA",
+      color: col("text-soft"),
     },
 
     ".cm-console-message-warn, .cm-console-message-error": {

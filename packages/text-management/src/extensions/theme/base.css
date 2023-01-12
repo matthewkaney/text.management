@@ -10,7 +10,7 @@ body {
 }
 
 body {
-  background-color: #35312f;
+  background-color: var(--col-bg);
   margin: 0;
 }
 
@@ -19,11 +19,20 @@ body {
   height: 100%;
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --col-bg: #dad7d4; 
+    --col-bg-overlay: #ffffff4C; /* 30% opacity */
+    --col-text: #24211f;
+    --col-text-soft: #4f4a44;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --col-bg: #0e0d0c; 
-    --col-bg-overlay: #eceae933; /* 20% opacity */
+    --col-bg-overlay: #00000033; /* 20% opacity */
     --col-text: #eceae9;
-    --col-text-soft: #b2aba8;
+    --col-text-soft: #b5aea8;
   }
 }
