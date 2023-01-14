@@ -1,10 +1,10 @@
-type EventMap = Record<string, any>;
+export type EventMap = Record<string, any>;
 
 type EventKey<T extends EventMap> = string & keyof T;
 
 export type EventHandler<E> = (value: E) => void;
-
 export type EventDisconnect = () => void;
+export type EventListener<E> = (handler: EventHandler<E>) => EventDisconnect;
 
 export class EventEmitter<T extends EventMap> {
   private listeners: {

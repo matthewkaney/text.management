@@ -1,9 +1,24 @@
+import { BehaviorSubject, ReplaySubject } from "rxjs";
+
+import { Text } from "@codemirror/state";
+
 import { EventEmitter } from "./events";
 
+export interface DocumentContent {
+  initialVersion: number;
+  initialText: Text;
+  updates$: ReplaySubject<DocUpdate>;
+}
+
 export interface Doc {
-  id: string;
-  name: string;
-  doc: Promise<string[]>;
+  name$: BehaviorSubject<string>;
+  snapshot: Promise<DocumentContent>;
+  pushUpdate(update: DocUpdate): Promise<boolean>;
+}
+
+export interface FileDoc extends Doc {
+  saveState$: BehaviorSubject<boolean>;
+  path$: BehaviorSubject<string | null>;
 }
 
 export interface DocUpdate {
@@ -19,18 +34,18 @@ export interface TerminalMessage {
   text: string;
 }
 
+export interface TabContent {
+  id: string;
+  doc: Doc;
+}
+
 export interface TextManagementEvents {
-  open: Doc;
+  open: TabContent;
   close: { id: string };
-  save: { id: string; state: boolean };
-  rename: { id: string; name: boolean };
   consoleMessage: TerminalMessage;
   code: string;
 }
 
 export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
-  // Document editing API
-  abstract pushUpdate(update: DocUpdate): Promise<boolean>;
-
   abstract getTidalVersion(): Promise<string>;
 }

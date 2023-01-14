@@ -26,8 +26,16 @@ export function getTemplate(
           accelerator: "Ctrl+O",
           click: (_, window) => actions.openFile(window),
         },
-        { label: "Save", accelerator: "Ctrl+S" },
-        { label: "Save As", accelerator: "Ctrl+Shift+S" },
+        {
+          label: "Save",
+          accelerator: "Ctrl+S",
+          click: (_, window) => actions.saveFile(window),
+        },
+        {
+          label: "Save As",
+          accelerator: "Ctrl+Shift+S",
+          click: (_, window) => actions.saveAsFile(window),
+        },
         { type: "separator" },
         { role: isMac ? "close" : "quit" },
       ],

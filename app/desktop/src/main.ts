@@ -22,6 +22,8 @@ interface Engine {
 
 const engineMap = new Map<number, Engine>();
 
+const authority = new Authority();
+
 const createWindow = () => {
   const win = new BrowserWindow({
     show: false,
@@ -36,17 +38,48 @@ const createWindow = () => {
     win.show();
   });
 
-  win.loadFile("./dist/renderer/index.html");
-
-  let authority = new Authority();
-
-  let unOpen = authority.on("open", (loadedDoc) => {
+  function send(channel: string, ...args: any[]) {
     if (!win.isDestroyed()) {
-      let { id, name, doc } = loadedDoc;
-      win.webContents.send("open", { id, name });
-      doc.then((content) => win.webContents.send(`doc-${id}`, content));
+      win.webContents.send(channel, ...args);
     }
+  }
+
+  win.webContents.ipc.once("api-ready", () => {
+    let unOpen = authority.on("open", ({ id, doc }) => {
+      win.webContents.ipc.handle(
+        `doc-${id}-push-update`,
+        (_, update: DocUpdate) => authority.doc.pushUpdate(update)
+      );
+
+      let { name$, snapshot } = doc;
+
+      send("open", id, name$.value);
+
+      name$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-name`, value);
+        },
+      });
+
+      snapshot.then(({ initialText, initialVersion, updates$ }) => {
+        send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
+
+        updates$.subscribe({
+          next: (update) => {
+            send(`doc-${id}-update`, update);
+          },
+        });
+      });
+    });
+
+    let unClose = authority.on("close", ({ id }) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("close", { id });
+      }
+    });
   });
+
+  win.loadFile("./dist/renderer/index.html");
 
   let tidal = new GHCI();
 
@@ -61,7 +94,8 @@ const createWindow = () => {
   });
 
   win.on("closed", () => {
-    unOpen();
+    // unOpen();
+    // unClose();
     unCode();
     unMessage();
     tidal.close();
@@ -82,17 +116,8 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-ipcMain.handle("push-update", (event, update) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.authority.pushUpdate(update);
-  } else {
-    return false;
-  }
-});
-
 import { dialog } from "electron";
+import { DocUpdate } from "@core/api";
 
 ipcMain.handle("tidal-version", (event) => {
   let engine = engineMap.get(event.sender.id);
@@ -104,7 +129,7 @@ ipcMain.handle("tidal-version", (event) => {
 
 async function newFile(window?: BrowserWindow) {
   if (window) {
-    engineMap.get(window.webContents.id)?.authority.newDoc();
+    engineMap.get(window.webContents.id)?.authority.loadDoc();
   }
 }
 
@@ -124,9 +149,23 @@ async function openFile(window?: BrowserWindow) {
   }
 }
 
-async function saveFile(window?: BrowserWindow) {}
+async function saveFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
 
-async function saveAsFile(window?: BrowserWindow) {}
+    // engineMap.get(window.webContents.id)?.authority.saveDoc();
+  }
+}
+
+async function saveAsFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
+
+    if (result.canceled || !result.filePath) return;
+
+    // engineMap.get(window.webContents.id)?.authority.saveAsDoc(result.filePath);
+  }
+}
 
 let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
 

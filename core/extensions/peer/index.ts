@@ -9,9 +9,9 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { TextManagementAPI } from "@core/api";
+import { Doc } from "@core/api";
 
-export function peer(api: TextManagementAPI, startVersion: number) {
+export function peer(api: Doc, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
       constructor(private view: EditorView) {
