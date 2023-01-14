@@ -9,9 +9,9 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { TextManagementAPI } from "@core/api";
+import { Document } from "@core/api";
 
-export function peer(api: TextManagementAPI, startVersion: number) {
+export function peer(doc: Document, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
       constructor(private view: EditorView) {
@@ -64,7 +64,7 @@ export function peer(api: TextManagementAPI, startVersion: number) {
             e.is(evalEffect) ? [e.value.from, e.value.to] : [e.value.method]
           );
 
-        let success = await api.pushUpdate({
+        let success = await doc.pushUpdate({
           version,
           changes: changes.toJSON(),
           clientID,

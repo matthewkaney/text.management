@@ -5,18 +5,14 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { EditorState, Text } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 
-import { TextManagementAPI } from "@core/api";
 import { EditorLayout } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
-const { api } = window as Window &
-  typeof globalThis & {
-    api: TextManagementAPI;
-  };
+import { api } from "./api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -28,15 +24,18 @@ export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new EditorLayout(parent);
 
-    api.on("open", ({ name, doc }) => {
-      document.title = name;
+    api.on("open", ({ tab }) => {
+      console.log("THING OPENED!");
+      // document.title = tab.name$.value;
 
-      doc.then((contents) => {
+      tab.content.then((content) => {
+        let { initialText, initialVersion } = content;
+
         layout.addTab(
-          name,
+          tab.name$.value,
           new EditorView({
             state: EditorState.create({
-              doc: Text.of(contents),
+              doc: initialText,
               extensions: [
                 tidal(),
                 keymap.of([indentWithTab]),
@@ -44,7 +43,7 @@ export class Editor {
                 basicSetup,
                 oneDark,
                 electronConsole(api),
-                peer(api, 0),
+                peer(content, initialVersion),
                 toolbar(api),
               ],
             }),

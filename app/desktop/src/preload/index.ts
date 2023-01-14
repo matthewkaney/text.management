@@ -1,52 +1,55 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { TextManagementAPI, TerminalMessage, DocUpdate, Doc } from "@core/api";
+import { TerminalMessage, DocumentUpdate } from "@core/api";
 
-import { FileMetadata } from "./doc";
+import { ProxyAPI } from "./proxyAPI";
 
-// Electron implementation of Text.Management API
-class ElectronAPI extends TextManagementAPI {
-  constructor() {
-    super();
+let proxied = false;
 
-    // Loaded doc
-    ipcRenderer.on("open", (_, { name, id }) => {
-      let thisDoc: Doc = {
-        name,
-        id,
-        doc: new Promise((resolve) => {
-          ipcRenderer.once(`doc-${id}`, (_, content) => {
-            resolve(content);
-          });
-        }),
-      };
+function proxyAPI(api: ProxyAPI) {
+  if (proxied) throw Error("Trying to proxy API twice");
 
-      this.onListener["open"] = (listener) => {
-        listener(thisDoc);
-      };
+  let { onOpen, onClose, onConsoleMessage, onTidalVersion } = api;
 
-      this.emit("open", thisDoc);
+  ipcRenderer.on("open", (_, id: number, name: string) => {
+    const pushUpdate = (update: DocumentUpdate) =>
+      ipcRenderer.invoke(`doc-${id}-push-update`, update);
+
+    let { onContent, onName, onUpdate } = onOpen({ id, name });
+
+    ipcRenderer.on(
+      `doc-${id}-content`,
+      (_, initialText: string[], initialVersion: number) => {
+        onContent({ initialText, initialVersion, pushUpdate });
+      }
+    );
+
+    ipcRenderer.on(`doc-${id}-name`, (_, name: string) => {
+      onName(name);
     });
 
-    // Terminal Messages
-    ipcRenderer.on("console-message", (_, message: TerminalMessage) => {
-      this.emit("consoleMessage", message);
+    ipcRenderer.on(`doc-${id}-update`, (_, update: DocumentUpdate) => {
+      onUpdate(update);
     });
-  }
+  });
 
-  pushUpdate(update: DocUpdate) {
-    return ipcRenderer.invoke("push-update", update);
-  }
+  ipcRenderer.on("close", (_, id: number) => {
+    ipcRenderer.removeAllListeners(`doc-${id}-content`);
+    ipcRenderer.removeAllListeners(`doc-${id}-name`);
+    ipcRenderer.removeAllListeners(`doc-${id}-update`);
+    onClose(id);
+  });
 
-  getTidalVersion() {
-    return ipcRenderer.invoke("tidal-version");
-  }
+  ipcRenderer.on("console-message", (_, message: TerminalMessage) => {
+    onConsoleMessage(message);
+  });
+
+  ipcRenderer.invoke("tidal-version").then((version: string) => {
+    onTidalVersion(version);
+  });
+
+  proxied = true;
+  ipcRenderer.send("api-ready");
 }
 
-const api = new ElectronAPI();
-
-contextBridge.exposeInMainWorld("api", {
-  on: api.on.bind(api),
-  pushUpdate: api.pushUpdate.bind(api),
-  getTidalVersion: api.getTidalVersion.bind(api),
-});
+contextBridge.exposeInMainWorld("proxyAPI", proxyAPI);

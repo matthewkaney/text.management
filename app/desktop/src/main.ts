@@ -15,12 +15,11 @@ import { Authority } from "./authority";
 
 import { getTemplate } from "./menu";
 
-interface Engine {
-  process: GHCI;
-  authority: Authority;
-}
+import { DocumentUpdate } from "@core/api";
 
-const engineMap = new Map<number, Engine>();
+const authority = new Authority();
+
+const tidal = new GHCI();
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -36,19 +35,50 @@ const createWindow = () => {
     win.show();
   });
 
-  win.loadFile("./dist/renderer/index.html");
-
-  let authority = new Authority();
-
-  let unOpen = authority.on("open", (loadedDoc) => {
+  function send(channel: string, ...args: any[]) {
     if (!win.isDestroyed()) {
-      let { id, name, doc } = loadedDoc;
-      win.webContents.send("open", { id, name });
-      doc.then((content) => win.webContents.send(`doc-${id}`, content));
+      win.webContents.send(channel, ...args);
     }
+  }
+
+  win.webContents.ipc.once("api-ready", () => {
+    let unOpen = authority.on("open", ({ id, tab }) => {
+      let { name$, content } = tab;
+
+      send("open", id, name$.value);
+
+      name$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-name`, value);
+        },
+      });
+
+      content.then((content) => {
+        win.webContents.ipc.handle(
+          `doc-${id}-push-update`,
+          (_, update: DocumentUpdate) => content.pushUpdate(update)
+        );
+
+        let { initialText, initialVersion, updates$ } = content;
+
+        send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
+
+        updates$.subscribe({
+          next: (update) => {
+            send(`doc-${id}-update`, update);
+          },
+        });
+      });
+    });
+
+    let unClose = authority.on("close", ({ id }) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("close", { id });
+      }
+    });
   });
 
-  let tidal = new GHCI();
+  win.loadFile("./dist/renderer/index.html");
 
   let unCode = authority.on("code", (code) => {
     tidal.send(code);
@@ -61,13 +91,12 @@ const createWindow = () => {
   });
 
   win.on("closed", () => {
-    unOpen();
+    // unOpen();
+    // unClose();
     unCode();
     unMessage();
     tidal.close();
   });
-
-  engineMap.set(win.webContents.id, { process: tidal, authority });
 };
 
 app.whenReady().then(() => {
@@ -82,30 +111,14 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-ipcMain.handle("push-update", (event, update) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.authority.pushUpdate(update);
-  } else {
-    return false;
-  }
-});
-
 import { dialog } from "electron";
 
 ipcMain.handle("tidal-version", (event) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.process.getVersion();
-  }
+  return tidal.getVersion();
 });
 
 async function newFile(window?: BrowserWindow) {
-  if (window) {
-    engineMap.get(window.webContents.id)?.authority.newDoc();
-  }
+  authority.loadDoc();
 }
 
 async function openFile(window?: BrowserWindow) {
@@ -116,17 +129,29 @@ async function openFile(window?: BrowserWindow) {
 
     if (result.canceled) return;
 
-    engineMap
-      .get(window.webContents.id)
-      ?.authority.loadDoc(result.filePaths[0]);
+    authority.loadDoc(result.filePaths[0]);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }
 }
 
-async function saveFile(window?: BrowserWindow) {}
+async function saveFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
 
-async function saveAsFile(window?: BrowserWindow) {}
+    // engineMap.get(window.webContents.id)?.authority.saveDoc();
+  }
+}
+
+async function saveAsFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
+
+    if (result.canceled || !result.filePath) return;
+
+    // engineMap.get(window.webContents.id)?.authority.saveAsDoc(result.filePath);
+  }
+}
 
 let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
 
