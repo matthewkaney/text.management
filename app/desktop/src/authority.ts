@@ -1,7 +1,7 @@
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
 
-import { BehaviorSubject, ReplaySubject, scan } from "rxjs";
+import { BehaviorSubject, ReplaySubject, scan, tap, debounceTime } from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
@@ -53,12 +53,90 @@ export class LocalDocument implements Document {
   }
 }
 
+export class FileDocument extends LocalDocument {
+  static async open(path?: string) {
+    let initialText: Text | undefined;
+    let saved = false;
+
+    if (path) {
+      try {
+        let contents = await readFile(path, { encoding: "utf-8" });
+        initialText = Text.of(contents.split(/\r?\n/));
+        saved = true;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw err;
+        }
+      }
+    }
+
+    return new FileDocument(saved, initialText, path);
+  }
+
+  public saveState$: BehaviorSubject<boolean>;
+  public path: string | null;
+
+  private constructor(saved: boolean, initialText?: Text, path?: string) {
+    super(initialText);
+
+    this.saveState$ = new BehaviorSubject(saved);
+    this.path = path || null;
+
+    this.watch();
+  }
+
+  private watching = false;
+
+  private watch() {
+    const path = this.path;
+
+    if (path && !this.watching) {
+      this.watching = true;
+
+      let lastSaved = this.saveState$.value ? this.initialText : undefined;
+      let pendingSave: Text | undefined;
+
+      const write = async (nextSave: Text) => {
+        // There's already a save in progress
+        // Mark this one as pending and move on
+        if (pendingSave) {
+          pendingSave = nextSave;
+          return;
+        }
+
+        while (!pendingSave || !pendingSave.eq(nextSave)) {
+          pendingSave = nextSave;
+          await writeFile(path, nextSave.sliceString(0));
+          lastSaved = nextSave;
+        }
+
+        pendingSave = undefined;
+      };
+
+      this.text$
+        .pipe(
+          tap((nextSave) => {
+            this.saveState$.next(!lastSaved || !nextSave.eq(lastSaved));
+          }),
+          debounceTime(1000)
+        )
+        .subscribe({
+          next: (nextSave) => {
+            if (!lastSaved || !nextSave.eq(lastSaved)) {
+              write(nextSave);
+            }
+          },
+        });
+    }
+  }
+}
+
 export class DesktopTab implements Tab {
   saveState$ = new BehaviorSubject(false);
   path$: BehaviorSubject<string | null>;
   name$: BehaviorSubject<string>;
 
-  private document: Promise<Document>;
+  private document: Promise<FileDocument>;
 
   get content() {
     return this.document;
@@ -68,7 +146,7 @@ export class DesktopTab implements Tab {
     this.path$ = new BehaviorSubject(path || null);
     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
 
-    this.document = loadFile(path);
+    this.document = FileDocument.open(path);
 
     //   this.versions.push(updateData);
     //   let changeSet = ChangeSet.fromJSON(update.changes);
@@ -90,30 +168,13 @@ export class DesktopTab implements Tab {
     // }
   }
 
-  async destroy() {}
-}
-
-async function loadFile(path?: string): Promise<Document> {
-  let initialVersion = 0;
-  let initialText: Text;
-  let updateList: Omit<DocumentUpdate, "version">[] = [];
-
-  if (path) {
-    try {
-      let contents = await readFile(path, { encoding: "utf-8" });
-      initialText = Text.of(contents.split(/\r?\n/));
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-        initialText = Text.of([""]);
-      } else {
-        throw err;
-      }
-    }
-  } else {
-    initialText = Text.of([""]);
+  async destroy() {
+    this.path$.complete();
+    this.name$.complete();
+    this.document.then((doc) => {
+      doc.destroy();
+    });
   }
-
-  return new LocalDocument(initialText, initialVersion, updateList);
 }
 
 export class Authority extends TextManagementAPI {
@@ -133,6 +194,8 @@ export class Authority extends TextManagementAPI {
 
   loadDoc(path?: string) {
     this.emit("close", { id: this.id });
+
+    this.tab.destroy();
 
     this.tab = new DesktopTab(path);
     this.id = this.getID();
