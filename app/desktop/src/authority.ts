@@ -110,13 +110,14 @@ export class FileDocument extends LocalDocument {
           lastSaved = nextSave;
         }
 
+        this.saveState$.next(true);
         pendingSave = undefined;
       };
 
       this.text$
         .pipe(
           tap((nextSave) => {
-            this.saveState$.next(!lastSaved || !nextSave.eq(lastSaved));
+            this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
           }),
           debounceTime(1000)
         )
@@ -132,7 +133,7 @@ export class FileDocument extends LocalDocument {
 }
 
 export class DesktopTab implements Tab {
-  saveState$ = new BehaviorSubject(false);
+  saveState$: BehaviorSubject<boolean>;
   path$: BehaviorSubject<string | null>;
   name$: BehaviorSubject<string>;
 
@@ -143,10 +144,15 @@ export class DesktopTab implements Tab {
   }
 
   constructor(path?: string) {
+    this.saveState$ = new BehaviorSubject(!!path);
     this.path$ = new BehaviorSubject(path || null);
     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
 
     this.document = FileDocument.open(path);
+
+    this.document.then(({ saveState$ }) => {
+      saveState$.subscribe(this.saveState$);
+    });
 
     //   this.versions.push(updateData);
     //   let changeSet = ChangeSet.fromJSON(update.changes);

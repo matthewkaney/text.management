@@ -11,7 +11,7 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Authority } from "./authority";
+import { Authority, DesktopTab } from "./authority";
 
 import { getTemplate } from "./menu";
 
@@ -43,13 +43,19 @@ const createWindow = () => {
 
   win.webContents.ipc.once("api-ready", () => {
     let unOpen = authority.on("open", ({ id, tab }) => {
-      let { name$, content } = tab;
+      let { name$, saveState$, content } = tab as DesktopTab;
 
-      send("open", id, name$.value);
+      send("open", id, name$.value, saveState$.value);
 
       name$.subscribe({
         next: (value) => {
           send(`doc-${id}-name`, value);
+        },
+      });
+
+      saveState$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-saved`, value);
         },
       });
 
@@ -113,7 +119,7 @@ app.on("window-all-closed", () => {
 
 import { dialog } from "electron";
 
-ipcMain.handle("tidal-version", (event) => {
+ipcMain.handle("tidal-version", () => {
   return tidal.getVersion();
 });
 

@@ -7,6 +7,7 @@ export interface ProxyAPI {
     {
       id: number;
       name: string;
+      saveState: boolean;
     },
     {
       onName: Handler<string, void>;
@@ -19,6 +20,7 @@ export interface ProxyAPI {
         void
       >;
       onUpdate: Handler<DocumentUpdate, void>;
+      onSaveState: Handler<boolean, void>;
     }
   >;
 

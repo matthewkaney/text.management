@@ -11,7 +11,7 @@ import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
-import { api } from "./api";
+import { ElectronTab, api } from "./api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -24,8 +24,18 @@ export class Editor {
     let editor: EditorView | undefined;
 
     api.on("open", ({ tab }) => {
-      console.log("THING OPENED!");
-      // document.title = tab.name$.value;
+      let name = tab.name$.value;
+      document.title = name;
+
+      if (tab instanceof ElectronTab) {
+        tab.content.then((content) => {
+          content.saveState$.subscribe({
+            next: (saved) => {
+              document.title = name + (saved ? "" : "*");
+            },
+          });
+        });
+      }
 
       if (editor) {
         editor.destroy();

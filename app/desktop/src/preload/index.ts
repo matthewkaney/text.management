@@ -11,11 +11,15 @@ function proxyAPI(api: ProxyAPI) {
 
   let { onOpen, onClose, onConsoleMessage, onTidalVersion } = api;
 
-  ipcRenderer.on("open", (_, id: number, name: string) => {
+  ipcRenderer.on("open", (_, id: number, name: string, saveState: boolean) => {
     const pushUpdate = (update: DocumentUpdate) =>
       ipcRenderer.invoke(`doc-${id}-push-update`, update);
 
-    let { onContent, onName, onUpdate } = onOpen({ id, name });
+    let { onContent, onName, onUpdate, onSaveState } = onOpen({
+      id,
+      name,
+      saveState,
+    });
 
     ipcRenderer.on(
       `doc-${id}-content`,
@@ -30,6 +34,10 @@ function proxyAPI(api: ProxyAPI) {
 
     ipcRenderer.on(`doc-${id}-update`, (_, update: DocumentUpdate) => {
       onUpdate(update);
+    });
+
+    ipcRenderer.on(`doc-${id}-saved`, (_, saveState: boolean) => {
+      onSaveState(saveState);
     });
   });
 
