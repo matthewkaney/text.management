@@ -18,22 +18,22 @@ export function getTemplate(
       submenu: [
         {
           label: "New",
-          accelerator: "Ctrl+N",
+          accelerator: "CommandOrControl+N",
           click: (_, window) => actions.newFile(window),
         },
         {
-          label: "Open",
-          accelerator: "Ctrl+O",
+          label: "Open...",
+          accelerator: "CommandOrControl+O",
           click: (_, window) => actions.openFile(window),
         },
         {
           label: "Save",
-          accelerator: "Ctrl+S",
+          accelerator: "CommandOrControl+S",
           click: (_, window) => actions.saveFile(window),
         },
         {
-          label: "Save As",
-          accelerator: "Ctrl+Shift+S",
+          label: "Save As...",
+          accelerator: "CommandOrControl+Shift+S",
           click: (_, window) => actions.saveAsFile(window),
         },
         { type: "separator" },
