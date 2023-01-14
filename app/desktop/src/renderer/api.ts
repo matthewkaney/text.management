@@ -2,7 +2,7 @@ import { BehaviorSubject, ReplaySubject } from "rxjs";
 
 import { Text } from "@codemirror/state";
 
-import { Doc, DocumentContent, DocUpdate, TextManagementAPI } from "@core/api";
+import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
 import { ProxyAPI } from "../preload/proxyAPI";
 
 const { proxyAPI } = window as Window &
@@ -10,40 +10,36 @@ const { proxyAPI } = window as Window &
     proxyAPI: (api: ProxyAPI) => void;
   };
 
-class ElectronDoc implements Doc {
+class ElectronTab implements Tab {
   name$: BehaviorSubject<string>;
 
-  snapshot = new Promise<DocumentContent>(() => {});
+  content: Promise<Document>;
 
-  constructor(name: string, update: (update: DocUpdate) => Promise<boolean>) {
+  constructor(name: string) {
     this.name$ = new BehaviorSubject(name);
-    this.pushUpdate = update;
 
-    let updates$ = new ReplaySubject<DocUpdate>();
+    let updates$ = new ReplaySubject<DocumentUpdate>();
 
     this.receiveUpdate = (update) => {
       updates$.next(update);
     };
 
-    this.snapshot = new Promise((resolve) => {
-      this.receiveContent = ({ initialText, initialVersion }) => {
+    this.content = new Promise((resolve) => {
+      this.receiveContent = (content) => {
         resolve({
-          initialText: Text.of(initialText),
-          initialVersion,
           updates$,
+          ...content,
         });
       };
     });
   }
 
-  pushUpdate: (update: DocUpdate) => Promise<boolean>;
-
-  receiveContent = (_: { initialText: string[]; initialVersion: number }) => {};
-  receiveUpdate = (_: DocUpdate) => {};
+  receiveContent = (_: Omit<Document, "updates$">) => {};
+  receiveUpdate = (_: DocumentUpdate) => {};
 }
 
 class ElectronAPI extends TextManagementAPI {
-  private doc: Doc | null = null;
+  // private doc: Doc | null = null;
 
   constructor() {
     super();
@@ -55,20 +51,24 @@ class ElectronAPI extends TextManagementAPI {
     });
 
     proxyAPI({
-      onOpen: ({ id, name, update }) => {
-        const doc = new ElectronDoc(name, update);
+      onOpen: ({ id, name }) => {
+        const tab = new ElectronTab(name);
 
-        this.emit("open", { id: id.toString(), doc });
+        this.emit("open", { id: id.toString(), tab });
 
         return {
           onName: (name) => {
-            doc.name$.next(name);
+            tab.name$.next(name);
           },
-          onContent: (content) => {
-            doc.receiveContent(content);
+          onContent: ({ initialText, initialVersion, pushUpdate }) => {
+            tab.receiveContent({
+              initialText: Text.of(initialText),
+              initialVersion,
+              pushUpdate,
+            });
           },
           onUpdate: (update) => {
-            doc.receiveUpdate(update);
+            tab.receiveUpdate(update);
           },
         };
       },

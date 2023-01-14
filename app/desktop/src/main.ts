@@ -15,14 +15,11 @@ import { Authority } from "./authority";
 
 import { getTemplate } from "./menu";
 
-interface Engine {
-  process: GHCI;
-  authority: Authority;
-}
-
-const engineMap = new Map<number, Engine>();
+import { DocumentUpdate } from "@core/api";
 
 const authority = new Authority();
+
+const tidal = new GHCI();
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -45,13 +42,8 @@ const createWindow = () => {
   }
 
   win.webContents.ipc.once("api-ready", () => {
-    let unOpen = authority.on("open", ({ id, doc }) => {
-      win.webContents.ipc.handle(
-        `doc-${id}-push-update`,
-        (_, update: DocUpdate) => authority.doc.pushUpdate(update)
-      );
-
-      let { name$, snapshot } = doc;
+    let unOpen = authority.on("open", ({ id, tab }) => {
+      let { name$, content } = tab;
 
       send("open", id, name$.value);
 
@@ -61,7 +53,14 @@ const createWindow = () => {
         },
       });
 
-      snapshot.then(({ initialText, initialVersion, updates$ }) => {
+      content.then((content) => {
+        win.webContents.ipc.handle(
+          `doc-${id}-push-update`,
+          (_, update: DocumentUpdate) => content.pushUpdate(update)
+        );
+
+        let { initialText, initialVersion, updates$ } = content;
+
         send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
 
         updates$.subscribe({
@@ -81,8 +80,6 @@ const createWindow = () => {
 
   win.loadFile("./dist/renderer/index.html");
 
-  let tidal = new GHCI();
-
   let unCode = authority.on("code", (code) => {
     tidal.send(code);
   });
@@ -100,8 +97,6 @@ const createWindow = () => {
     unMessage();
     tidal.close();
   });
-
-  engineMap.set(win.webContents.id, { process: tidal, authority });
 };
 
 app.whenReady().then(() => {
@@ -117,20 +112,13 @@ app.on("window-all-closed", () => {
 });
 
 import { dialog } from "electron";
-import { DocUpdate } from "@core/api";
 
 ipcMain.handle("tidal-version", (event) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.process.getVersion();
-  }
+  return tidal.getVersion();
 });
 
 async function newFile(window?: BrowserWindow) {
-  if (window) {
-    engineMap.get(window.webContents.id)?.authority.loadDoc();
-  }
+  authority.loadDoc();
 }
 
 async function openFile(window?: BrowserWindow) {
@@ -141,9 +129,7 @@ async function openFile(window?: BrowserWindow) {
 
     if (result.canceled) return;
 
-    engineMap
-      .get(window.webContents.id)
-      ?.authority.loadDoc(result.filePaths[0]);
+    authority.loadDoc(result.filePaths[0]);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }

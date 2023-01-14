@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { TerminalMessage, DocUpdate } from "@core/api";
+import { TerminalMessage, DocumentUpdate } from "@core/api";
 
 import { ProxyAPI } from "./proxyAPI";
 
@@ -12,15 +12,15 @@ function proxyAPI(api: ProxyAPI) {
   let { onOpen, onClose, onConsoleMessage, onTidalVersion } = api;
 
   ipcRenderer.on("open", (_, id: number, name: string) => {
-    const update = (update: DocUpdate) =>
+    const pushUpdate = (update: DocumentUpdate) =>
       ipcRenderer.invoke(`doc-${id}-push-update`, update);
 
-    let { onContent, onName, onUpdate } = onOpen({ id, name, update });
+    let { onContent, onName, onUpdate } = onOpen({ id, name });
 
     ipcRenderer.on(
       `doc-${id}-content`,
       (_, initialText: string[], initialVersion: number) => {
-        onContent({ initialText, initialVersion });
+        onContent({ initialText, initialVersion, pushUpdate });
       }
     );
 
@@ -28,7 +28,7 @@ function proxyAPI(api: ProxyAPI) {
       onName(name);
     });
 
-    ipcRenderer.on(`doc-${id}-update`, (_, update: DocUpdate) => {
+    ipcRenderer.on(`doc-${id}-update`, (_, update: DocumentUpdate) => {
       onUpdate(update);
     });
   });

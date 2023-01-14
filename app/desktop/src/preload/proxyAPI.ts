@@ -1,4 +1,4 @@
-import { DocUpdate, TerminalMessage } from "@core/api";
+import { DocumentUpdate, TerminalMessage } from "@core/api";
 
 export type Handler<T, U> = (event: T) => U;
 
@@ -7,15 +7,18 @@ export interface ProxyAPI {
     {
       id: number;
       name: string;
-      update: (update: DocUpdate) => Promise<boolean>;
     },
     {
       onName: Handler<string, void>;
       onContent: Handler<
-        { initialText: string[]; initialVersion: number },
+        {
+          initialText: string[];
+          initialVersion: number;
+          pushUpdate: (update: DocumentUpdate) => Promise<boolean>;
+        },
         void
       >;
-      onUpdate: Handler<DocUpdate, void>;
+      onUpdate: Handler<DocumentUpdate, void>;
     }
   >;
 

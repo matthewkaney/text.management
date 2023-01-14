@@ -23,16 +23,16 @@ export class Editor {
   constructor(parent: HTMLElement) {
     let editor: EditorView | undefined;
 
-    api.on("open", ({ doc }) => {
+    api.on("open", ({ tab }) => {
       console.log("THING OPENED!");
-      document.title = doc.name$.value;
+      // document.title = tab.name$.value;
 
       if (editor) {
         editor.destroy();
       }
 
-      doc.snapshot.then((snapshot) => {
-        let { initialText, initialVersion } = snapshot;
+      tab.content.then((content) => {
+        let { initialText, initialVersion } = content;
 
         editor = new EditorView({
           state: EditorState.create({
@@ -44,7 +44,7 @@ export class Editor {
               basicSetup,
               oneDark,
               electronConsole(api),
-              peer(doc, initialVersion),
+              peer(content, initialVersion),
               toolbar(api),
             ],
           }),

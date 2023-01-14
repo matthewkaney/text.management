@@ -5,10 +5,10 @@ import { BehaviorSubject, ReplaySubject, scan } from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
-import { DocUpdate, FileDoc, TextManagementAPI } from "@core/api";
+import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
 
-export class Document {
-  readonly updates$: ReplaySubject<DocUpdate>;
+export class LocalDocument implements Document {
+  readonly updates$: ReplaySubject<DocumentUpdate>;
 
   get text$() {
     return this.updates$.pipe(
@@ -26,7 +26,7 @@ export class Document {
   constructor(
     readonly initialText = Text.of([""]),
     readonly initialVersion = 0,
-    private updateList: Omit<DocUpdate, "version">[] = []
+    private updateList: Omit<DocumentUpdate, "version">[] = []
   ) {
     this.updates$ = new ReplaySubject();
     this.updateList.forEach((update, index) =>
@@ -34,17 +34,16 @@ export class Document {
     );
   }
 
-  update(update: DocUpdate) {
+  pushUpdate(update: DocumentUpdate) {
     if (this.destroyed) throw new Error("Can't update a destroyed document");
 
     const { version, ...updateData } = update;
 
-    if (version !== this.version) {
-      throw new Error(`Incompatible update version: ${version}`);
-    }
+    if (version !== this.version) return Promise.resolve(false);
 
     this.updateList.push(updateData);
     this.updates$.next(update);
+    return Promise.resolve(true);
   }
 
   private destroyed = false;
@@ -54,19 +53,15 @@ export class Document {
   }
 }
 
-export class DesktopDoc implements FileDoc {
+export class DesktopTab implements Tab {
   saveState$ = new BehaviorSubject(false);
   path$: BehaviorSubject<string | null>;
   name$: BehaviorSubject<string>;
 
   private document: Promise<Document>;
 
-  get snapshot() {
-    return this.document.then((doc) => ({
-      initialVersion: doc.initialVersion,
-      initialText: doc.initialText,
-      updates$: doc.updates$,
-    }));
+  get content() {
+    return this.document;
   }
 
   constructor(path?: string) {
@@ -74,18 +69,6 @@ export class DesktopDoc implements FileDoc {
     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
 
     this.document = loadFile(path);
-  }
-
-  async pushUpdate(update: DocUpdate) {
-    let { version } = update;
-    let document = await this.document;
-
-    if (version === document.version) {
-      document.update(update);
-      return true;
-    } else {
-      return false;
-    }
 
     //   this.versions.push(updateData);
     //   let changeSet = ChangeSet.fromJSON(update.changes);
@@ -113,7 +96,7 @@ export class DesktopDoc implements FileDoc {
 async function loadFile(path?: string): Promise<Document> {
   let initialVersion = 0;
   let initialText: Text;
-  let updateList: Omit<DocUpdate, "version">[] = [];
+  let updateList: Omit<DocumentUpdate, "version">[] = [];
 
   if (path) {
     try {
@@ -130,31 +113,31 @@ async function loadFile(path?: string): Promise<Document> {
     initialText = Text.of([""]);
   }
 
-  return new Document(initialText, initialVersion, updateList);
+  return new LocalDocument(initialText, initialVersion, updateList);
 }
 
 export class Authority extends TextManagementAPI {
   private docID = 0;
 
   private id = this.getID();
-  public doc = new DesktopDoc();
+  public tab = new DesktopTab();
 
   constructor() {
     super();
 
     this.onListener["open"] = (listener) => {
-      let { id, doc } = this;
-      listener({ id, doc });
+      let { id, tab } = this;
+      listener({ id, tab });
     };
   }
 
   loadDoc(path?: string) {
     this.emit("close", { id: this.id });
 
-    this.doc = new DesktopDoc(path);
+    this.tab = new DesktopTab(path);
     this.id = this.getID();
 
-    this.emit("open", { id: this.id, doc: this.doc });
+    this.emit("open", { id: this.id, tab: this.tab });
   }
 
   private getID() {
