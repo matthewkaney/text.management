@@ -153,25 +153,6 @@ export class DesktopTab implements Tab {
     this.document.then(({ saveState$ }) => {
       saveState$.subscribe(this.saveState$);
     });
-
-    //   this.versions.push(updateData);
-    //   let changeSet = ChangeSet.fromJSON(update.changes);
-    //   doc.update(changeSet);
-
-    //   for (let evaluation of update.evaluations || []) {
-    //     if (typeof evaluation[0] === "number") {
-    //       let [from, to] = evaluation as [number, number];
-    //       this.emit("code", doc.slice(from, to));
-    //     } else {
-    //       let [method] = evaluation;
-    //       this.emit("code", method);
-    //     }
-    //   }
-
-    //   return true;
-    // } else {
-    //   return false;
-    // }
   }
 
   async destroy() {

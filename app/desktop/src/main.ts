@@ -77,30 +77,30 @@ const createWindow = () => {
       });
     });
 
+    let unOpenMessage = authority.on("open", async ({ tab }) => {
+      tidal.listenToDocument(await tab.content);
+    });
+
     let unClose = authority.on("close", ({ id }) => {
       if (!win.isDestroyed()) {
         win.webContents.send("close", { id });
+      }
+    });
+
+    let unMessage = tidal.on("message", (m) => {
+      console.log(m.text);
+      if (!win.isDestroyed()) {
+        win.webContents.send("console-message", m);
       }
     });
   });
 
   win.loadFile("./dist/renderer/index.html");
 
-  let unCode = authority.on("code", (code) => {
-    tidal.send(code);
-  });
-
-  let unMessage = tidal.on("message", (m) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send("console-message", m);
-    }
-  });
-
   win.on("closed", () => {
     // unOpen();
     // unClose();
-    unCode();
-    unMessage();
+    // unMessage();
     tidal.close();
   });
 };

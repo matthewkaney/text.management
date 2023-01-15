@@ -7,6 +7,7 @@ import {
   DocumentUpdate,
   FileDocument,
   Tab,
+  TerminalMessage,
   TextManagementAPI,
 } from "@core/api";
 import { ProxyAPI } from "../preload/proxyAPI";
@@ -54,8 +55,6 @@ export class ElectronTab implements Tab {
 }
 
 class ElectronAPI extends TextManagementAPI {
-  // private doc: Doc | null = null;
-
   constructor() {
     super();
 
@@ -64,6 +63,14 @@ class ElectronAPI extends TextManagementAPI {
     this.tidalVersion = new Promise((resolve) => {
       onTidalVersion = resolve;
     });
+
+    let messageHistory: TerminalMessage[] = [];
+
+    this.onListener["consoleMessage"] = (listener) => {
+      messageHistory.forEach((m) => {
+        listener(m);
+      });
+    };
 
     proxyAPI({
       onOpen: ({ id, name, saveState }) => {
@@ -90,7 +97,9 @@ class ElectronAPI extends TextManagementAPI {
         };
       },
       onClose: () => {},
-      onConsoleMessage: () => {},
+      onConsoleMessage: (message) => {
+        this.emit("consoleMessage", message);
+      },
       onTidalVersion,
     });
   }
