@@ -1,7 +1,15 @@
 import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
 
-import { BehaviorSubject, ReplaySubject, scan, tap, debounceTime } from "rxjs";
+import {
+  BehaviorSubject,
+  ReplaySubject,
+  map,
+  scan,
+  tap,
+  debounceTime,
+  Subscription,
+} from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
@@ -74,25 +82,34 @@ export class FileDocument extends LocalDocument {
   }
 
   public saveState$: BehaviorSubject<boolean>;
-  public path: string | null;
+  public path$: BehaviorSubject<string | null>;
+
+  public saveAs(path: string) {
+    this.saveState$.next(false);
+    this.path$.next(path);
+
+    this.watch();
+  }
 
   private constructor(saved: boolean, initialText?: Text, path?: string) {
     super(initialText);
 
     this.saveState$ = new BehaviorSubject(saved);
-    this.path = path || null;
+    this.path$ = new BehaviorSubject(path || null);
 
     this.watch();
   }
 
-  private watching = false;
+  private watcher: Subscription | null = null;
 
   private watch() {
-    const path = this.path;
+    if (this.watcher) {
+      this.watcher.unsubscribe();
+    }
 
-    if (path && !this.watching) {
-      this.watching = true;
+    const path = this.path$.value;
 
+    if (path) {
       let lastSaved = this.saveState$.value ? this.initialText : undefined;
       let pendingSave: Text | undefined;
 
@@ -110,11 +127,11 @@ export class FileDocument extends LocalDocument {
           lastSaved = nextSave;
         }
 
-        this.saveState$.next(true);
+        this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
         pendingSave = undefined;
       };
 
-      this.text$
+      this.watcher = this.text$
         .pipe(
           tap((nextSave) => {
             this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
@@ -148,15 +165,19 @@ export class DesktopTab implements Tab {
     this.path$ = new BehaviorSubject(path || null);
     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
 
+    this.path$
+      .pipe(map((path) => (path ? basename(path) : "untitled")))
+      .subscribe(this.name$);
+
     this.document = FileDocument.open(path);
 
-    this.document.then(({ saveState$ }) => {
+    this.document.then(({ path$, saveState$ }) => {
+      path$.subscribe(this.path$);
       saveState$.subscribe(this.saveState$);
     });
   }
 
   async destroy() {
-    this.path$.complete();
     this.name$.complete();
     this.document.then((doc) => {
       doc.destroy();
@@ -188,6 +209,10 @@ export class Authority extends TextManagementAPI {
     this.id = this.getID();
 
     this.emit("open", { id: this.id, tab: this.tab });
+  }
+
+  async saveDocAs(path: string) {
+    (await this.tab.content).saveAs(path);
   }
 
   private getID() {

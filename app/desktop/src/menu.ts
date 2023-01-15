@@ -5,14 +5,29 @@ const isMac = process.platform === "darwin";
 interface MenuActions {
   newFile: (window?: BrowserWindow) => void;
   openFile: (window?: BrowserWindow) => void;
-  saveFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
 }
 
 export function getTemplate(
   actions: MenuActions
 ): MenuItemConstructorOptions[] {
-  let template: MenuItemConstructorOptions[] = [
+  let template: MenuItemConstructorOptions[] = [];
+
+  if (isMac) {
+    template.push({
+      label: app.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    });
+  }
+
+  template.push(
     {
       role: "fileMenu",
       submenu: [
@@ -27,9 +42,10 @@ export function getTemplate(
           click: (_, window) => actions.openFile(window),
         },
         {
+          id: "save",
           label: "Save",
           accelerator: "CommandOrControl+S",
-          click: (_, window) => actions.saveFile(window),
+          click: (_, window) => actions.saveAsFile(window),
         },
         {
           label: "Save As...",
@@ -42,22 +58,8 @@ export function getTemplate(
     },
     { role: "editMenu" },
     { role: "viewMenu" },
-    { role: "windowMenu" },
-  ];
-
-  if (isMac) {
-    template.unshift({
-      label: app.name,
-      submenu: [
-        { role: "about" },
-        { type: "separator" },
-        { role: "hide" },
-        { role: "unhide" },
-        { type: "separator" },
-        { role: "quit" },
-      ],
-    });
-  }
+    { role: "windowMenu" }
+  );
 
   return template;
 }

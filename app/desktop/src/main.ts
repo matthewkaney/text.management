@@ -82,16 +82,11 @@ const createWindow = () => {
     });
 
     let unClose = authority.on("close", ({ id }) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send("close", { id });
-      }
+      send("close", { id });
     });
 
     let unMessage = tidal.on("message", (m) => {
-      console.log(m.text);
-      if (!win.isDestroyed()) {
-        win.webContents.send("console-message", m);
-      }
+      send("console-message", m);
     });
   });
 
@@ -141,24 +136,28 @@ async function openFile(window?: BrowserWindow) {
   }
 }
 
-async function saveFile(window?: BrowserWindow) {
-  if (window) {
-    let result = await dialog.showSaveDialog(window);
-
-    // engineMap.get(window.webContents.id)?.authority.saveDoc();
-  }
-}
-
 async function saveAsFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showSaveDialog(window);
 
     if (result.canceled || !result.filePath) return;
 
-    // engineMap.get(window.webContents.id)?.authority.saveAsDoc(result.filePath);
+    authority.saveDocAs(result.filePath);
   }
 }
 
-let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
+let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+Menu.setApplicationMenu(mainMenu);
+
+authority.on("open", ({ tab }) => {
+  if (tab instanceof DesktopTab) {
+    tab.path$.subscribe({
+      next: (path) => {
+        let saveItem = mainMenu.getMenuItemById("save");
+        if (saveItem) saveItem.enabled = !path;
+      },
+    });
+  }
+});
