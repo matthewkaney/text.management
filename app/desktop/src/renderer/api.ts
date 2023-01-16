@@ -19,11 +19,22 @@ const { proxyAPI } = window as Window &
 
 export class ElectronTab implements Tab {
   name$: BehaviorSubject<string>;
+  saveState$: BehaviorSubject<boolean>;
 
   content: Promise<FileDocument>;
 
   constructor(name: string, saveState: boolean) {
     this.name$ = new BehaviorSubject(name);
+
+    this.receiveName = (name) => {
+      this.name$.next(name);
+    };
+
+    this.saveState$ = new BehaviorSubject(saveState);
+
+    this.receiveSaveState = (saveState) => {
+      this.saveState$.next(saveState);
+    };
 
     let updates$ = new ReplaySubject<DocumentUpdate>();
 
@@ -31,17 +42,11 @@ export class ElectronTab implements Tab {
       updates$.next(update);
     };
 
-    let saveState$ = new BehaviorSubject(saveState);
-
-    this.receiveSaveState = (saveState) => {
-      saveState$.next(saveState);
-    };
-
     this.content = new Promise((resolve) => {
       this.receiveContent = (content) => {
         resolve({
           updates$,
-          saveState$,
+          saveState$: this.saveState$,
           path: null,
           ...content,
         });
@@ -51,6 +56,7 @@ export class ElectronTab implements Tab {
 
   receiveContent = (_: Omit<Document, "updates$">) => {};
   receiveUpdate = (_: DocumentUpdate) => {};
+  receiveName = (_: string) => {};
   receiveSaveState = (_: boolean) => {};
 }
 

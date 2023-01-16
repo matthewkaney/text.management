@@ -1,11 +1,12 @@
+import { combineLatest, Subscription } from "rxjs";
+
+import { EditorState } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
-
-import { EditorState } from "@codemirror/state";
 
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
@@ -21,24 +22,29 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let editor: EditorView | undefined;
+    let editor: EditorView;
+    let titleSubscription: Subscription;
 
     api.on("open", ({ tab }) => {
-      let name = tab.name$.value;
-      document.title = name;
-
-      if (tab instanceof ElectronTab) {
-        tab.content.then((content) => {
-          content.saveState$.subscribe({
-            next: (saved) => {
-              document.title = name + (saved ? "" : "*");
-            },
-          });
-        });
-      }
+      let hadFocus = editor?.hasFocus;
 
       if (editor) {
         editor.destroy();
+      }
+
+      if (titleSubscription) {
+        titleSubscription.unsubscribe();
+      }
+
+      if (tab instanceof ElectronTab) {
+        titleSubscription = combineLatest(
+          [tab.name$, tab.saveState$],
+          (name, saved) => name + (saved ? "" : "*")
+        ).subscribe({
+          next: (title) => {
+            document.title = title;
+          },
+        });
       }
 
       tab.content.then((content) => {
@@ -60,6 +66,10 @@ export class Editor {
           }),
           parent,
         });
+
+        if (hadFocus) {
+          editor.focus();
+        }
       });
     });
   }

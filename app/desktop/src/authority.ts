@@ -2,13 +2,17 @@ import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
 
 import {
+  Observable,
   BehaviorSubject,
   ReplaySubject,
+  of,
   map,
   scan,
-  tap,
+  skip,
   debounceTime,
-  Subscription,
+  take,
+  concatWith,
+  shareReplay,
 } from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
@@ -18,14 +22,7 @@ import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
 export class LocalDocument implements Document {
   readonly updates$: ReplaySubject<DocumentUpdate>;
 
-  get text$() {
-    return this.updates$.pipe(
-      scan((text, update) => {
-        let changeSet = ChangeSet.fromJSON(update.changes);
-        return changeSet.apply(text);
-      }, this.initialText)
-    );
-  }
+  readonly text$: Observable<Text>;
 
   get version() {
     return this.initialVersion + this.updateList.length;
@@ -39,6 +36,18 @@ export class LocalDocument implements Document {
     this.updates$ = new ReplaySubject();
     this.updateList.forEach((update, index) =>
       this.updates$.next({ version: index + this.initialVersion, ...update })
+    );
+
+    this.text$ = of(this.initialText).pipe(
+      concatWith(
+        this.updates$.pipe(
+          scan(
+            (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
+            this.initialText
+          )
+        )
+      ),
+      shareReplay(1)
     );
   }
 
@@ -100,12 +109,10 @@ export class FileDocument extends LocalDocument {
     this.watch();
   }
 
-  private watcher: Subscription | null = null;
+  private unwatch = () => {};
 
   private watch() {
-    if (this.watcher) {
-      this.watcher.unsubscribe();
-    }
+    this.unwatch();
 
     const path = this.path$.value;
 
@@ -113,6 +120,7 @@ export class FileDocument extends LocalDocument {
       let lastSaved = this.saveState$.value ? this.initialText : undefined;
       let pendingSave: Text | undefined;
 
+      // First, set up write logic
       const write = async (nextSave: Text) => {
         // There's already a save in progress
         // Mark this one as pending and move on
@@ -131,13 +139,15 @@ export class FileDocument extends LocalDocument {
         pendingSave = undefined;
       };
 
-      this.watcher = this.text$
-        .pipe(
-          tap((nextSave) => {
-            this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
-          }),
-          debounceTime(1000)
-        )
+      // Then hook up subscriptions
+      const saveStateWatch = this.text$.subscribe({
+        next: (nextSave) => {
+          this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
+        },
+      });
+
+      const textWatch = this.text$
+        .pipe(take(1), concatWith(this.text$.pipe(skip(1), debounceTime(1000))))
         .subscribe({
           next: (nextSave) => {
             if (!lastSaved || !nextSave.eq(lastSaved)) {
@@ -145,6 +155,11 @@ export class FileDocument extends LocalDocument {
             }
           },
         });
+
+      this.unwatch = () => {
+        saveStateWatch.unsubscribe();
+        textWatch.unsubscribe();
+      };
     }
   }
 }
