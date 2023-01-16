@@ -152,7 +152,7 @@ export class GHCI extends Engine<GHCIEvents> {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
-      .join();
+      .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 
