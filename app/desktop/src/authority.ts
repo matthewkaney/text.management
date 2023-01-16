@@ -5,7 +5,6 @@ import {
   Observable,
   BehaviorSubject,
   ReplaySubject,
-  of,
   map,
   scan,
   skip,
@@ -13,6 +12,7 @@ import {
   take,
   concatWith,
   shareReplay,
+  startWith,
 } from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
@@ -38,15 +38,12 @@ export class LocalDocument implements Document {
       this.updates$.next({ version: index + this.initialVersion, ...update })
     );
 
-    this.text$ = of(this.initialText).pipe(
-      concatWith(
-        this.updates$.pipe(
-          scan(
-            (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
-            this.initialText
-          )
-        )
+    this.text$ = this.updates$.pipe(
+      scan(
+        (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
+        this.initialText
       ),
+      startWith(this.initialText),
       shareReplay(1)
     );
   }
