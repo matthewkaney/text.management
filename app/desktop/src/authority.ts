@@ -2,72 +2,20 @@ import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
 
 import {
-  Observable,
   BehaviorSubject,
-  ReplaySubject,
   map,
-  scan,
   skip,
   debounceTime,
   take,
   concatWith,
-  shareReplay,
-  startWith,
 } from "rxjs";
 
-import { ChangeSet, Text } from "@codemirror/state";
+import { Text } from "@codemirror/state";
 
-import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
+import { Document } from "@core/document";
+import { Tab, TextManagementAPI } from "@core/api";
 
-export class LocalDocument implements Document {
-  readonly updates$: ReplaySubject<DocumentUpdate>;
-
-  readonly text$: Observable<Text>;
-
-  get version() {
-    return this.initialVersion + this.updateList.length;
-  }
-
-  constructor(
-    readonly initialText = Text.of([""]),
-    readonly initialVersion = 0,
-    private updateList: Omit<DocumentUpdate, "version">[] = []
-  ) {
-    this.updates$ = new ReplaySubject();
-    this.updateList.forEach((update, index) =>
-      this.updates$.next({ version: index + this.initialVersion, ...update })
-    );
-
-    this.text$ = this.updates$.pipe(
-      scan(
-        (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
-        this.initialText
-      ),
-      startWith(this.initialText),
-      shareReplay(1)
-    );
-  }
-
-  pushUpdate(update: DocumentUpdate) {
-    if (this.destroyed) throw new Error("Can't update a destroyed document");
-
-    const { version, ...updateData } = update;
-
-    if (version !== this.version) return Promise.resolve(false);
-
-    this.updateList.push(updateData);
-    this.updates$.next(update);
-    return Promise.resolve(true);
-  }
-
-  private destroyed = false;
-
-  destroy() {
-    this.updates$.complete();
-  }
-}
-
-export class FileDocument extends LocalDocument {
+export class FileDocument extends Document {
   static async open(path?: string) {
     let initialText: Text | undefined;
     let saved = false;

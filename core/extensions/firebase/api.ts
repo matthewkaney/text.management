@@ -1,15 +1,105 @@
 import {
+  get,
   set,
+  push,
   child,
-  query,
-  startAt,
   onChildAdded,
   onChildChanged,
   DatabaseReference,
   DataSnapshot,
 } from "firebase/database";
 
-import { DocUpdate, TextManagementAPI } from "../../api";
+import { Document, DocumentUpdate } from "@core/document";
+import { TextManagementAPI } from "@core/api";
+
+export class FirebaseDocument extends Document {
+  static async fromRemote(remote: DatabaseReference) {
+    let remoteSession = await get(remote);
+  }
+
+  private remote: DatabaseReference | null = null;
+
+  pushToSession(session: DatabaseReference) {
+    if (!this.remote) {
+      this.remote = push(child(session, "documents"));
+      this.listenToRemote(this.remote);
+
+      // Push all remaining information to remote
+    }
+  }
+
+  private pending: number | null = null;
+
+  async pushUpdate(update: DocumentUpdate) {
+    if (!this.remote) return super.pushUpdate(update);
+
+    let { version, clientID, changes, evaluations } = update;
+    this.pending = version;
+
+    let evalStrings: string[] | undefined;
+    if (evaluations) {
+      evalStrings = evaluations.map((v) => JSON.stringify(v));
+    }
+
+    try {
+      await set(child(this.remote, `versions/${version}`), {
+        clientID,
+        changes: JSON.stringify(changes),
+        eval: evalStrings,
+      });
+
+      this.receiveUpdate(update);
+
+      return true;
+    } catch (e) {
+      // TODO: Catch errors other than permission denied?
+      return false;
+    } finally {
+      this.pending = null;
+    }
+  }
+
+  private listenToRemote(remote: DatabaseReference) {
+    const onRemoteUpdate = (snapshot: DataSnapshot) => {
+      if (!snapshot.key) return;
+
+      let version = parseInt(snapshot.key);
+
+      if (version === this.pending || version !== this.version) return;
+
+      let { clientID, changes, evaluations } = snapshot.val();
+
+      changes = JSON.parse(changes);
+
+      if (evaluations) {
+        evaluations = (evaluations as string[]).map((e) => JSON.parse(e));
+      }
+
+      this.receiveUpdate({
+        version: parseInt(snapshot.key),
+        clientID,
+        changes,
+        evaluations,
+      });
+    };
+
+    let unsubChildAdded = onChildAdded(
+      child(remote, "updates"),
+      onRemoteUpdate
+    );
+
+    let unsubChildChanged = onChildChanged(
+      child(remote, "updates"),
+      onRemoteUpdate
+    );
+
+    // TODO: Move this to destroy somehow
+    return () => {
+      unsubChildAdded();
+      unsubChildChanged();
+    };
+  }
+}
 
 // Firebase implementation of Text.Management API
 export class FirebaseAPI extends TextManagementAPI {
@@ -21,71 +111,7 @@ export class FirebaseAPI extends TextManagementAPI {
     this.session = session;
   }
 
-  async pushUpdate(update: DocUpdate) {
-    let { version, clientID, changes, evaluations } = update;
-
-    let evalStrings: string[] | undefined;
-    if (evaluations) {
-      evalStrings = evaluations.map((v) => JSON.stringify(v));
-    }
-
-    try {
-      await set(child(this.session, `versions/${version}`), {
-        clientID,
-        changes: JSON.stringify(changes),
-        eval: evalStrings,
-      });
-
-      return true;
-    } catch (e) {
-      // TODO: Catch errors other than permission denied?
-      return false;
-    }
-  }
-
   getTidalVersion() {
     return new Promise<string>(() => {});
   }
 }
-
-/*export function getAPI(session: DatabaseReference): TextManagementAPI {
-  return {
-    onUpdate: (version, callback) => {
-      const onRemoteUpdate = (snapshot: DataSnapshot) => {
-        let { changes, clientID, eval: evaluations } = snapshot.val();
-
-        changes = JSON.parse(changes);
-
-        if (evaluations) {
-          evaluations = (evaluations as string[]).map((e) => JSON.parse(e));
-        }
-
-        if (snapshot.key !== null) {
-          callback({
-            version: parseInt(snapshot.key),
-            clientID,
-            changes,
-            evaluations,
-          });
-        }
-      };
-
-      let versionQuery = query(
-        child(session, "versions"),
-        startAt(undefined, version.toString())
-      );
-
-      let unsubChildAdded = onChildAdded(versionQuery, onRemoteUpdate);
-      let unsubChildChanged = onChildChanged(versionQuery, onRemoteUpdate);
-
-      return () => {
-        unsubChildAdded();
-        unsubChildChanged();
-      };
-    },
-
-    listenForConsole: (callback) => {
-      return () => {};
-    },
-  };
-}*/

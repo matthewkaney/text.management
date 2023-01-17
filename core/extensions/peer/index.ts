@@ -9,42 +9,49 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { Document } from "@core/api";
+import { Document } from "@core/document";
+import { Subscription } from "rxjs";
 
 export function peer(doc: Document, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
+      private updateSubscription: Subscription;
+
       constructor(private view: EditorView) {
-        this.view = view;
+        this.updateSubscription = doc.updates$.subscribe({
+          next: (update) => {
+            let { version, clientID, changes, evaluations } = update;
 
-        // api.on(startVersion, (update) => {
-        //   let { version, clientID, changes, evaluations } = update;
+            // Ignore local updates
+            if (clientID === getClientID(this.view.state)) return;
 
-        //   changes = ChangeSet.fromJSON(changes);
+            changes = ChangeSet.fromJSON(changes);
 
-        //   // Ignore local updates
-        //   if (clientID === getClientID(this.view.state)) return;
+            let effects: StateEffect<any>[] = [];
 
-        //   let effects: StateEffect<any>[] = [];
+            if (evaluations) {
+              effects = (evaluations as any[])
+                .filter((args) => typeof args[0] === "number")
+                .map(([from, to]) => evalEffect.of({ from, to }));
+            }
 
-        //   if (evaluations) {
-        //     effects = (evaluations as any[])
-        //       .filter((args) => typeof args[0] === "number")
-        //       .map(([from, to]) => evalEffect.of({ from, to }));
-        //   }
-
-        //   this.applyUpdate(version, {
-        //     changes,
-        //     clientID,
-        //     effects,
-        //   });
-        // });
+            this.applyUpdate(version, {
+              changes,
+              clientID,
+              effects,
+            });
+          },
+        });
       }
 
       update(update: ViewUpdate) {
         if (update.docChanged || sendableUpdates(this.view.state).length) {
           this.push();
         }
+      }
+
+      destroy() {
+        this.updateSubscription.unsubscribe();
       }
 
       private pushing = false;
