@@ -1,15 +1,31 @@
+import { BehaviorSubject, Observable } from "rxjs";
+
+import { Text } from "@codemirror/state";
+
 import { EventEmitter } from "./events";
 
-export interface Doc {
-  name: string;
-  doc: Promise<string[]>;
-}
-
-export interface DocUpdate {
+export interface DocumentUpdate {
   version: number;
   clientID: string;
   changes: any;
   evaluations?: ([number, number] | [string])[];
+}
+
+export interface Document {
+  initialVersion: number;
+  initialText: Text;
+  updates$: Observable<DocumentUpdate>;
+  pushUpdate(update: DocumentUpdate): Promise<boolean>;
+}
+
+export interface FileDocument extends Document {
+  saveState$: Observable<boolean>;
+  path: string | null;
+}
+
+export interface Tab {
+  name$: BehaviorSubject<string>;
+  content: Promise<Document>;
 }
 
 export interface TerminalMessage {
@@ -19,13 +35,12 @@ export interface TerminalMessage {
 }
 
 export interface TextManagementEvents {
-  doc: Doc;
+  open: { id: string; tab: Tab };
+  close: { id: string };
   consoleMessage: TerminalMessage;
+  code: string;
 }
 
 export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
-  // Document editing API
-  abstract pushUpdate(update: DocUpdate): Promise<boolean>;
-
   abstract getTidalVersion(): Promise<string>;
 }

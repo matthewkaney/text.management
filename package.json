@@ -15,7 +15,7 @@
     "start:web": "parcel app/web",
     "build:web": "parcel build app/web",
     "start:desktop": "electron app/desktop",
-    "version": "npm version $npm_package_version --no-git-tag-version -w app/desktop -w app/web",
+    "version": "npm version $npm_package_version --no-git-tag-version -w app",
     "clean": "find . -name node_modules -prune -o -name dist -type d -prune -exec rm -rf {} \\;",
     "clean-branches": "git fetch -p && for branch in $(git for-each-ref --format '%(refname) %(upstream:track)' refs/heads | awk '$2 == \"[gone]\" {sub(\"refs/heads/\", \"\", $1); print $1}'); do git branch -D $branch; done"
   },
@@ -42,12 +42,13 @@
     "@codemirror/view": "^6.0.0",
     "@lezer/highlight": "^1.0.0",
     "commander": "^9.4.0",
-    "firebase": "^9.12.1"
+    "firebase": "^9.12.1",
+    "rxjs": "^7.8.0"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.0",
     "@parcel/transformer-typescript-types": "^2.8.0",
     "parcel": "^2.8.0",
-    "typescript": "^4.4.4"
+    "typescript": "^4.9.4"
   }
 }

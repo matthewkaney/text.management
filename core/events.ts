@@ -1,10 +1,10 @@
-type EventMap = Record<string, any>;
+export type EventMap = Record<string, any>;
 
 type EventKey<T extends EventMap> = string & keyof T;
 
-type EventHandler<E> = (value: E) => void;
-
-type EventDisconnect = () => void;
+export type EventHandler<E> = (value: E) => void;
+export type EventDisconnect = () => void;
+export type EventListener<E> = (handler: EventHandler<E>) => EventDisconnect;
 
 export class EventEmitter<T extends EventMap> {
   private listeners: {
@@ -39,7 +39,10 @@ export class EventEmitter<T extends EventMap> {
     listeners.push(handler);
 
     return () => {
-      listeners.indexOf(handler);
+      let index = listeners.indexOf(handler);
+      if (index != -1) {
+        listeners.splice(index, 1);
+      }
     };
   }
 

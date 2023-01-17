@@ -11,16 +11,15 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Authority } from "./authority";
+import { Authority, DesktopTab } from "./authority";
 
 import { getTemplate } from "./menu";
 
-interface Engine {
-  process: GHCI;
-  authority: Authority;
-}
+import { DocumentUpdate } from "@core/api";
 
-const engineMap = new Map<number, Engine>();
+const authority = new Authority();
+
+const tidal = new GHCI();
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -28,7 +27,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: resolve(app.getAppPath(), "dist/preload.js"),
+      preload: resolve(app.getAppPath(), "dist/preload/index.js"),
     },
   });
 
@@ -36,76 +35,91 @@ const createWindow = () => {
     win.show();
   });
 
+  function send(channel: string, ...args: any[]) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, ...args);
+    }
+  }
+
+  win.webContents.ipc.once("api-ready", () => {
+    let unOpen = authority.on("open", ({ id, tab }) => {
+      let { name$, saveState$, content } = tab as DesktopTab;
+
+      send("open", id, name$.value, saveState$.value);
+
+      name$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-name`, value);
+        },
+      });
+
+      saveState$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-saved`, value);
+        },
+      });
+
+      content.then((content) => {
+        win.webContents.ipc.handle(
+          `doc-${id}-push-update`,
+          (_, update: DocumentUpdate) => content.pushUpdate(update)
+        );
+
+        let { initialText, initialVersion, updates$ } = content;
+
+        send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
+
+        updates$.subscribe({
+          next: (update) => {
+            send(`doc-${id}-update`, update);
+          },
+        });
+      });
+    });
+
+    let unOpenMessage = authority.on("open", async ({ tab }) => {
+      tidal.listenToDocument(await tab.content);
+    });
+
+    let unClose = authority.on("close", ({ id }) => {
+      send("close", { id });
+    });
+
+    let unMessage = tidal.on("message", (m) => {
+      send("console-message", m);
+    });
+  });
+
   win.loadFile("./dist/renderer/index.html");
 
-  let authority = new Authority();
-
-  let unDoc = authority.on("doc", (loadedDoc) => {
-    if (!win.isDestroyed()) {
-      let { doc, ...docParams } = loadedDoc;
-      win.webContents.send("doc", docParams);
-      doc.then((content) => win.webContents.send("doc-content", content));
-    }
-  });
-
-  let tidal = new GHCI();
-
-  let unCode = authority.on("code", (code) => {
-    tidal.send(code);
-  });
-
-  let unMessage = tidal.on("message", (m) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send("console-message", m);
-    }
-  });
-
   win.on("closed", () => {
-    unDoc();
-    unCode();
-    unMessage();
+    // unOpen();
+    // unClose();
+    // unMessage();
     tidal.close();
   });
-
-  engineMap.set(win.webContents.id, { process: tidal, authority });
 };
 
 app.whenReady().then(() => {
   createWindow();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  // app.on("activate", () => {
+  //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-
-ipcMain.handle("push-update", (event, update) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.authority.pushUpdate(update);
-  } else {
-    return false;
-  }
-});
+// app.on("window-all-closed", () => {
+//   if (process.platform !== "darwin") app.quit();
+// });
 
 import { dialog } from "electron";
 
-ipcMain.handle("tidal-version", (event) => {
-  let engine = engineMap.get(event.sender.id);
-
-  if (engine) {
-    return engine.process.getVersion();
-  }
+ipcMain.handle("tidal-version", () => {
+  return tidal.getVersion();
 });
 
 async function newFile(window?: BrowserWindow) {
-  if (window) {
-    engineMap.get(window.webContents.id)?.authority.newDoc();
-  }
+  authority.loadDoc();
 }
 
 async function openFile(window?: BrowserWindow) {
@@ -116,18 +130,34 @@ async function openFile(window?: BrowserWindow) {
 
     if (result.canceled) return;
 
-    engineMap
-      .get(window.webContents.id)
-      ?.authority.loadDoc(result.filePaths[0]);
+    authority.loadDoc(result.filePaths[0]);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }
 }
 
-async function saveFile(window?: BrowserWindow) {}
+async function saveAsFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
 
-async function saveAsFile(window?: BrowserWindow) {}
+    if (result.canceled || !result.filePath) return;
 
-let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
+    authority.saveDocAs(result.filePath);
+  }
+}
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+let mainMenu = Menu.buildFromTemplate(menuTemplate);
+
+Menu.setApplicationMenu(mainMenu);
+
+authority.on("open", ({ tab }) => {
+  if (tab instanceof DesktopTab) {
+    tab.path$.subscribe({
+      next: (path) => {
+        let saveItem = mainMenu.getMenuItemById("save");
+        if (saveItem) saveItem.enabled = !path;
+      },
+    });
+  }
+});

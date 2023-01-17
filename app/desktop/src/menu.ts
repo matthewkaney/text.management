@@ -5,40 +5,16 @@ const isMac = process.platform === "darwin";
 interface MenuActions {
   newFile: (window?: BrowserWindow) => void;
   openFile: (window?: BrowserWindow) => void;
-  saveFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
 }
 
 export function getTemplate(
   actions: MenuActions
 ): MenuItemConstructorOptions[] {
-  let template: MenuItemConstructorOptions[] = [
-    {
-      role: "fileMenu",
-      submenu: [
-        {
-          label: "New",
-          accelerator: "Ctrl+N",
-          click: (_, window) => actions.newFile(window),
-        },
-        {
-          label: "Open",
-          accelerator: "Ctrl+O",
-          click: (_, window) => actions.openFile(window),
-        },
-        { label: "Save", accelerator: "Ctrl+S" },
-        { label: "Save As", accelerator: "Ctrl+Shift+S" },
-        { type: "separator" },
-        { role: isMac ? "close" : "quit" },
-      ],
-    },
-    { role: "editMenu" },
-    { role: "viewMenu" },
-    { role: "windowMenu" },
-  ];
+  let template: MenuItemConstructorOptions[] = [];
 
   if (isMac) {
-    template.unshift({
+    template.push({
       label: app.name,
       submenu: [
         { role: "about" },
@@ -50,6 +26,40 @@ export function getTemplate(
       ],
     });
   }
+
+  template.push(
+    {
+      role: "fileMenu",
+      submenu: [
+        {
+          label: "New",
+          accelerator: "CommandOrControl+N",
+          click: (_, window) => actions.newFile(window),
+        },
+        {
+          label: "Open...",
+          accelerator: "CommandOrControl+O",
+          click: (_, window) => actions.openFile(window),
+        },
+        {
+          id: "save",
+          label: "Save",
+          accelerator: "CommandOrControl+S",
+          click: (_, window) => actions.saveAsFile(window),
+        },
+        {
+          label: "Save As...",
+          accelerator: "CommandOrControl+Shift+S",
+          click: (_, window) => actions.saveAsFile(window),
+        },
+        { type: "separator" },
+        { role: isMac ? "close" : "quit" },
+      ],
+    },
+    { role: "editMenu" },
+    { role: "viewMenu" },
+    { role: "windowMenu" }
+  );
 
   return template;
 }
