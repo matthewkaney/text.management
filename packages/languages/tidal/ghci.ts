@@ -22,7 +22,11 @@ const defaultOpts: GHCIOptions = {
   customBootfiles: [],
 };
 
-export class GHCI extends Engine {
+interface GHCIEvents {
+  message: TerminalMessage;
+}
+
+export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
@@ -37,13 +41,11 @@ export class GHCI extends Engine {
     this.socket = this.initSocket();
     this.process = this.initProcess(opts);
 
-    this.on("newListener", (event, listener) => {
-      if (event === "message") {
-        for (let message of this.history) {
-          listener(message);
-        }
+    this.onListener["message"] = (listener) => {
+      for (let message of this.history) {
+        listener(message);
       }
-    });
+    };
   }
 
   private initSocket() {
@@ -53,9 +55,9 @@ export class GHCI extends Engine {
         resolve(socket);
       });
 
-      socket.on("message", (data) => {
-        this.emit("message", data);
-      });
+      // socket.on("message", (data) => {
+      //   this.emit("message", data);
+      // });
     });
   }
 
@@ -146,11 +148,11 @@ export class GHCI extends Engine {
     return join(stdout, "BootTidal.hs");
   }
 
-  async send(text: string) {
+  protected async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
-      .join();
+      .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 

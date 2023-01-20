@@ -1,85 +1,163 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
+
+import { resolve } from "path";
 
 // @ts-ignore
 import squirrelStartup from "electron-squirrel-startup";
 if (squirrelStartup) app.quit();
-
-import { fileURLToPath } from "url";
 
 import fixPath from "fix-path";
 
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Authority } from "./authority";
-import { TerminalMessage } from "@core/api";
+import { Authority, DesktopTab } from "./authority";
 
-interface Engine {
-  process: GHCI;
-  authority: Authority;
-}
+import { getTemplate } from "./menu";
 
-const engineMap = new Map<number, Engine>();
+import { DocumentUpdate } from "@core/api";
+
+const authority = new Authority();
+
+const tidal = new GHCI();
 
 const createWindow = () => {
   const win = new BrowserWindow({
+    show: false,
     width: 800,
     height: 600,
     webPreferences: {
-      preload: fileURLToPath(new URL("preload.ts", import.meta.url)),
+      preload: resolve(app.getAppPath(), "dist/preload/index.js"),
     },
+  });
+
+  win.on("ready-to-show", () => {
+    win.show();
+  });
+
+  function send(channel: string, ...args: any[]) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, ...args);
+    }
+  }
+
+  win.webContents.ipc.once("api-ready", () => {
+    let unOpen = authority.on("open", ({ id, tab }) => {
+      let { name$, saveState$, content } = tab as DesktopTab;
+
+      send("open", id, name$.value, saveState$.value);
+
+      name$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-name`, value);
+        },
+      });
+
+      saveState$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-saved`, value);
+        },
+      });
+
+      content.then((content) => {
+        win.webContents.ipc.handle(
+          `doc-${id}-push-update`,
+          (_, update: DocumentUpdate) => content.pushUpdate(update)
+        );
+
+        let { initialText, initialVersion, updates$ } = content;
+
+        send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
+
+        updates$.subscribe({
+          next: (update) => {
+            send(`doc-${id}-update`, update);
+          },
+        });
+      });
+    });
+
+    let unOpenMessage = authority.on("open", async ({ tab }) => {
+      tidal.listenToDocument(await tab.content);
+    });
+
+    let unClose = authority.on("close", ({ id }) => {
+      send("close", { id });
+    });
+
+    let unMessage = tidal.on("message", (m) => {
+      send("console-message", m);
+    });
   });
 
   win.loadFile("./dist/renderer/index.html");
 
-  let authority = new Authority();
-
-  let tidal = new GHCI();
-
-  authority.on("code", (code) => {
-    tidal.send(code);
-  });
-
-  function dispatchMessage(m: TerminalMessage) {
-    win.webContents.send("console-message", m);
-  }
-
-  tidal.on("message", dispatchMessage);
-
   win.on("closed", () => {
-    tidal.off("message", dispatchMessage);
+    // unOpen();
+    // unClose();
+    // unMessage();
     tidal.close();
   });
-
-  engineMap.set(win.webContents.id, { process: tidal, authority });
 };
 
 app.whenReady().then(() => {
   createWindow();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  // app.on("activate", () => {
+  //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+// app.on("window-all-closed", () => {
+//   if (process.platform !== "darwin") app.quit();
+// });
+
+import { dialog } from "electron";
+
+ipcMain.handle("tidal-version", () => {
+  return tidal.getVersion();
 });
 
-ipcMain.handle("push-update", (event, update) => {
-  let engine = engineMap.get(event.sender.id);
+async function newFile(window?: BrowserWindow) {
+  authority.loadDoc();
+}
 
-  if (engine) {
-    return engine.authority.pushUpdate(update);
+async function openFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+    });
+
+    if (result.canceled) return;
+
+    authority.loadDoc(result.filePaths[0]);
   } else {
-    return false;
+    dialog.showOpenDialog({ properties: ["openFile"] });
   }
-});
+}
 
-ipcMain.handle("tidal-version", (event) => {
-  let engine = engineMap.get(event.sender.id);
+async function saveAsFile(window?: BrowserWindow) {
+  if (window) {
+    let result = await dialog.showSaveDialog(window);
 
-  if (engine) {
-    return engine.process.getVersion();
+    if (result.canceled || !result.filePath) return;
+
+    authority.saveDocAs(result.filePath);
+  }
+}
+
+let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+let mainMenu = Menu.buildFromTemplate(menuTemplate);
+
+Menu.setApplicationMenu(mainMenu);
+
+authority.on("open", ({ tab }) => {
+  if (tab instanceof DesktopTab) {
+    tab.path$.subscribe({
+      next: (path) => {
+        let saveItem = mainMenu.getMenuItemById("save");
+        if (saveItem) saveItem.enabled = !path;
+      },
+    });
   }
 });

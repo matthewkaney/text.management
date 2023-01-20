@@ -9,36 +9,36 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { TextManagementAPI } from "@core/api";
+import { Document } from "@core/api";
 
-export function peer(api: TextManagementAPI, startVersion: number) {
+export function peer(doc: Document, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
       constructor(private view: EditorView) {
         this.view = view;
 
-        api.onUpdate(startVersion, (update) => {
-          let { version, clientID, changes, evaluations } = update;
+        // api.on(startVersion, (update) => {
+        //   let { version, clientID, changes, evaluations } = update;
 
-          changes = ChangeSet.fromJSON(changes);
+        //   changes = ChangeSet.fromJSON(changes);
 
-          // Ignore local updates
-          if (clientID === getClientID(this.view.state)) return;
+        //   // Ignore local updates
+        //   if (clientID === getClientID(this.view.state)) return;
 
-          let effects: StateEffect<any>[] = [];
+        //   let effects: StateEffect<any>[] = [];
 
-          if (evaluations) {
-            effects = (evaluations as any[])
-              .filter((args) => typeof args[0] === "number")
-              .map(([from, to]) => evalEffect.of({ from, to }));
-          }
+        //   if (evaluations) {
+        //     effects = (evaluations as any[])
+        //       .filter((args) => typeof args[0] === "number")
+        //       .map(([from, to]) => evalEffect.of({ from, to }));
+        //   }
 
-          this.applyUpdate(version, {
-            changes,
-            clientID,
-            effects,
-          });
-        });
+        //   this.applyUpdate(version, {
+        //     changes,
+        //     clientID,
+        //     effects,
+        //   });
+        // });
       }
 
       update(update: ViewUpdate) {
@@ -64,7 +64,7 @@ export function peer(api: TextManagementAPI, startVersion: number) {
             e.is(evalEffect) ? [e.value.from, e.value.to] : [e.value.method]
           );
 
-        let success = await api.pushUpdate({
+        let success = await doc.pushUpdate({
           version,
           changes: changes.toJSON(),
           clientID,

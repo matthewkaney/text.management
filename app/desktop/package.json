@@ -22,6 +22,17 @@
       "publicUrl": "./..",
       "includeNodeModules": true
     },
+    "preload": {
+      "source": "src/preload/index.ts",
+      "distDir": "dist",
+      "context": "electron-main",
+      "sourceMap": {
+        "inline": true
+      },
+      "includeNodeModules": {
+        "electron": false
+      }
+    },
     "main": {
       "source": "src/main.ts",
       "distDir": "dist",
