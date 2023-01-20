@@ -148,11 +148,11 @@ export class GHCI extends Engine<GHCIEvents> {
     return join(stdout, "BootTidal.hs");
   }
 
-  async send(text: string) {
+  protected async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
-      .join();
+      .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 

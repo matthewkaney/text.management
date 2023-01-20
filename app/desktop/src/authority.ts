@@ -1,7 +1,19 @@
 import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
 
-import { BehaviorSubject, ReplaySubject, scan, tap, debounceTime } from "rxjs";
+import {
+  Observable,
+  BehaviorSubject,
+  ReplaySubject,
+  map,
+  scan,
+  skip,
+  debounceTime,
+  take,
+  concatWith,
+  shareReplay,
+  startWith,
+} from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
@@ -10,14 +22,7 @@ import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
 export class LocalDocument implements Document {
   readonly updates$: ReplaySubject<DocumentUpdate>;
 
-  get text$() {
-    return this.updates$.pipe(
-      scan((text, update) => {
-        let changeSet = ChangeSet.fromJSON(update.changes);
-        return changeSet.apply(text);
-      }, this.initialText)
-    );
-  }
+  readonly text$: Observable<Text>;
 
   get version() {
     return this.initialVersion + this.updateList.length;
@@ -31,6 +36,15 @@ export class LocalDocument implements Document {
     this.updates$ = new ReplaySubject();
     this.updateList.forEach((update, index) =>
       this.updates$.next({ version: index + this.initialVersion, ...update })
+    );
+
+    this.text$ = this.updates$.pipe(
+      scan(
+        (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
+        this.initialText
+      ),
+      startWith(this.initialText),
+      shareReplay(1)
     );
   }
 
@@ -74,28 +88,36 @@ export class FileDocument extends LocalDocument {
   }
 
   public saveState$: BehaviorSubject<boolean>;
-  public path: string | null;
+  public path$: BehaviorSubject<string | null>;
+
+  public saveAs(path: string) {
+    this.saveState$.next(false);
+    this.path$.next(path);
+
+    this.watch();
+  }
 
   private constructor(saved: boolean, initialText?: Text, path?: string) {
     super(initialText);
 
     this.saveState$ = new BehaviorSubject(saved);
-    this.path = path || null;
+    this.path$ = new BehaviorSubject(path || null);
 
     this.watch();
   }
 
-  private watching = false;
+  private unwatch = () => {};
 
   private watch() {
-    const path = this.path;
+    this.unwatch();
 
-    if (path && !this.watching) {
-      this.watching = true;
+    const path = this.path$.value;
 
+    if (path) {
       let lastSaved = this.saveState$.value ? this.initialText : undefined;
       let pendingSave: Text | undefined;
 
+      // First, set up write logic
       const write = async (nextSave: Text) => {
         // There's already a save in progress
         // Mark this one as pending and move on
@@ -110,16 +132,19 @@ export class FileDocument extends LocalDocument {
           lastSaved = nextSave;
         }
 
+        this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
         pendingSave = undefined;
       };
 
-      this.text$
-        .pipe(
-          tap((nextSave) => {
-            this.saveState$.next(!lastSaved || !nextSave.eq(lastSaved));
-          }),
-          debounceTime(1000)
-        )
+      // Then hook up subscriptions
+      const saveStateWatch = this.text$.subscribe({
+        next: (nextSave) => {
+          this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
+        },
+      });
+
+      const textWatch = this.text$
+        .pipe(take(1), concatWith(this.text$.pipe(skip(1), debounceTime(1000))))
         .subscribe({
           next: (nextSave) => {
             if (!lastSaved || !nextSave.eq(lastSaved)) {
@@ -127,12 +152,17 @@ export class FileDocument extends LocalDocument {
             }
           },
         });
+
+      this.unwatch = () => {
+        saveStateWatch.unsubscribe();
+        textWatch.unsubscribe();
+      };
     }
   }
 }
 
 export class DesktopTab implements Tab {
-  saveState$ = new BehaviorSubject(false);
+  saveState$: BehaviorSubject<boolean>;
   path$: BehaviorSubject<string | null>;
   name$: BehaviorSubject<string>;
 
@@ -143,33 +173,23 @@ export class DesktopTab implements Tab {
   }
 
   constructor(path?: string) {
+    this.saveState$ = new BehaviorSubject(!!path);
     this.path$ = new BehaviorSubject(path || null);
     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
 
+    this.path$
+      .pipe(map((path) => (path ? basename(path) : "untitled")))
+      .subscribe(this.name$);
+
     this.document = FileDocument.open(path);
 
-    //   this.versions.push(updateData);
-    //   let changeSet = ChangeSet.fromJSON(update.changes);
-    //   doc.update(changeSet);
-
-    //   for (let evaluation of update.evaluations || []) {
-    //     if (typeof evaluation[0] === "number") {
-    //       let [from, to] = evaluation as [number, number];
-    //       this.emit("code", doc.slice(from, to));
-    //     } else {
-    //       let [method] = evaluation;
-    //       this.emit("code", method);
-    //     }
-    //   }
-
-    //   return true;
-    // } else {
-    //   return false;
-    // }
+    this.document.then(({ path$, saveState$ }) => {
+      path$.subscribe(this.path$);
+      saveState$.subscribe(this.saveState$);
+    });
   }
 
   async destroy() {
-    this.path$.complete();
     this.name$.complete();
     this.document.then((doc) => {
       doc.destroy();
@@ -201,6 +221,10 @@ export class Authority extends TextManagementAPI {
     this.id = this.getID();
 
     this.emit("open", { id: this.id, tab: this.tab });
+  }
+
+  async saveDocAs(path: string) {
+    (await this.tab.content).saveAs(path);
   }
 
   private getID() {

@@ -11,7 +11,7 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Authority } from "./authority";
+import { Authority, DesktopTab } from "./authority";
 
 import { getTemplate } from "./menu";
 
@@ -43,13 +43,19 @@ const createWindow = () => {
 
   win.webContents.ipc.once("api-ready", () => {
     let unOpen = authority.on("open", ({ id, tab }) => {
-      let { name$, content } = tab;
+      let { name$, saveState$, content } = tab as DesktopTab;
 
-      send("open", id, name$.value);
+      send("open", id, name$.value, saveState$.value);
 
       name$.subscribe({
         next: (value) => {
           send(`doc-${id}-name`, value);
+        },
+      });
+
+      saveState$.subscribe({
+        next: (value) => {
+          send(`doc-${id}-saved`, value);
         },
       });
 
@@ -71,30 +77,25 @@ const createWindow = () => {
       });
     });
 
+    let unOpenMessage = authority.on("open", async ({ tab }) => {
+      tidal.listenToDocument(await tab.content);
+    });
+
     let unClose = authority.on("close", ({ id }) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send("close", { id });
-      }
+      send("close", { id });
+    });
+
+    let unMessage = tidal.on("message", (m) => {
+      send("console-message", m);
     });
   });
 
   win.loadFile("./dist/renderer/index.html");
 
-  let unCode = authority.on("code", (code) => {
-    tidal.send(code);
-  });
-
-  let unMessage = tidal.on("message", (m) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send("console-message", m);
-    }
-  });
-
   win.on("closed", () => {
     // unOpen();
     // unClose();
-    unCode();
-    unMessage();
+    // unMessage();
     tidal.close();
   });
 };
@@ -102,18 +103,18 @@ const createWindow = () => {
 app.whenReady().then(() => {
   createWindow();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  // app.on("activate", () => {
+  //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+// app.on("window-all-closed", () => {
+//   if (process.platform !== "darwin") app.quit();
+// });
 
 import { dialog } from "electron";
 
-ipcMain.handle("tidal-version", (event) => {
+ipcMain.handle("tidal-version", () => {
   return tidal.getVersion();
 });
 
@@ -135,24 +136,28 @@ async function openFile(window?: BrowserWindow) {
   }
 }
 
-async function saveFile(window?: BrowserWindow) {
-  if (window) {
-    let result = await dialog.showSaveDialog(window);
-
-    // engineMap.get(window.webContents.id)?.authority.saveDoc();
-  }
-}
-
 async function saveAsFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showSaveDialog(window);
 
     if (result.canceled || !result.filePath) return;
 
-    // engineMap.get(window.webContents.id)?.authority.saveAsDoc(result.filePath);
+    authority.saveDocAs(result.filePath);
   }
 }
 
-let menuTemplate = getTemplate({ newFile, openFile, saveFile, saveAsFile });
+let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+Menu.setApplicationMenu(mainMenu);
+
+authority.on("open", ({ tab }) => {
+  if (tab instanceof DesktopTab) {
+    tab.path$.subscribe({
+      next: (path) => {
+        let saveItem = mainMenu.getMenuItemById("save");
+        if (saveItem) saveItem.enabled = !path;
+      },
+    });
+  }
+});

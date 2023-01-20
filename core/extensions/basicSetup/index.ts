@@ -10,7 +10,7 @@ import {
   defaultHighlightStyle,
   bracketMatching,
 } from "@codemirror/language";
-import { defaultKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { decorateEmptyLines } from "./emptyLines";
 
@@ -22,6 +22,7 @@ export const basicSetup = [
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   bracketMatching(),
   closeBrackets(),
-  keymap.of([...defaultKeymap, ...closeBracketsKeymap]),
+  history(),
+  keymap.of([...defaultKeymap, ...closeBracketsKeymap, ...historyKeymap]),
   decorateEmptyLines(),
 ];

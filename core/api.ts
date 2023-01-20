@@ -18,15 +18,15 @@ export interface Document {
   pushUpdate(update: DocumentUpdate): Promise<boolean>;
 }
 
+export interface FileDocument extends Document {
+  saveState$: Observable<boolean>;
+  path: string | null;
+}
+
 export interface Tab {
   name$: BehaviorSubject<string>;
   content: Promise<Document>;
 }
-
-// export interface FileDoc extends Doc {
-//   saveState$: Observable<boolean>;
-//   path$: Observable<string | null>;
-// }
 
 export interface TerminalMessage {
   level: "info" | "error";

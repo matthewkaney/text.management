@@ -1,3 +1,6 @@
+import { combineLatest, Subscription } from "rxjs";
+
+import { EditorState } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { EditorView, keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
@@ -5,14 +8,12 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { EditorState } from "@codemirror/state";
-
 import { EditorLayout } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
-import { api } from "./api";
+import { ElectronTab, api } from "./api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -23,10 +24,23 @@ window.addEventListener("load", () => {
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new EditorLayout(parent);
+    let titleSubscription: Subscription;
 
     api.on("open", ({ tab }) => {
-      console.log("THING OPENED!");
-      // document.title = tab.name$.value;
+      if (titleSubscription) {
+        titleSubscription.unsubscribe();
+      }
+
+      if (tab instanceof ElectronTab) {
+        titleSubscription = combineLatest(
+          [tab.name$, tab.saveState$],
+          (name, saved) => name + (saved ? "" : "*")
+        ).subscribe({
+          next: (title) => {
+            document.title = title;
+          },
+        });
+      }
 
       tab.content.then((content) => {
         let { initialText, initialVersion } = content;
