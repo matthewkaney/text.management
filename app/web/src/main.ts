@@ -31,7 +31,8 @@ export class Editor {
           oneDark,
           // electronConsole(api),
           // peer(api, 0),
-          // toolbar(api),
+          // @ts-ignore
+          toolbar({ getTidalVersion: () => new Promise(() => {}) }),
         ],
       }),
       parent,
