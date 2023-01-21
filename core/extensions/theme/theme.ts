@@ -7,20 +7,14 @@ import { tags as t } from "@lezer/highlight";
 
 const col = (name: string) => `var(--col-${name})`;
 
-const haze = "#00000050",
-  chalky = "#e5c07b",
-  coral = "#e06c75",
-  cyan = "#56b6c2",
+const coral = "#e06c75",
   invalid = "#ffffff",
   ivory = "#abb2bf",
   stone = "#7d8799", // Brightened compared to original to increase contrast
-  malibu = "#61afef",
-  sage = "#98c379",
   whiskey = "#d19a66",
   violet = "#c678dd",
   darkBackground = "#21252b",
   highlightBackground = "#2c313a",
-  background = "#282c34",
   selection = "#3E4451",
   cursor = "white";
 
@@ -121,7 +115,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: selection,
+      backgroundColor: col("selection"),
     },
 
     "& .cm-scroller": {
@@ -130,7 +124,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-line": {
-      backgroundColor: col("bg-overlay"),
+      backgroundColor: col("bg-shadow"),
     },
 
     ".cm-searchMatch": {
@@ -149,7 +143,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-gutters": {
-      backgroundColor: haze,
+      backgroundColor: col("bg-shadow"),
       color: col("text"),
       border: "none",
     },
@@ -176,6 +170,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-panels": {
+      color: col("text"),
       backgroundColor: "transparent",
     },
 
@@ -203,7 +198,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     ".cm-console-message-info": {
-      backgroundColor: col("bg-overlay"),
+      backgroundColor: col("bg-shadow"),
     },
     ".cm-console-message-info .cm-console-message-source": {
       color: col("text-soft"),
@@ -218,14 +213,19 @@ export const oneDarkTheme = EditorView.theme(
         color: coral,
       },
     ".cm-toolbar": {
-      background: haze,
+      background: col("bg-shadow-soft"),
+      borderTop: `solid 2px ${col("bg-shadow")}`,
+    },
+
+    ".cm-toolbar div": {
+      clipPath: "inset(1px 0 0 0)",
     },
 
     "*::-webkit-scrollbar-track-piece": {
-      backgroundColor: haze,
+      backgroundColor: col("bg-shadow"),
     },
     "*::-webkit-scrollbar-thumb": {
-      backgroundColor: haze,
+      backgroundColor: col("bg-shadow"),
     },
     "*::-webkit-scrollbar-corner": {
       backgroundColor: "transparent",
@@ -239,9 +239,9 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
   { tag: t.keyword, color: violet },
   {
     tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-    color: coral,
+    color: col("text"),
   },
-  { tag: [t.function(t.variableName), t.labelName], color: malibu },
+  { tag: [t.function(t.variableName), t.labelName], color: col("text") },
   { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: whiskey },
   { tag: [t.definition(t.name), t.separator], color: ivory },
   {
@@ -255,7 +255,7 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
       t.self,
       t.namespace,
     ],
-    color: chalky,
+    color: col("text-4"),
   },
   {
     tag: [
@@ -267,16 +267,19 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
       t.link,
       t.special(t.string),
     ],
-    color: cyan,
+    color: col("text-1"),
   },
-  { tag: [t.meta, t.comment], color: stone },
+  { tag: [t.meta, t.comment], color: col("text-soft") },
   { tag: t.strong, fontWeight: "bold" },
   { tag: t.emphasis, fontStyle: "italic" },
   { tag: t.link, color: stone, textDecoration: "underline" },
   { tag: t.heading, fontWeight: "bold", color: coral },
   { tag: [t.atom, t.bool, t.special(t.variableName)], color: whiskey },
-  { tag: [t.processingInstruction, t.string, t.inserted], color: sage },
-  { tag: t.invalid, color: invalid },
+  {
+    tag: [t.processingInstruction, t.string, t.inserted],
+    color: col("text-3"),
+  },
+  { tag: t.invalid, color: col("text-soft") },
 ]);
 
 /// Extension to enable the One Dark theme (both the editor theme and
