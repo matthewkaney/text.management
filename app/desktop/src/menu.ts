@@ -1,5 +1,6 @@
 import { app, BrowserWindow, MenuItemConstructorOptions } from "electron";
 
+const isWin = process.platform === "win32";
 const isMac = process.platform === "darwin";
 
 interface MenuActions {
@@ -90,7 +91,9 @@ export function getTemplate(
         },
         {
           label: "Redo",
-          accelerator: "CommandOrControl+Shift+Z",
+          accelerator: isWin
+            ? "CommandOrControl+Y"
+            : "CommandOrControl+Shift+Z",
           click: (_, window, { triggeredByAccelerator }) => {
             if (window && !triggeredByAccelerator) {
               window.webContents.sendInputEvent({
