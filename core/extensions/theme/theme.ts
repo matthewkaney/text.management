@@ -8,15 +8,13 @@ import { tags as t } from "@lezer/highlight";
 const col = (name: string) => `var(--col-${name})`;
 
 const coral = "#e06c75",
-  invalid = "#ffffff",
   ivory = "#abb2bf",
   stone = "#7d8799", // Brightened compared to original to increase contrast
   whiskey = "#d19a66",
   violet = "#c678dd",
   darkBackground = "#21252b",
   highlightBackground = "#2c313a",
-  selection = "#3E4451",
-  cursor = "white";
+  selection = "#3E4451";
 
 const size = 12;
 
@@ -101,7 +99,7 @@ export const oneDarkTheme = EditorView.theme(
     "&": {
       color: col("text"),
       "& ::selection": { backgroundColor: selection },
-      caretColor: cursor,
+      caretColor: col("text"),
       fontFamily: "inherit",
     },
 
@@ -115,7 +113,7 @@ export const oneDarkTheme = EditorView.theme(
     },
 
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: col("selection"),
+      backgroundColor: col("text-invert"),
     },
 
     "& .cm-scroller": {
@@ -137,9 +135,14 @@ export const oneDarkTheme = EditorView.theme(
 
     ".cm-selectionMatch": { backgroundColor: "#aafe661a" },
 
+    "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
+      backgroundColor: col("text-2"),
+      color: col("text-invert"),
+    },
+
     ".cm-matchingBracket, .cm-nonmatchingBracket": {
-      backgroundColor: "#bad0f847",
-      outline: "1px solid #515a6b",
+      backgroundColor: "transparent",
+      boxShadow: `inset 0 0 0 2px ${col("text-2")}`,
     },
 
     ".cm-gutters": {
@@ -280,6 +283,7 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
     color: col("text-3"),
   },
   { tag: t.invalid, color: col("text-soft") },
+  { tag: t.bracket, color: col("text-2") },
 ]);
 
 /// Extension to enable the One Dark theme (both the editor theme and
