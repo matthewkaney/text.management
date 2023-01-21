@@ -12,10 +12,10 @@ import {
 
 import { Text } from "@codemirror/state";
 
-import { Document } from "@core/document";
 import { Tab, TextManagementAPI } from "@core/api";
+import { FirebaseDocument } from "@core/extensions/firebase/api";
 
-export class FileDocument extends Document {
+export class FileDocument extends FirebaseDocument {
   static async open(path?: string) {
     let initialText: Text | undefined;
     let saved = false;
@@ -180,6 +180,10 @@ export class Authority extends TextManagementAPI {
     this.docID = id + 1;
     return id.toString();
   }
+
+  async createSession() {}
+
+  async joinSession(id: string) {}
 
   getTidalVersion(): Promise<string> {
     return new Promise(() => {});

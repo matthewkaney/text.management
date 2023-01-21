@@ -6,6 +6,9 @@ interface MenuActions {
   newFile: (window?: BrowserWindow) => void;
   openFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
+  startSession: () => void;
+  joinSession: () => void;
+  closeSession: () => void;
 }
 
 export function getTemplate(
@@ -52,6 +55,10 @@ export function getTemplate(
           accelerator: "CommandOrControl+Shift+S",
           click: (_, window) => actions.saveAsFile(window),
         },
+        { type: "separator" },
+        { label: "Start Remote Session", click: () => actions.startSession() },
+        { label: "Join Remote Session", click: () => actions.joinSession() },
+        { label: "Close Remote Session", click: () => actions.closeSession() },
         { type: "separator" },
         { role: isMac ? "close" : "quit" },
       ],

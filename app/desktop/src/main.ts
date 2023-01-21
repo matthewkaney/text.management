@@ -15,7 +15,7 @@ import { Authority, DesktopTab } from "./authority";
 
 import { getTemplate } from "./menu";
 
-import { DocumentUpdate } from "@core/api";
+import { DocumentUpdate } from "@core/document";
 
 const authority = new Authority();
 
@@ -113,6 +113,7 @@ app.whenReady().then(() => {
 // });
 
 import { dialog } from "electron";
+import { async } from "@firebase/util";
 
 ipcMain.handle("tidal-version", () => {
   return tidal.getVersion();
@@ -146,7 +147,20 @@ async function saveAsFile(window?: BrowserWindow) {
   }
 }
 
-let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+async function startSession() {}
+
+async function joinSession() {}
+
+async function closeSession() {}
+
+let menuTemplate = getTemplate({
+  newFile,
+  openFile,
+  saveAsFile,
+  startSession,
+  joinSession,
+  closeSession,
+});
 let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
