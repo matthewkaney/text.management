@@ -27,5 +27,7 @@ export interface TextManagementEvents {
 }
 
 export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
+  remote = new BehaviorSubject<string | null>(null);
+
   abstract getTidalVersion(): Promise<string>;
 }

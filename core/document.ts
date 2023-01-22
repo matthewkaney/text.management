@@ -21,7 +21,7 @@ export class Document {
   constructor(
     readonly initialText = Text.of([""]),
     readonly initialVersion = 0,
-    private updateList: Omit<DocumentUpdate, "version">[] = []
+    protected updateList: Omit<DocumentUpdate, "version">[] = []
   ) {
     this.updates$ = new ReplaySubject();
     this.updateList.forEach((update, index) =>

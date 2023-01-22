@@ -1,56 +1,48 @@
-import { initializeApp } from "firebase/app";
+import { FirebaseApp } from "firebase/app";
+
 import {
   getDatabase,
-  ref,
-  push,
+  ref as dbRef,
   get,
   set,
   DatabaseReference,
 } from "firebase/database";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCCI6aaQue3ouM3xwhpnZN13NV1FVHOTr8",
-  authDomain: "text-management-fc3da.firebaseapp.com",
-  databaseURL: "https://text-management-fc3da-default-rtdb.firebaseio.com",
-  projectId: "text-management-fc3da",
-  storageBucket: "text-management-fc3da.appspot.com",
-  messagingSenderId: "179979662724",
-  appId: "1:179979662724:web:82926ad96e6ec667d499d1",
-};
-
-// Initialize Firebase
-initializeApp(firebaseConfig);
-
-const db = getDatabase();
-const sessionListRef = ref(db, "sessions");
 
 export interface Session {
   id: string;
   ref: DatabaseReference;
 }
 
-export async function getSession(id: string): Promise<Session> {
-  let session: DatabaseReference;
+export async function newSession(app: FirebaseApp) {
+  let db = getDatabase(app);
+  let session: Session | undefined;
 
-  let longID = await get(ref(db, `sessionIds/${id}`));
-
-  if (longID.exists()) {
-    session = ref(db, `sessions/${longID.val()}`);
-  } else {
-    session = push(sessionListRef);
+  while (!session) {
+    try {
+      let id = `${randomChars(4)}-${randomChars(4)}`;
+      let ref = dbRef(db, `sessions/${id}`);
+      await set(ref, { documents: {}, users: {} });
+      session = { id, ref };
+    } catch (e) {
+      // Do something
+    }
   }
 
-  return { id, ref: session };
+  return session;
 }
 
-export async function createSession(initial = "") {
-  let session: DatabaseReference;
-  session = push(sessionListRef, { initial });
+export async function getSession(app: FirebaseApp, id: string) {
+  let ref = dbRef(getDatabase(app), `sessions/${id}`);
 
-  let id = `${randomChars(4)}-${randomChars(4)}`;
-  await set(ref(db, `sessionIds/${id}`), session.key);
-
-  return { id, ref: session };
+  try {
+    // Try loading remote session
+    await get(ref);
+    let session: Session = { id, ref };
+    return session;
+  } catch (e) {
+    // If remote session isn't found
+    return null;
+  }
 }
 
 function randomChars(length: number) {

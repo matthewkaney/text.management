@@ -1,6 +1,7 @@
-import { Session, getSession, createSession } from "./session";
+import { app } from "./app";
+import { Session, newSession, getSession } from "./session";
 
-let sessionRef: Promise<Session>;
+let sessionRef: Promise<Session | null>;
 let id: string;
 if ((window as Window & { electronApp?: boolean }).electronApp) {
   id = "";
@@ -9,12 +10,14 @@ if ((window as Window & { electronApp?: boolean }).electronApp) {
 }
 
 if (id) {
-  sessionRef = getSession(id);
+  sessionRef = getSession(app, id);
 } else {
-  sessionRef = createSession();
+  sessionRef = newSession(app);
 
-  sessionRef.then(({ id }) => {
-    history.replaceState(null, "", id);
+  sessionRef.then((session) => {
+    if (!session) return;
+
+    history.replaceState(null, "", session.id);
   });
 }
 

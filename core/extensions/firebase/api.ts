@@ -21,10 +21,21 @@ export class FirebaseDocument extends Document {
 
   pushToSession(session: DatabaseReference) {
     if (!this.remote) {
-      this.remote = push(child(session, "documents"));
-      this.listenToRemote(this.remote);
+      let document = {
+        start: {
+          version: this.initialVersion,
+          text: this.initialText.sliceString(0),
+        },
+        versions: Object.fromEntries(
+          this.updateList.map((update, i) => [
+            i + this.initialVersion,
+            serialize(update),
+          ])
+        ),
+      };
 
-      // Push all remaining information to remote
+      this.remote = push(child(session, "documents"), document);
+      this.listenToRemote(this.remote);
     }
   }
 
@@ -33,20 +44,14 @@ export class FirebaseDocument extends Document {
   async pushUpdate(update: DocumentUpdate) {
     if (!this.remote) return super.pushUpdate(update);
 
-    let { version, clientID, changes, evaluations } = update;
+    const { version, ...updateContent } = update;
     this.pending = version;
 
-    let evalStrings: string[] | undefined;
-    if (evaluations) {
-      evalStrings = evaluations.map((v) => JSON.stringify(v));
-    }
-
     try {
-      await set(child(this.remote, `versions/${version}`), {
-        clientID,
-        changes: JSON.stringify(changes),
-        eval: evalStrings,
-      });
+      await set(
+        child(this.remote, `versions/${version}`),
+        serialize(updateContent)
+      );
 
       this.receiveUpdate(update);
 
@@ -103,15 +108,26 @@ export class FirebaseDocument extends Document {
 
 // Firebase implementation of Text.Management API
 export class FirebaseAPI extends TextManagementAPI {
-  private session: DatabaseReference;
-
-  constructor(session: DatabaseReference) {
+  constructor(private session: DatabaseReference) {
     super();
-
-    this.session = session;
   }
 
   getTidalVersion() {
     return new Promise<string>(() => {});
   }
+}
+
+function serialize(update: Omit<DocumentUpdate, "version">) {
+  let { clientID, changes, evaluations } = update;
+
+  let evalStrings: string[] | undefined;
+  if (evaluations) {
+    evalStrings = evaluations.map((v) => JSON.stringify(v));
+  }
+
+  return {
+    clientID,
+    changes: JSON.stringify(changes),
+    eval: evalStrings,
+  };
 }
