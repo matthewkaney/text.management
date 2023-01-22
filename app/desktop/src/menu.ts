@@ -1,5 +1,6 @@
 import { app, BrowserWindow, MenuItemConstructorOptions } from "electron";
 
+const isWin = process.platform === "win32";
 const isMac = process.platform === "darwin";
 
 interface MenuActions {
@@ -63,7 +64,85 @@ export function getTemplate(
         { role: isMac ? "close" : "quit" },
       ],
     },
-    { role: "editMenu" },
+    {
+      role: "editMenu",
+      submenu: [
+        {
+          label: "Undo",
+          accelerator: "CommandOrControl+Z",
+          click: (_, window, { triggeredByAccelerator }) => {
+            if (window && !triggeredByAccelerator) {
+              window.webContents.sendInputEvent({
+                type: "keyDown",
+                keyCode: "Ctrl",
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyDown",
+                keyCode: "Z",
+                modifiers: ["control"],
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyUp",
+                keyCode: "Z",
+                modifiers: ["control"],
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyUp",
+                keyCode: "Ctrl",
+              });
+            }
+          },
+        },
+        {
+          label: "Redo",
+          accelerator: isWin
+            ? "CommandOrControl+Y"
+            : "CommandOrControl+Shift+Z",
+          click: (_, window, { triggeredByAccelerator }) => {
+            if (window && !triggeredByAccelerator) {
+              window.webContents.sendInputEvent({
+                type: "keyDown",
+                keyCode: "Ctrl",
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyDown",
+                keyCode: "Shift",
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyDown",
+                keyCode: "Z",
+                modifiers: ["control", "shift"],
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyUp",
+                keyCode: "Z",
+                modifiers: ["control", "shift"],
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyUp",
+                keyCode: "Shift",
+              });
+
+              window.webContents.sendInputEvent({
+                type: "keyUp",
+                keyCode: "Ctrl",
+              });
+            }
+          },
+        },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+      ],
+    },
     { role: "viewMenu" },
     { role: "windowMenu" }
   );

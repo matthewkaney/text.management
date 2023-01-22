@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  create-release:
+    name: Set up Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: softprops/action-gh-release@v1
+        id: make-release
+        with:
+          name: Test Release
+          draft: true
+      - run: "echo 'Draft release: ${{ steps.make-release.outputs.url }}' >> $GITHUB_STEP_SUMMARY"
+
+  build-app:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            files: app/desktop/out/make/deb/x64/*.deb
+          - os: macos-latest
+            name: Mac OS
+            files: app/desktop/out/make/zip/darwin/x64/*.zip
+          - os: windows-latest
+            name: Windows
+            files: app/desktop/out/make/squirrel.windows/x64/*.exe
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - name: Build Desktop App
+        run: npm run build:desktop
+      - name: Make Desktop App
+        run: npx electron-forge make app/desktop
+      - run: ls -R app/desktop/out/make
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          fail_on_unmatched_files: true
+          files: ${{ matrix.files }}
