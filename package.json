@@ -7,7 +7,8 @@
     "packages/languages/*"
   ],
   "alias": {
-    "@core/*": "./core/$1"
+    "@core/*": "./core/$1",
+    "@firebase/database": "@firebase/database/dist/node-esm/index.node.esm.js"
   },
   "scripts": {
     "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",

@@ -13,7 +13,10 @@ import {
 import { Text } from "@codemirror/state";
 
 import { Tab, TextManagementAPI } from "@core/api";
+import { app } from "@core/extensions/firebase/app";
 import { FirebaseDocument } from "@core/extensions/firebase/api";
+import { newSession } from "@core/extensions/firebase/session";
+import { DatabaseReference } from "firebase/database";
 
 export class FileDocument extends FirebaseDocument {
   static async open(path?: string) {
@@ -181,7 +184,16 @@ export class Authority extends TextManagementAPI {
     return id.toString();
   }
 
-  async createSession() {}
+  private remoteSession: DatabaseReference | null = null;
+
+  async createSession() {
+    console.log("create session");
+    const { id, ref } = await newSession(app);
+    console.log("session: ", id);
+    this.remote.next(id);
+    this.remoteSession = ref;
+    (await this.tab.content).pushToSession(ref);
+  }
 
   async joinSession(id: string) {}
 

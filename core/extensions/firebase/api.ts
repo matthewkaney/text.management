@@ -26,7 +26,7 @@ export class FirebaseDocument extends Document {
           version: this.initialVersion,
           text: this.initialText.sliceString(0),
         },
-        versions: Object.fromEntries(
+        updates: Object.fromEntries(
           this.updateList.map((update, i) => [
             i + this.initialVersion,
             serialize(update),
@@ -49,7 +49,7 @@ export class FirebaseDocument extends Document {
 
     try {
       await set(
-        child(this.remote, `versions/${version}`),
+        child(this.remote, `updates/${version}`),
         serialize(updateContent)
       );
 

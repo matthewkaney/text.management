@@ -113,7 +113,6 @@ app.whenReady().then(() => {
 // });
 
 import { dialog } from "electron";
-import { async } from "@firebase/util";
 
 ipcMain.handle("tidal-version", () => {
   return tidal.getVersion();
@@ -147,7 +146,9 @@ async function saveAsFile(window?: BrowserWindow) {
   }
 }
 
-async function startSession() {}
+async function startSession() {
+  authority.createSession();
+}
 
 async function joinSession() {}
 
