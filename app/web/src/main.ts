@@ -12,6 +12,12 @@ import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
+import { app } from "@core/extensions/firebase/app";
+import { session } from "@core/extensions/firebase/currentSession";
+import { newSession } from "@core/extensions/firebase/session";
+import { get } from "firebase/database";
+import { FirebaseDocument } from "@core/extensions/firebase/api";
+
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
@@ -20,22 +26,41 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    return new EditorView({
-      state: EditorState.create({
-        doc: Text.of([""]),
-        extensions: [
-          tidal(),
-          keymap.of([indentWithTab]),
-          evaluation(),
-          basicSetup,
-          oneDark,
-          // electronConsole(api),
-          // peer(api, 0),
-          // @ts-ignore
-          toolbar({ getTidalVersion: () => new Promise(() => {}) }),
-        ],
-      }),
-      parent,
-    });
+    session
+      .then((content) => (content ? content : newSession(app)))
+      .then(async ({ id, ref }) => {
+        let snapshot = await get(ref);
+        let document: FirebaseDocument | undefined;
+
+        if (snapshot.child("documents").hasChildren()) {
+          snapshot.child("documents").forEach((child) => {
+            document = FirebaseDocument.fromRemote(child);
+            return true;
+          });
+        } else {
+          document = new FirebaseDocument();
+          document.pushToSession(ref);
+        }
+
+        if (document) {
+          new EditorView({
+            state: EditorState.create({
+              doc: Text.of([""]),
+              extensions: [
+                tidal(),
+                keymap.of([indentWithTab]),
+                evaluation(),
+                basicSetup,
+                oneDark,
+                // electronConsole(api),
+                peer(document, 0),
+                // @ts-ignore
+                toolbar({ getTidalVersion: () => new Promise(() => {}) }),
+              ],
+            }),
+            parent,
+          });
+        }
+      });
   }
 }

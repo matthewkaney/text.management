@@ -15,33 +15,35 @@ import { Subscription } from "rxjs";
 export function peer(doc: Document, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
-      private updateSubscription: Subscription;
+      private updateSubscription: Promise<Subscription>;
 
       constructor(private view: EditorView) {
-        this.updateSubscription = doc.updates$.subscribe({
-          next: (update) => {
-            let { version, clientID, changes, evaluations } = update;
+        this.updateSubscription = Promise.resolve(
+          doc.updates$.subscribe({
+            next: (update) => {
+              let { version, clientID, changes, evaluations } = update;
 
-            // Ignore local updates
-            if (clientID === getClientID(this.view.state)) return;
+              // Ignore local updates
+              if (clientID === getClientID(this.view.state)) return;
 
-            changes = ChangeSet.fromJSON(changes);
+              changes = ChangeSet.fromJSON(changes);
 
-            let effects: StateEffect<any>[] = [];
+              let effects: StateEffect<any>[] = [];
 
-            if (evaluations) {
-              effects = (evaluations as any[])
-                .filter((args) => typeof args[0] === "number")
-                .map(([from, to]) => evalEffect.of({ from, to }));
-            }
+              if (evaluations) {
+                effects = (evaluations as any[])
+                  .filter((args) => typeof args[0] === "number")
+                  .map(([from, to]) => evalEffect.of({ from, to }));
+              }
 
-            this.applyUpdate(version, {
-              changes,
-              clientID,
-              effects,
-            });
-          },
-        });
+              this.applyUpdate(version, {
+                changes,
+                clientID,
+                effects,
+              });
+            },
+          })
+        );
       }
 
       update(update: ViewUpdate) {
@@ -50,8 +52,8 @@ export function peer(doc: Document, startVersion: number) {
         }
       }
 
-      destroy() {
-        this.updateSubscription.unsubscribe();
+      async destroy() {
+        (await this.updateSubscription).unsubscribe();
       }
 
       private pushing = false;
@@ -93,6 +95,7 @@ export function peer(doc: Document, startVersion: number) {
         let nextVersion = getSyncedVersion(this.view.state);
 
         while ((next = this.queuedUpdates.get(nextVersion))) {
+          this.queuedUpdates.delete(nextVersion);
           this.view.dispatch(receiveUpdates(this.view.state, [next]));
           nextVersion = getSyncedVersion(this.view.state);
         }

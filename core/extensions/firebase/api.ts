@@ -1,5 +1,4 @@
 import {
-  get,
   set,
   push,
   child,
@@ -13,8 +12,22 @@ import { Document, DocumentUpdate } from "@core/document";
 import { TextManagementAPI } from "@core/api";
 
 export class FirebaseDocument extends Document {
-  static async fromRemote(remote: DatabaseReference) {
-    let remoteSession = await get(remote);
+  static fromRemote(remote: DataSnapshot): FirebaseDocument {
+    let {
+      start: { text: startText, version: startVersion },
+    } = remote.val();
+
+    let updateList: Omit<DocumentUpdate, "version">[] = [];
+    remote.child("updates").forEach((updateSnapshot) => {
+      let { version, ...update } = deserialize(updateSnapshot);
+      if (version === startVersion + updateList.length) {
+        updateList.push(update);
+      }
+    });
+
+    let document = new FirebaseDocument(startText, startVersion, updateList);
+    document.listenToRemote(remote.ref);
+    return document;
   }
 
   private remote: DatabaseReference | null = null;
@@ -34,8 +47,8 @@ export class FirebaseDocument extends Document {
         ),
       };
 
-      this.remote = push(child(session, "documents"), document);
-      this.listenToRemote(this.remote);
+      let remote = push(child(session, "documents"), document);
+      this.listenToRemote(remote);
     }
   }
 
@@ -65,27 +78,15 @@ export class FirebaseDocument extends Document {
   }
 
   private listenToRemote(remote: DatabaseReference) {
-    const onRemoteUpdate = (snapshot: DataSnapshot) => {
-      if (!snapshot.key) return;
+    this.remote = remote;
 
-      let version = parseInt(snapshot.key);
+    const onRemoteUpdate = (snapshot: DataSnapshot) => {
+      let update = deserialize(snapshot);
+      let { version } = update;
 
       if (version === this.pending || version !== this.version) return;
 
-      let { clientID, changes, evaluations } = snapshot.val();
-
-      changes = JSON.parse(changes);
-
-      if (evaluations) {
-        evaluations = (evaluations as string[]).map((e) => JSON.parse(e));
-      }
-
-      this.receiveUpdate({
-        version: parseInt(snapshot.key),
-        clientID,
-        changes,
-        evaluations,
-      });
+      this.receiveUpdate(update);
     };
 
     let unsubChildAdded = onChildAdded(
@@ -129,5 +130,24 @@ function serialize(update: Omit<DocumentUpdate, "version">) {
     clientID,
     changes: JSON.stringify(changes),
     eval: evalStrings,
+  };
+}
+
+function deserialize(snapshot: DataSnapshot): DocumentUpdate {
+  if (!snapshot.key) throw new Error("Deserializing empty snapshot");
+
+  let { clientID, changes, evaluations } = snapshot.val();
+
+  changes = JSON.parse(changes);
+
+  if (evaluations) {
+    evaluations = (evaluations as string[]).map((e) => JSON.parse(e));
+  }
+
+  return {
+    version: parseInt(snapshot.key),
+    clientID,
+    changes,
+    evaluations,
   };
 }
