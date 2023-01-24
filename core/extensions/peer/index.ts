@@ -15,12 +15,15 @@ import { Subscription } from "rxjs";
 export function peer(doc: Document, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
-      private updateSubscription: Promise<Subscription>;
+      private updateSubscription: Subscription | undefined;
+      private destroyed = false;
 
       constructor(private view: EditorView) {
-        this.updateSubscription = Promise.resolve(
-          doc.updates$.subscribe({
+        queueMicrotask(() => {
+          this.updateSubscription = doc.updates$.subscribe({
             next: (update) => {
+              if (this.destroyed) return;
+
               let { version, clientID, changes, evaluations } = update;
 
               // Ignore local updates
@@ -29,7 +32,6 @@ export function peer(doc: Document, startVersion: number) {
               changes = ChangeSet.fromJSON(changes);
 
               let effects: StateEffect<any>[] = [];
-
               if (evaluations) {
                 effects = (evaluations as any[])
                   .filter((args) => typeof args[0] === "number")
@@ -42,8 +44,8 @@ export function peer(doc: Document, startVersion: number) {
                 effects,
               });
             },
-          })
-        );
+          });
+        });
       }
 
       update(update: ViewUpdate) {
@@ -52,8 +54,9 @@ export function peer(doc: Document, startVersion: number) {
         }
       }
 
-      async destroy() {
-        (await this.updateSubscription).unsubscribe();
+      destroy() {
+        this.destroyed = true;
+        this.updateSubscription?.unsubscribe();
       }
 
       private pushing = false;
