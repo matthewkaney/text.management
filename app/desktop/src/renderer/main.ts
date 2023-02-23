@@ -12,20 +12,23 @@ import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
-import { ElectronTab, api } from "./api";
+import { ElectronTab } from "./api";
+import { Authority } from "./authority";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
-  new Editor(parent);
+  new TextManagement(parent);
 });
 
-export class Editor {
+export class TextManagement {
   constructor(parent: HTMLElement) {
     let editor: EditorView;
     let titleSubscription: Subscription;
 
-    api.on("open", ({ tab }) => {
+    let authority = new Authority();
+
+    authority.on("open", ({ tab }) => {
       let hadFocus = editor?.hasFocus;
 
       if (editor) {
@@ -59,9 +62,9 @@ export class Editor {
               evaluation(),
               basicSetup,
               oneDark,
-              electronConsole(api),
+              // electronConsole(api),
               peer(content, initialVersion),
-              toolbar(api),
+              // toolbar(api),
             ],
           }),
           parent,

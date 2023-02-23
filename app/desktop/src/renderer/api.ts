@@ -3,13 +3,12 @@ import { BehaviorSubject, ReplaySubject } from "rxjs";
 import { Text } from "@codemirror/state";
 
 import {
-  Document,
-  DocumentUpdate,
   FileDocument,
   Tab,
   TerminalMessage,
   TextManagementAPI,
 } from "@core/api";
+import { Document, DocumentUpdate } from "@core/document";
 import { ProxyAPI } from "../preload/proxyAPI";
 
 const { proxyAPI } = window as Window &
