@@ -1,75 +1,104 @@
 import { EditorView } from "@codemirror/view";
+import { StateEffect } from "@codemirror/state";
+
 import "./style.css";
 
-export class EditorLayout {
-  _dom: HTMLDivElement = document.createElement("div");
+interface LayoutTransaction {
+  effects: StateEffect<any>[];
+}
 
-  get dom() {
-    return this._dom;
+const currentTabEffect = StateEffect.define<number | null>();
+
+export class EditorLayout {
+  readonly dom: HTMLDivElement;
+  private tabRegion: HTMLDivElement;
+
+  private children: Map<number, TabView> = new Map();
+
+  private _nextID = 0;
+
+  private get nextID() {
+    return this._nextID++;
   }
 
-  private tabRegion = new TabRegion();
-  private children: EditorView[] = [];
-  private current: number | null = null;
+  private currentEditor: EditorView | null = null;
 
   constructor(parent: HTMLElement) {
+    this.dom = document.createElement("div");
     this.dom.classList.add("editor-layout");
-    this.dom.appendChild(this.tabRegion.dom);
+
+    this.tabRegion = this.dom.appendChild(document.createElement("div"));
+    this.tabRegion.classList.add("tab-region");
 
     parent.appendChild(this.dom);
   }
 
-  addTab(name: string, tab: EditorView) {
-    if (typeof this.current === "number") {
-      this.dom.removeChild(this.children[this.current].dom);
+  addTab(name: string, editor: EditorView) {
+    let tab = new TabView(this.nextID, name, editor, this);
+    this.children.set(tab.id, tab);
+    this.tabRegion.appendChild(tab.tab);
+    this.dispatch({ effects: [currentTabEffect.of(tab.id)] });
+  }
+
+  dispatch(tr: LayoutTransaction) {
+    this.update(tr);
+  }
+
+  update(tr: LayoutTransaction) {
+    // Update self
+    for (let effect of tr.effects) {
+      if (effect.is(currentTabEffect)) {
+        if (this.currentEditor) {
+          this.dom.removeChild(this.currentEditor.dom);
+          this.currentEditor = null;
+        }
+
+        let currentTab =
+          effect.value === null ? undefined : this.children.get(effect.value);
+
+        if (currentTab) {
+          this.dom.appendChild(currentTab.editor.dom);
+          this.currentEditor = currentTab.editor;
+        }
+      }
     }
 
-    this.children.push(tab);
-    this.dom.appendChild(tab.dom);
-    this.current = this.children.length - 1;
-    this.tabRegion.addTab(name);
+    for (let [_, tab] of this.children) {
+      tab.update(tr);
+    }
   }
 }
 
-class TabRegion {
-  dom: HTMLDivElement;
+class TabView {
+  public tab: HTMLDivElement;
 
-  private tabs: Tab[] = [];
+  constructor(
+    public id: number,
+    public label: string,
+    public editor: EditorView,
+    private layout: EditorLayout
+  ) {
+    this.tab = document.createElement("div");
+    this.tab.innerText = label;
+    this.tab.classList.add("tab");
+    this.tab.addEventListener("click", () => {
+      this.layout.dispatch({ effects: [currentTabEffect.of(this.id)] });
+    });
 
-  constructor() {
-    this.dom = document.createElement("div");
-    this.dom.classList.add("tab-region");
+    let closeButton = this.tab.appendChild(document.createElement("button"));
+    closeButton.classList.add("close-button");
+    closeButton.innerText = "×";
+    closeButton.addEventListener("click", (event) => {
+      console.log("CLOSE: ", this.id);
+      event.stopPropagation();
+    });
   }
 
-  addTab(name: string) {
-    if (this.tabs.length) {
-      this.tabs.forEach((t) => (t.current = false));
+  update(tr: LayoutTransaction) {
+    for (let effect of tr.effects) {
+      if (effect.is(currentTabEffect)) {
+        this.tab.classList.toggle("current", effect.value === this.id);
+      }
     }
-
-    let tab = new Tab(name, true);
-    this.tabs.push(tab);
-    this.dom.appendChild(tab.dom);
-  }
-}
-
-class Tab {
-  dom: HTMLDivElement;
-
-  private _current = false;
-
-  get current() {
-    return this._current;
-  }
-
-  set current(value) {
-    this.dom.classList.toggle("current", value);
-    this._current = value;
-  }
-
-  constructor(label: string, current = false) {
-    this.dom = document.createElement("div");
-    this.dom.innerText = label;
-    this.dom.classList.add("tab");
-    this.current = current;
   }
 }
