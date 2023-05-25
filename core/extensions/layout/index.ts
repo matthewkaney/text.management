@@ -1,6 +1,11 @@
 import { EditorView } from "@codemirror/view";
 import { StateEffect } from "@codemirror/state";
 
+import { library, icon } from "@fortawesome/fontawesome-svg-core";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+
+library.add(faXmark);
+
 import "./style.css";
 
 interface LayoutTransaction {
@@ -87,7 +92,9 @@ class TabView {
 
     let closeButton = this.tab.appendChild(document.createElement("button"));
     closeButton.classList.add("close-button");
-    closeButton.innerText = "×";
+    Array.from(icon({ prefix: "fas", iconName: "xmark" }).node).map((n) => {
+      closeButton.appendChild(n);
+    });
     closeButton.addEventListener("click", (event) => {
       console.log("CLOSE: ", this.id);
       event.stopPropagation();
