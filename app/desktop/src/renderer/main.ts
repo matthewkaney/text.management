@@ -8,7 +8,7 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { EditorLayout } from "@core/extensions/layout";
+import { addTabEffect, EditorLayout } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
@@ -45,10 +45,11 @@ export class Editor {
       tab.content.then((content) => {
         let { initialText, initialVersion } = content;
 
-        layout.addTab(
-          tab.name$.value,
-          new EditorView({
-            state: EditorState.create({
+        layout.dispatch({
+          effects: [
+            addTabEffect.of({
+              id: "0",
+              name: tab.name$.value,
               doc: initialText,
               extensions: [
                 tidal(),
@@ -61,8 +62,8 @@ export class Editor {
                 toolbar(api),
               ],
             }),
-          })
-        );
+          ],
+        });
       });
     });
   }

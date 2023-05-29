@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { StateEffect } from "@codemirror/state";
+import { Extension, StateEffect, Text } from "@codemirror/state";
 
 import { library, icon } from "@fortawesome/fontawesome-svg-core";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -12,19 +12,22 @@ interface LayoutTransaction {
   effects: StateEffect<any>[];
 }
 
-const currentTabEffect = StateEffect.define<number | null>();
+export const addTabEffect = StateEffect.define<{
+  id: string;
+  name: string;
+  doc: string | Text;
+  extensions: Extension[];
+}>();
+
+const removeTabEffect = StateEffect.define<{ id: string }>();
+
+const currentTabEffect = StateEffect.define<string>();
 
 export class EditorLayout {
   readonly dom: HTMLDivElement;
   private tabRegion: HTMLDivElement;
 
-  private children: Map<number, TabView> = new Map();
-
-  private _nextID = 0;
-
-  private get nextID() {
-    return this._nextID++;
-  }
+  private children: Map<string, TabView> = new Map();
 
   private currentEditor: EditorView | null = null;
 
@@ -38,13 +41,6 @@ export class EditorLayout {
     parent.appendChild(this.dom);
   }
 
-  addTab(name: string, editor: EditorView) {
-    let tab = new TabView(this.nextID, name, editor, this);
-    this.children.set(tab.id, tab);
-    this.tabRegion.appendChild(tab.tab);
-    this.dispatch({ effects: [currentTabEffect.of(tab.id)] });
-  }
-
   dispatch(tr: LayoutTransaction) {
     this.update(tr);
   }
@@ -52,6 +48,25 @@ export class EditorLayout {
   update(tr: LayoutTransaction) {
     // Update self
     for (let effect of tr.effects) {
+      if (effect.is(addTabEffect)) {
+        let { id, name, doc, extensions } = effect.value;
+        let editor = new EditorView({ doc: doc, extensions });
+        let tab = new TabView(id, name, editor, this);
+        this.children.set(id, tab);
+        this.tabRegion.appendChild(tab.tab);
+        this.dispatch({ effects: [currentTabEffect.of(tab.id)] });
+      }
+
+      if (effect.is(removeTabEffect)) {
+        let { id } = effect.value;
+        let tab: TabView | undefined;
+        if ((tab = this.children.get(id))) {
+          this.children.delete(id);
+          tab.editor.destroy();
+          this.tabRegion.removeChild(tab.tab);
+        }
+      }
+
       if (effect.is(currentTabEffect)) {
         if (this.currentEditor) {
           this.dom.removeChild(this.currentEditor.dom);
@@ -78,7 +93,7 @@ class TabView {
   public tab: HTMLDivElement;
 
   constructor(
-    public id: number,
+    public id: string,
     public label: string,
     public editor: EditorView,
     private layout: EditorLayout
@@ -96,7 +111,7 @@ class TabView {
       closeButton.appendChild(n);
     });
     closeButton.addEventListener("click", (event) => {
-      console.log("CLOSE: ", this.id);
+      this.layout.dispatch({ effects: [removeTabEffect.of({ id })] });
       event.stopPropagation();
     });
   }
