@@ -8,11 +8,11 @@
 
 .tab-region {
   padding: 0 calc(1.5 * 12px);
-  color: white;
+  color: var(--col-text);
   font-family: Fira Code, monospace;
   font-size: calc(1.2727 * 12px);
   line-height: calc(2.5 * 12px);
-  border-bottom: solid 2px #00000050;
+  border-bottom: solid 2px var(--col-bg-shadow);
   margin-bottom: -1px;
   display: flex;
 }
@@ -20,7 +20,7 @@
 .tab {
   margin-bottom: -1px;
   padding: 0 calc(2.5 * 12px) 0 calc(0.5 * 12px);
-  background: #00000030;
+  background: var(--col-bg-shadow-soft);
   position: relative;
   cursor: default;
   user-select: none;
@@ -30,7 +30,7 @@
 }
 
 .tab.current, .tab:hover:not(:has(.close-button:hover)) {
-  background: #00000050
+  background: var(--col-bg-shadow);
 }
 
 .tab:not(.current) {
@@ -50,12 +50,12 @@
   position: absolute;
   top: calc(0.5 * 12px);
   right: calc(0.5 * 12px);
-  border: none;
-  background: transparent;
   width: calc(1.5 * 12px);
   height: calc(1.5 * 12px);
+  line-height: calc(1.5 * 12px);
+  text-align: center;
 }
 
 .tab .close-button:hover {
-  background: #00000050;
+  background: var(--col-bg-shadow);
 }

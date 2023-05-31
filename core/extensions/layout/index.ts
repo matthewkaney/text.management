@@ -105,7 +105,7 @@ class TabView {
       this.layout.dispatch({ effects: [currentTabEffect.of(this.id)] });
     });
 
-    let closeButton = this.tab.appendChild(document.createElement("button"));
+    let closeButton = this.tab.appendChild(document.createElement("a"));
     closeButton.classList.add("close-button");
     Array.from(icon({ prefix: "fas", iconName: "xmark" }).node).map((n) => {
       closeButton.appendChild(n);
