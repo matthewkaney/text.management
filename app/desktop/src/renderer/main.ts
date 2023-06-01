@@ -8,7 +8,7 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { addTabEffect, EditorLayout } from "@core/extensions/layout";
+import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
@@ -23,7 +23,7 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new EditorLayout(parent);
+    let layout = new LayoutView(parent);
     let titleSubscription: Subscription;
 
     api.on("open", ({ tab }) => {
@@ -46,9 +46,10 @@ export class Editor {
         let { initialText, initialVersion } = content;
 
         layout.dispatch({
-          effects: [
-            addTabEffect.of({
-              id: "0",
+          current: layout.children.length,
+          changes: [
+            layout.children.length,
+            {
               name: tab.name$.value,
               doc: initialText,
               extensions: [
@@ -61,7 +62,7 @@ export class Editor {
                 peer(content, initialVersion),
                 toolbar(api),
               ],
-            }),
+            },
           ],
         });
       });
