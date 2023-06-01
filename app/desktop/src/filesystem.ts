@@ -5,8 +5,6 @@ import { ChangeSet, Text } from "@codemirror/state";
 import { EventEmitter } from "@core/events";
 import { DocumentUpdate } from "@core/api";
 
-// import { basename } from "path";
-
 // import {
 //   Observable,
 //   BehaviorSubject,
@@ -209,7 +207,7 @@ interface DocumentState {
   version: number;
 }
 
-class DesktopDoc extends EventEmitter<DocumentEvents> {
+class DesktopDocument extends EventEmitter<DocumentEvents> {
   path: string | null = null;
 
   content: Promise<DocumentState>;
@@ -277,15 +275,15 @@ class DesktopDoc extends EventEmitter<DocumentEvents> {
   }
 }
 
-interface AuthorityEvents {
-  open: { id: string; tab: DesktopDoc };
+interface FilesystemEvents {
+  open: { id: string; doc: DesktopDocument };
 }
 
-export class Authority extends EventEmitter<AuthorityEvents> {
-  docs = new Map<string, DesktopDoc>();
+export class Filesystem extends EventEmitter<FilesystemEvents> {
+  docs = new Map<string, DesktopDocument>();
 
   getDoc(id: string) {
-    let doc: DesktopDoc | undefined;
+    let doc: DesktopDocument | undefined;
     if ((doc = this.docs.get(id))) {
       return doc;
     }
@@ -295,9 +293,9 @@ export class Authority extends EventEmitter<AuthorityEvents> {
 
   loadDoc(path?: string) {
     let id = this.getID();
-    let tab = new DesktopDoc(path);
+    let doc = new DesktopDocument(path);
 
-    this.emit("open", { id, tab });
+    this.emit("open", { id, doc });
   }
 
   private _nextDocID = 0;

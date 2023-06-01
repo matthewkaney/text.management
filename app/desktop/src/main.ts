@@ -11,13 +11,13 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Authority, DesktopTab } from "./authority";
+import { Filesystem } from "./filesystem";
 
 import { getTemplate } from "./menu";
 
 import { DocumentUpdate } from "@core/api";
 
-const authority = new Authority();
+const filesystem = new Filesystem();
 
 const tidal = new GHCI();
 
@@ -31,63 +31,38 @@ const createWindow = () => {
     },
   });
 
+  // TODO: IMPLEMENT
+  let removeWindowHandlers = () => {};
+
   win.on("ready-to-show", () => {
+    // Attach file handlers
+    let unOpen = filesystem.on("open", ({ id, doc }) => {
+      let { path, content } = doc;
+
+      win.webContents.send("open", id, path);
+
+      let unPathChanged = doc.on("pathChanged", (path) => {
+        win.webContents.send(`doc-${id}-path`, path);
+      });
+
+      let unSaved = doc.on("saved", (version) => {
+        win.webContents.send(`doc-${id}-saved`, version);
+      });
+
+      win.webContents.ipc.on(`doc-${id}-update`, (_, update: DocumentUpdate) =>
+        doc.update(update)
+      );
+
+      content.then(({ doc, version }) => {
+        win.webContents.send(`doc-${id}-content`, doc.toJSON(), version);
+      });
+    });
+
+    // For now, load a blank document on startup
+    filesystem.loadDoc();
+
+    // Show the window
     win.show();
-  });
-
-  function send(channel: string, ...args: any[]) {
-    if (!win.isDestroyed()) {
-      win.webContents.send(channel, ...args);
-    }
-  }
-
-  win.webContents.ipc.once("api-ready", () => {
-    let unOpen = authority.on("open", ({ id, tab }) => {
-      let { name$, saveState$, content } = tab as DesktopTab;
-
-      send("open", id, name$.value, saveState$.value);
-
-      name$.subscribe({
-        next: (value) => {
-          send(`doc-${id}-name`, value);
-        },
-      });
-
-      saveState$.subscribe({
-        next: (value) => {
-          send(`doc-${id}-saved`, value);
-        },
-      });
-
-      content.then((content) => {
-        win.webContents.ipc.handle(
-          `doc-${id}-push-update`,
-          (_, update: DocumentUpdate) => content.pushUpdate(update)
-        );
-
-        let { initialText, initialVersion, updates$ } = content;
-
-        send(`doc-${id}-content`, initialText.toJSON(), initialVersion);
-
-        updates$.subscribe({
-          next: (update) => {
-            send(`doc-${id}-update`, update);
-          },
-        });
-      });
-    });
-
-    let unOpenMessage = authority.on("open", async ({ tab }) => {
-      tidal.listenToDocument(await tab.content);
-    });
-
-    let unClose = authority.on("close", ({ id }) => {
-      send("close", { id });
-    });
-
-    let unMessage = tidal.on("message", (m) => {
-      send("console-message", m);
-    });
   });
 
   win.loadFile("./dist/renderer/index.html");
@@ -119,7 +94,7 @@ ipcMain.handle("tidal-version", () => {
 });
 
 async function newFile(window?: BrowserWindow) {
-  authority.loadDoc();
+  filesystem.loadDoc();
 }
 
 async function openFile(window?: BrowserWindow) {
@@ -130,7 +105,7 @@ async function openFile(window?: BrowserWindow) {
 
     if (result.canceled) return;
 
-    authority.loadDoc(result.filePaths[0]);
+    filesystem.loadDoc(result.filePaths[0]);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }
@@ -142,7 +117,7 @@ async function saveAsFile(window?: BrowserWindow) {
 
     if (result.canceled || !result.filePath) return;
 
-    authority.saveDocAs(result.filePath);
+    // filesystem.save(result.filePath);
   }
 }
 
@@ -151,13 +126,14 @@ let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
 
-authority.on("open", ({ tab }) => {
-  if (tab instanceof DesktopTab) {
-    tab.path$.subscribe({
-      next: (path) => {
-        let saveItem = mainMenu.getMenuItemById("save");
-        if (saveItem) saveItem.enabled = !path;
-      },
-    });
-  }
-});
+// TODO: Save menu logic
+// filesystem.on("open", ({ doc }) => {
+//   if (tab instanceof DesktopTab) {
+//     tab.path$.subscribe({
+//       next: (path) => {
+//         let saveItem = mainMenu.getMenuItemById("save");
+//         if (saveItem) saveItem.enabled = !path;
+//       },
+//     });
+//   }
+// });
