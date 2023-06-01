@@ -1,239 +1,318 @@
 import { readFile, writeFile } from "fs/promises";
-import { basename } from "path";
-
-import {
-  Observable,
-  BehaviorSubject,
-  ReplaySubject,
-  map,
-  scan,
-  skip,
-  debounceTime,
-  take,
-  concatWith,
-  shareReplay,
-  startWith,
-} from "rxjs";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
-import { Document, DocumentUpdate, Tab, TextManagementAPI } from "@core/api";
+import { EventEmitter } from "@core/events";
+import { DocumentUpdate } from "@core/api";
 
-export class LocalDocument implements Document {
-  readonly updates$: ReplaySubject<DocumentUpdate>;
+// import { basename } from "path";
 
-  readonly text$: Observable<Text>;
+// import {
+//   Observable,
+//   BehaviorSubject,
+//   ReplaySubject,
+//   map,
+//   scan,
+//   skip,
+//   debounceTime,
+//   take,
+//   concatWith,
+//   shareReplay,
+//   startWith,
+// } from "rxjs";
 
-  get version() {
-    return this.initialVersion + this.updateList.length;
-  }
+// export class LocalDocument implements Document {
+//   readonly updates$: ReplaySubject<DocumentUpdate>;
 
-  constructor(
-    readonly initialText = Text.of([""]),
-    readonly initialVersion = 0,
-    private updateList: Omit<DocumentUpdate, "version">[] = []
-  ) {
-    this.updates$ = new ReplaySubject();
-    this.updateList.forEach((update, index) =>
-      this.updates$.next({ version: index + this.initialVersion, ...update })
-    );
+//   readonly text$: Observable<Text>;
 
-    this.text$ = this.updates$.pipe(
-      scan(
-        (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
-        this.initialText
-      ),
-      startWith(this.initialText),
-      shareReplay(1)
-    );
-  }
+//   get version() {
+//     return this.initialVersion + this.updateList.length;
+//   }
 
-  pushUpdate(update: DocumentUpdate) {
-    if (this.destroyed) throw new Error("Can't update a destroyed document");
+//   constructor(
+//     readonly initialText = Text.of([""]),
+//     readonly initialVersion = 0,
+//     private updateList: Omit<DocumentUpdate, "version">[] = []
+//   ) {
+//     this.updates$ = new ReplaySubject();
+//     this.updateList.forEach((update, index) =>
+//       this.updates$.next({ version: index + this.initialVersion, ...update })
+//     );
 
-    const { version, ...updateData } = update;
+//     this.text$ = this.updates$.pipe(
+//       scan(
+//         (text, { changes }) => ChangeSet.fromJSON(changes).apply(text),
+//         this.initialText
+//       ),
+//       startWith(this.initialText),
+//       shareReplay(1)
+//     );
+//   }
 
-    if (version !== this.version) return Promise.resolve(false);
+//   pushUpdate(update: DocumentUpdate) {
+//     if (this.destroyed) throw new Error("Can't update a destroyed document");
 
-    this.updateList.push(updateData);
-    this.updates$.next(update);
-    return Promise.resolve(true);
-  }
+//     const { version, ...updateData } = update;
 
-  private destroyed = false;
+//     if (version !== this.version) return Promise.resolve(false);
 
-  destroy() {
-    this.updates$.complete();
-  }
+//     this.updateList.push(updateData);
+//     this.updates$.next(update);
+//     return Promise.resolve(true);
+//   }
+
+//   private destroyed = false;
+
+//   destroy() {
+//     this.updates$.complete();
+//   }
+// }
+
+// export class FileDocument extends LocalDocument {
+//   static async open(path?: string) {
+//     let initialText: Text | undefined;
+//     let saved = false;
+
+//     if (path) {
+//       try {
+//         let contents = await readFile(path, { encoding: "utf-8" });
+//         initialText = Text.of(contents.split(/\r?\n/));
+//         saved = true;
+//       } catch (err) {
+//         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+//           throw err;
+//         }
+//       }
+//     }
+
+//     return new FileDocument(saved, initialText, path);
+//   }
+
+//   public saveState$: BehaviorSubject<boolean>;
+//   public path$: BehaviorSubject<string | null>;
+
+//   public saveAs(path: string) {
+//     this.saveState$.next(false);
+//     this.path$.next(path);
+
+//     this.watch();
+//   }
+
+//   private constructor(saved: boolean, initialText?: Text, path?: string) {
+//     super(initialText);
+
+//     this.saveState$ = new BehaviorSubject(saved);
+//     this.path$ = new BehaviorSubject(path || null);
+
+//     this.watch();
+//   }
+
+//   private unwatch = () => {};
+
+//   private watch() {
+//     this.unwatch();
+
+//     const path = this.path$.value;
+
+//     if (path) {
+//       let lastSaved = this.saveState$.value ? this.initialText : undefined;
+//       let pendingSave: Text | undefined;
+
+//       // First, set up write logic
+//       const write = async (nextSave: Text) => {
+//         // There's already a save in progress
+//         // Mark this one as pending and move on
+//         if (pendingSave) {
+//           pendingSave = nextSave;
+//           return;
+//         }
+
+//         while (!pendingSave || !pendingSave.eq(nextSave)) {
+//           pendingSave = nextSave;
+//           await writeFile(path, nextSave.sliceString(0));
+//           lastSaved = nextSave;
+//         }
+
+//         this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
+//         pendingSave = undefined;
+//       };
+
+//       // Then hook up subscriptions
+//       const saveStateWatch = this.text$.subscribe({
+//         next: (nextSave) => {
+//           this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
+//         },
+//       });
+
+//       const textWatch = this.text$
+//         .pipe(take(1), concatWith(this.text$.pipe(skip(1), debounceTime(1000))))
+//         .subscribe({
+//           next: (nextSave) => {
+//             if (!lastSaved || !nextSave.eq(lastSaved)) {
+//               write(nextSave);
+//             }
+//           },
+//         });
+
+//       this.unwatch = () => {
+//         saveStateWatch.unsubscribe();
+//         textWatch.unsubscribe();
+//       };
+//     }
+//   }
+// }
+
+// export class DesktopTab implements Tab {
+//   saveState$: BehaviorSubject<boolean>;
+//   path$: BehaviorSubject<string | null>;
+//   name$: BehaviorSubject<string>;
+
+//   private document: Promise<FileDocument>;
+
+//   get content() {
+//     return this.document;
+//   }
+
+//   constructor(path?: string) {
+//     this.saveState$ = new BehaviorSubject(!!path);
+//     this.path$ = new BehaviorSubject(path || null);
+//     this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
+
+//     this.path$
+//       .pipe(map((path) => (path ? basename(path) : "untitled")))
+//       .subscribe(this.name$);
+
+//     this.document = FileDocument.open(path);
+
+//     this.document.then(({ path$, saveState$ }) => {
+//       path$.subscribe(this.path$);
+//       saveState$.subscribe(this.saveState$);
+//     });
+//   }
+
+//   async destroy() {
+//     this.name$.complete();
+//     this.document.then((doc) => {
+//       doc.destroy();
+//     });
+//   }
+// }
+
+interface DocumentEvents {
+  saved: number;
+  pathChanged: string;
 }
 
-export class FileDocument extends LocalDocument {
-  static async open(path?: string) {
-    let initialText: Text | undefined;
-    let saved = false;
-
-    if (path) {
-      try {
-        let contents = await readFile(path, { encoding: "utf-8" });
-        initialText = Text.of(contents.split(/\r?\n/));
-        saved = true;
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
-          throw err;
-        }
-      }
-    }
-
-    return new FileDocument(saved, initialText, path);
-  }
-
-  public saveState$: BehaviorSubject<boolean>;
-  public path$: BehaviorSubject<string | null>;
-
-  public saveAs(path: string) {
-    this.saveState$.next(false);
-    this.path$.next(path);
-
-    this.watch();
-  }
-
-  private constructor(saved: boolean, initialText?: Text, path?: string) {
-    super(initialText);
-
-    this.saveState$ = new BehaviorSubject(saved);
-    this.path$ = new BehaviorSubject(path || null);
-
-    this.watch();
-  }
-
-  private unwatch = () => {};
-
-  private watch() {
-    this.unwatch();
-
-    const path = this.path$.value;
-
-    if (path) {
-      let lastSaved = this.saveState$.value ? this.initialText : undefined;
-      let pendingSave: Text | undefined;
-
-      // First, set up write logic
-      const write = async (nextSave: Text) => {
-        // There's already a save in progress
-        // Mark this one as pending and move on
-        if (pendingSave) {
-          pendingSave = nextSave;
-          return;
-        }
-
-        while (!pendingSave || !pendingSave.eq(nextSave)) {
-          pendingSave = nextSave;
-          await writeFile(path, nextSave.sliceString(0));
-          lastSaved = nextSave;
-        }
-
-        this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
-        pendingSave = undefined;
-      };
-
-      // Then hook up subscriptions
-      const saveStateWatch = this.text$.subscribe({
-        next: (nextSave) => {
-          this.saveState$.next(!!lastSaved && nextSave.eq(lastSaved));
-        },
-      });
-
-      const textWatch = this.text$
-        .pipe(take(1), concatWith(this.text$.pipe(skip(1), debounceTime(1000))))
-        .subscribe({
-          next: (nextSave) => {
-            if (!lastSaved || !nextSave.eq(lastSaved)) {
-              write(nextSave);
-            }
-          },
-        });
-
-      this.unwatch = () => {
-        saveStateWatch.unsubscribe();
-        textWatch.unsubscribe();
-      };
-    }
-  }
+interface DocumentState {
+  doc: Text;
+  version: number;
 }
 
-export class DesktopTab implements Tab {
-  saveState$: BehaviorSubject<boolean>;
-  path$: BehaviorSubject<string | null>;
-  name$: BehaviorSubject<string>;
+class DesktopDoc extends EventEmitter<DocumentEvents> {
+  path: string | null = null;
 
-  private document: Promise<FileDocument>;
+  content: Promise<DocumentState>;
 
-  get content() {
-    return this.document;
-  }
+  lastSavedVersion: Promise<number | null> = Promise.resolve(null);
 
   constructor(path?: string) {
-    this.saveState$ = new BehaviorSubject(!!path);
-    this.path$ = new BehaviorSubject(path || null);
-    this.name$ = new BehaviorSubject(path ? basename(path) : "untitled");
+    super();
 
-    this.path$
-      .pipe(map((path) => (path ? basename(path) : "untitled")))
-      .subscribe(this.name$);
+    this.content = new Promise(async () => {
+      if (path) {
+        try {
+          let doc = Text.of(
+            (await readFile(path, { encoding: "utf-8" })).split(/\r?\n/)
+          );
+          let version = 0;
+          this.lastSavedVersion = Promise.resolve(0);
+          return { doc, version };
+        } catch (err) {
+          if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+            throw err;
+          }
+        }
+      }
 
-    this.document = FileDocument.open(path);
-
-    this.document.then(({ path$, saveState$ }) => {
-      path$.subscribe(this.path$);
-      saveState$.subscribe(this.saveState$);
+      return { doc: Text.of([""]), version: 0 };
     });
   }
 
-  async destroy() {
-    this.name$.complete();
-    this.document.then((doc) => {
-      doc.destroy();
+  public save(newPath: string | null = null) {
+    if (newPath && this.path !== newPath) {
+      this.path = newPath;
+      this.emit("pathChanged", newPath);
+    }
+
+    let path = this.path;
+    let content = this.content;
+
+    if (!path) {
+      throw Error("Can't save a document without a path");
+    }
+
+    this.lastSavedVersion = this.lastSavedVersion.then(async () => {
+      if (path) {
+        let { doc, version } = await content;
+        await writeFile(path, doc.sliceString(0));
+        this.emit("saved", version);
+        return version;
+      } else {
+        throw Error("Lost document path during save");
+      }
+    });
+  }
+
+  public update(update: DocumentUpdate) {
+    let { changes, version } = update;
+    this.content.then(async (previous) => {
+      if (version !== previous.version + 1) {
+        throw Error("Not all updates were sent to the filesystem");
+      }
+
+      let doc = ChangeSet.fromJSON(changes).apply(previous.doc);
+      return { doc, version };
     });
   }
 }
 
-export class Authority extends TextManagementAPI {
-  private docID = 0;
+interface AuthorityEvents {
+  open: { id: string; tab: DesktopDoc };
+}
 
-  private id = this.getID();
-  public tab = new DesktopTab();
+export class Authority extends EventEmitter<AuthorityEvents> {
+  docs = new Map<string, DesktopDoc>();
 
-  constructor() {
-    super();
+  getDoc(id: string) {
+    let doc: DesktopDoc | undefined;
+    if ((doc = this.docs.get(id))) {
+      return doc;
+    }
 
-    this.onListener["open"] = (listener) => {
-      let { id, tab } = this;
-      listener({ id, tab });
-    };
+    throw Error("Tried to fetch a non-existent doc.");
   }
 
   loadDoc(path?: string) {
-    this.emit("close", { id: this.id });
+    let id = this.getID();
+    let tab = new DesktopDoc(path);
 
-    this.tab.destroy();
-
-    this.tab = new DesktopTab(path);
-    this.id = this.getID();
-
-    this.emit("open", { id: this.id, tab: this.tab });
+    this.emit("open", { id, tab });
   }
 
-  async saveDocAs(path: string) {
-    (await this.tab.content).saveAs(path);
-  }
+  private _nextDocID = 0;
 
   private getID() {
-    let id = this.docID;
-    this.docID = id + 1;
-    return id.toString();
+    return (this._nextDocID++).toString();
   }
 
-  getTidalVersion(): Promise<string> {
-    return new Promise(() => {});
+  private _currentDoc: string | null = null;
+
+  get currentDoc() {
+    return this._currentDoc;
+  }
+
+  set currentDoc(docID) {
+    this._currentDoc = docID;
   }
 }
