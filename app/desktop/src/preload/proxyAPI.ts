@@ -5,26 +5,24 @@ export type Handler<T, U> = (event: T) => U;
 export interface ProxyAPI {
   onOpen: Handler<
     {
-      id: number;
-      name: string;
-      saveState: boolean;
+      id: string;
+      path: string | null;
+      update: (update: DocumentUpdate) => void;
     },
     {
-      onName: Handler<string, void>;
       onContent: Handler<
         {
-          initialText: string[];
-          initialVersion: number;
-          pushUpdate: (update: DocumentUpdate) => Promise<boolean>;
+          doc: string[];
+          version: number;
         },
         void
       >;
-      onUpdate: Handler<DocumentUpdate, void>;
-      onSaveState: Handler<boolean, void>;
+      onPath: Handler<string, void>;
+      onSaved: Handler<number, void>;
     }
   >;
 
-  onClose: Handler<number, void>;
+  onClose: Handler<string, void>;
 
   onConsoleMessage: Handler<TerminalMessage, void>;
 

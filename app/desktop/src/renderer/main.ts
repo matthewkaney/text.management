@@ -1,8 +1,10 @@
 import { combineLatest, Subscription } from "rxjs";
 
-import { EditorState } from "@codemirror/state";
+import { ElectronAPI } from "../preload";
+
+import { EditorState, Text } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap, ViewPlugin } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
@@ -12,8 +14,7 @@ import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
-
-import { ElectronTab, api } from "./api";
+import { fileSync } from "./file";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -21,51 +22,79 @@ window.addEventListener("load", () => {
   new Editor(parent);
 });
 
+const { api } = window as Window &
+  typeof globalThis & {
+    api: ElectronAPI;
+  };
+
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new LayoutView(parent);
-    let titleSubscription: Subscription;
 
-    api.on("open", ({ tab }) => {
-      if (titleSubscription) {
-        titleSubscription.unsubscribe();
-      }
-
-      if (tab instanceof ElectronTab) {
-        titleSubscription = combineLatest(
-          [tab.name$, tab.saveState$],
-          (name, saved) => name + (saved ? "" : "*")
-        ).subscribe({
-          next: (title) => {
-            document.title = title;
-          },
-        });
-      }
-
-      tab.content.then((content) => {
-        let { initialText, initialVersion } = content;
+    api.onOpen(({ id, path }) => {
+      let offContent = api.onContent(id, ({ doc: docJSON, version }) => {
+        let doc = Text.of(docJSON);
 
         layout.dispatch({
           current: layout.children.length,
           changes: [
             layout.children.length,
             {
-              name: tab.name$.value,
-              doc: initialText,
+              name: path || "untitled *",
+              doc,
               extensions: [
                 tidal(),
                 keymap.of([indentWithTab]),
                 evaluation(),
                 basicSetup,
                 oneDark,
-                electronConsole(api),
-                peer(content, initialVersion),
-                toolbar(api),
+                fileSync(
+                  id,
+                  version,
+                  doc,
+                  (saveState) => {
+                    console.log(saveState);
+                  },
+                  api.update,
+                  api.onSaved
+                ),
+                // electronConsole(api),
+                // peer(version),
+                // toolbar(api),
               ],
             },
           ],
         });
+
+        offContent();
       });
     });
+
+    // api.on("open", ({ id, path, content }) => {
+    //   tab.content.then((content) => {
+    //     let { initialText, initialVersion } = content;
+
+    //     layout.dispatch({
+    //       current: layout.children.length,
+    //       changes: [
+    //         layout.children.length,
+    //         {
+    //           name: tab.name$.value,
+    //           doc: initialText,
+    //           extensions: [
+    //             tidal(),
+    //             keymap.of([indentWithTab]),
+    //             evaluation(),
+    //             basicSetup,
+    //             oneDark,
+    //             electronConsole(api),
+    //             peer(content, initialVersion),
+    //             toolbar(api),
+    //           ],
+    //         },
+    //       ],
+    //     });
+    //   });
+    // });
   }
 }

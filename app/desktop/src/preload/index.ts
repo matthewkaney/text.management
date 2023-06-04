@@ -6,42 +6,95 @@ import { ProxyAPI } from "./proxyAPI";
 
 let proxied = false;
 
+type Handler<T> = (event: T) => void;
+
+export type ElectronAPI = typeof api;
+
+const api = {
+  onOpen: (handler: Handler<{ id: string; path: string | null }>) => {
+    function handleOpen(_: any, id: string, path: string | null) {
+      handler({ id, path });
+    }
+
+    ipcRenderer.on("open", handleOpen);
+
+    return () => {
+      ipcRenderer.off("open", handleOpen);
+    };
+  },
+
+  update: (id: string, update: DocumentUpdate) => {
+    ipcRenderer.send(`doc-${id}-update`, update);
+  },
+
+  onContent: (
+    id: string,
+    handler: Handler<{ doc: string[]; version: number }>
+  ) => {
+    function handleContent(_: any, doc: string[], version: number) {
+      handler({ doc, version });
+    }
+    ipcRenderer.on(`doc-${id}-content`, handleContent);
+
+    return () => {
+      ipcRenderer.off(`doc-${id}-content`, handleContent);
+    };
+  },
+
+  onPath: (id: string, handler: Handler<string>) => {
+    function handlePath(_: any, path: string) {
+      handler(path);
+    }
+
+    ipcRenderer.on(`doc-${id}-path`, handlePath);
+
+    return () => {
+      ipcRenderer.off(`doc-${id}-path`, handlePath);
+    };
+  },
+
+  onSaved: (id: string, handler: Handler<number>) => {
+    function handleSaved(_: any, version: number) {
+      handler(version);
+    }
+
+    ipcRenderer.on(`doc-${id}-saved`, handleSaved);
+
+    return () => {
+      ipcRenderer.off(`doc-${id}-saved`, handleSaved);
+    };
+  },
+};
+
 function proxyAPI(api: ProxyAPI) {
   if (proxied) throw Error("Trying to proxy API twice");
 
   let { onOpen, onClose, onConsoleMessage, onTidalVersion } = api;
 
-  ipcRenderer.on("open", (_, id: number, name: string, saveState: boolean) => {
-    const pushUpdate = (update: DocumentUpdate) =>
-      ipcRenderer.invoke(`doc-${id}-push-update`, update);
+  ipcRenderer.on("open", (_, id: string, path: string | null) => {
+    const update = (update: DocumentUpdate) =>
+      ipcRenderer.send(`doc-${id}-update`, update);
 
-    let { onContent, onName, onUpdate, onSaveState } = onOpen({
+    let { onContent, onPath, onSaved } = onOpen({
       id,
-      name,
-      saveState,
+      path,
+      update,
     });
 
-    ipcRenderer.on(
-      `doc-${id}-content`,
-      (_, initialText: string[], initialVersion: number) => {
-        onContent({ initialText, initialVersion, pushUpdate });
-      }
-    );
-
-    ipcRenderer.on(`doc-${id}-name`, (_, name: string) => {
-      onName(name);
+    ipcRenderer.on(`doc-${id}-content`, (_, doc: string[], version: number) => {
+      onContent({ doc, version });
     });
 
-    ipcRenderer.on(`doc-${id}-update`, (_, update: DocumentUpdate) => {
-      onUpdate(update);
+    ipcRenderer.on(`doc-${id}-path`, (_, path: string) => {
+      onPath(path);
     });
 
-    ipcRenderer.on(`doc-${id}-saved`, (_, saveState: boolean) => {
-      onSaveState(saveState);
+    ipcRenderer.on(`doc-${id}-saved`, (_, version: number) => {
+      onSaved(version);
     });
   });
 
-  ipcRenderer.on("close", (_, id: number) => {
+  ipcRenderer.on("close", (_, id: string) => {
     ipcRenderer.removeAllListeners(`doc-${id}-content`);
     ipcRenderer.removeAllListeners(`doc-${id}-name`);
     ipcRenderer.removeAllListeners(`doc-${id}-update`);
@@ -60,4 +113,4 @@ function proxyAPI(api: ProxyAPI) {
   ipcRenderer.send("api-ready");
 }
 
-contextBridge.exposeInMainWorld("proxyAPI", proxyAPI);
+contextBridge.exposeInMainWorld("api", api);

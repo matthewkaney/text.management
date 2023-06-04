@@ -217,7 +217,7 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
   constructor(path?: string) {
     super();
 
-    this.content = new Promise(async () => {
+    this.content = (async () => {
       if (path) {
         try {
           let doc = Text.of(
@@ -234,7 +234,7 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
       }
 
       return { doc: Text.of([""]), version: 0 };
-    });
+    })();
   }
 
   public save(newPath: string | null = null) {
@@ -264,7 +264,7 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
 
   public update(update: DocumentUpdate) {
     let { changes, version } = update;
-    this.content.then(async (previous) => {
+    this.content = this.content.then(async (previous) => {
       if (version !== previous.version + 1) {
         throw Error("Not all updates were sent to the filesystem");
       }

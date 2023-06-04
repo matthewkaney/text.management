@@ -3,7 +3,6 @@ import { BehaviorSubject, ReplaySubject } from "rxjs";
 import { Text } from "@codemirror/state";
 
 import {
-  Document,
   DocumentUpdate,
   FileDocument,
   Tab,
@@ -11,30 +10,28 @@ import {
   TextManagementAPI,
 } from "@core/api";
 import { ProxyAPI } from "../preload/proxyAPI";
+import { EventEmitter } from "@core/events";
 
 const { proxyAPI } = window as Window &
   typeof globalThis & {
     proxyAPI: (api: ProxyAPI) => void;
   };
 
-export class ElectronTab implements Tab {
-  name$: BehaviorSubject<string>;
-  saveState$: BehaviorSubject<boolean>;
+interface DocumentEvents {
+  saved: number;
+  pathChanged: string;
+}
 
-  content: Promise<FileDocument>;
+interface DocumentState {
+  doc: Text;
+  version: number;
+}
 
-  constructor(name: string, saveState: boolean) {
-    this.name$ = new BehaviorSubject(name);
+class Document extends EventEmitter<DocumentEvents> {
+  content: Promise<DocumentState>;
 
-    this.receiveName = (name) => {
-      this.name$.next(name);
-    };
-
-    this.saveState$ = new BehaviorSubject(saveState);
-
-    this.receiveSaveState = (saveState) => {
-      this.saveState$.next(saveState);
-    };
+  constructor(path: string | ) {
+    super();
 
     let updates$ = new ReplaySubject<DocumentUpdate>();
 
@@ -60,7 +57,14 @@ export class ElectronTab implements Tab {
   receiveSaveState = (_: boolean) => {};
 }
 
-class ElectronAPI extends TextManagementAPI {
+interface ElectronEvents {
+  open: {
+    id: string;
+    document: Document;
+  };
+}
+
+class ElectronAPI extends EventEmitter<ElectronEvents> {
   constructor() {
     super();
 
@@ -79,15 +83,12 @@ class ElectronAPI extends TextManagementAPI {
     };
 
     proxyAPI({
-      onOpen: ({ id, name, saveState }) => {
+      onOpen: ({ id, path, update }) => {
         const tab = new ElectronTab(name, saveState);
 
         this.emit("open", { id: id.toString(), tab });
 
         return {
-          onName: (name) => {
-            tab.name$.next(name);
-          },
           onContent: (content) => {
             tab.receiveContent({
               ...content,
@@ -97,8 +98,11 @@ class ElectronAPI extends TextManagementAPI {
           onUpdate: (update) => {
             tab.receiveUpdate(update);
           },
-          onSaveState: (saveState) => {
-            tab.receiveSaveState(saveState);
+          onPath: (path) => {
+            tab.name$.next(path);
+          },
+          onSaved: (version) => {
+            tab.receiveSaveState(true);
           },
         };
       },

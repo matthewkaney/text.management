@@ -71,6 +71,7 @@ export class LayoutView {
     }
 
     if (tr.newCurrent !== null) {
+      console.log(tr.newCurrent);
       this.currentEditor = this.children[tr.newCurrent].editor;
       this.dom.appendChild(this.currentEditor.dom);
     }

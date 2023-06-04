@@ -9,11 +9,17 @@ import {
   Update,
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
-import { Document } from "@core/api";
+import { DocumentUpdate } from "@core/api";
 
-export function peer(doc: Document, startVersion: number) {
+interface Authority {
+  pushUpdate: (update: DocumentUpdate) => Promise<boolean>;
+}
+
+export function peer(startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
+      private upstream: Authority | null = null;
+
       constructor(private view: EditorView) {
         this.view = view;
 
@@ -50,31 +56,35 @@ export function peer(doc: Document, startVersion: number) {
       private pushing = false;
 
       private async push() {
-        let updates = sendableUpdates(this.view.state);
-        if (this.pushing || !updates.length) return;
+        this.view.dispatch(
+          receiveUpdates(this.view.state, sendableUpdates(this.view.state))
+        );
 
-        this.pushing = true;
-        let version = getSyncedVersion(this.view.state);
-        let update = updates[0];
-        let { changes, clientID, effects } = update;
+        // let updates = sendableUpdates(this.view.state);
+        // if (this.pushing || !updates.length) return;
 
-        let evaluations: ([number, number] | [string])[] | undefined = effects
-          ?.filter((e) => e.is(evalEffect) || e.is(commandEffect))
-          .map((e) =>
-            e.is(evalEffect) ? [e.value.from, e.value.to] : [e.value.method]
-          );
+        // this.pushing = true;
+        // let version = getSyncedVersion(this.view.state);
+        // let update = updates[0];
+        // let { changes, clientID, effects } = update;
 
-        let success = await doc.pushUpdate({
-          version,
-          changes: changes.toJSON(),
-          clientID,
-          evaluations,
-        });
+        // let evaluations: ([number, number] | [string])[] | undefined = effects
+        //   ?.filter((e) => e.is(evalEffect) || e.is(commandEffect))
+        //   .map((e) =>
+        //     e.is(evalEffect) ? [e.value.from, e.value.to] : [e.value.method]
+        //   );
 
-        this.pushing = false;
-        if (success) {
-          this.applyUpdate(version, update);
-        }
+        // let success = await doc.pushUpdate({
+        //   version,
+        //   changes: changes.toJSON(),
+        //   clientID,
+        //   evaluations,
+        // });
+
+        // this.pushing = false;
+        // if (success) {
+        //   this.applyUpdate(version, update);
+        // }
       }
 
       private queuedUpdates: Map<number, Update> = new Map();
