@@ -38,7 +38,6 @@ export class Editor {
         layout.dispatch({
           current: layout.children.length,
           changes: [
-            layout.children.length,
             {
               name: path || "untitled *",
               doc,
@@ -52,9 +51,7 @@ export class Editor {
                   id,
                   version,
                   doc,
-                  (saveState) => {
-                    console.log(saveState);
-                  },
+                  (saveState) => {},
                   api.update,
                   api.onSaved
                 ),
@@ -69,32 +66,5 @@ export class Editor {
         offContent();
       });
     });
-
-    // api.on("open", ({ id, path, content }) => {
-    //   tab.content.then((content) => {
-    //     let { initialText, initialVersion } = content;
-
-    //     layout.dispatch({
-    //       current: layout.children.length,
-    //       changes: [
-    //         layout.children.length,
-    //         {
-    //           name: tab.name$.value,
-    //           doc: initialText,
-    //           extensions: [
-    //             tidal(),
-    //             keymap.of([indentWithTab]),
-    //             evaluation(),
-    //             basicSetup,
-    //             oneDark,
-    //             electronConsole(api),
-    //             peer(content, initialVersion),
-    //             toolbar(api),
-    //           ],
-    //         },
-    //       ],
-    //     });
-    //   });
-    // });
   }
 }

@@ -33,8 +33,9 @@ export class LayoutView {
     this.update(
       LayoutTransaction.create(
         this.current,
+        this.children.length,
         changes || [],
-        current || 0,
+        current,
         effects || []
       )
     );
@@ -43,35 +44,33 @@ export class LayoutView {
   update(tr: LayoutTransaction) {
     this.current = tr.newCurrent;
 
+    let lastAdded: TabView | undefined;
+
     // Update self
-    let index = 0;
-    for (let change of tr.changes) {
+    for (let change of tr.changes.changelist) {
       if (typeof change === "number") {
-        index += change;
-      } else if (change === null) {
-        let [tab] = this.children.splice(index, 1);
+        let [tab] = this.children.splice(change, 1);
+        tab.destroy();
         this.tabRegion.removeChild(tab.tab);
+      } else if (Array.isArray(change)) {
+        // TODO: Support tab movements
       } else {
-        let { name, doc, extensions } = change;
+        let { id, name, doc, extensions } = change;
+        let index = id ?? this.children.length;
         let editor = new EditorView({ doc: doc, extensions });
         let tab = new TabView(index, name, editor, this);
-        this.tabRegion.insertBefore(
-          tab.tab,
-          index < this.children.length ? this.children[index].tab : null
-        );
+        this.tabRegion.insertBefore(tab.tab, this.children[index]?.tab);
         this.children.splice(index, 0, tab);
-        index += 1;
       }
     }
 
     // Update current editor
-    if (this.currentEditor) {
+    if (this.currentEditor && this.dom.contains(this.currentEditor.dom)) {
       this.dom.removeChild(this.currentEditor.dom);
       this.currentEditor = null;
     }
 
     if (tr.newCurrent !== null) {
-      console.log(tr.newCurrent);
       this.currentEditor = this.children[tr.newCurrent].editor;
       this.dom.appendChild(this.currentEditor.dom);
     }
@@ -107,47 +106,24 @@ class TabView {
       closeButton.appendChild(n);
     });
     closeButton.addEventListener("click", (event) => {
-      let newCurrent: number | null | undefined = undefined;
-      if (this.layout.current !== null && this.layout.current >= this.index) {
-        newCurrent =
-          this.layout.children.length > 1
-            ? Math.max(this.layout.current - 1, 0)
-            : null;
-      } else {
-        newCurrent = this.layout.current;
-      }
-      this.layout.dispatch({ current: newCurrent, changes: [index, null] });
+      this.layout.dispatch({ changes: [this.index] });
       event.stopPropagation();
     });
   }
 
   update(tr: LayoutTransaction) {
-    let index = 0;
+    let index = tr.changes.mapIndex(this.index);
 
-    if (this.index !== null) {
-      for (let change of tr.changes) {
-        if (typeof change === "number") {
-          index += change;
-        } else if (change === null) {
-          if (index === this.index) {
-            this.index === -1;
-            break;
-          } else if (index < this.index) {
-            this.index -= 1;
-          }
-        } else {
-          if (index < this.index) {
-            index += 1;
-            this.index += 1;
-          }
-        }
-
-        if (index >= this.index) {
-          break;
-        }
-      }
+    if (index === null) {
+      throw Error("Trying to update a destroyed tab");
     }
 
+    this.index = index;
+
     this.tab.classList.toggle("current", tr.newCurrent === this.index);
+  }
+
+  destroy() {
+    this.editor.destroy();
   }
 }
