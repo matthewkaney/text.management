@@ -1,10 +1,8 @@
-import { combineLatest, Subscription } from "rxjs";
-
 import { ElectronAPI } from "../preload";
 
-import { EditorState, Text } from "@codemirror/state";
+import { Text } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { EditorView, keymap, ViewPlugin } from "@codemirror/view";
+import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";

@@ -34,7 +34,7 @@
       }
     },
     "main": {
-      "source": "src/main.ts",
+      "source": "src/main/index.ts",
       "distDir": "dist",
       "context": "electron-main",
       "includeNodeModules": {

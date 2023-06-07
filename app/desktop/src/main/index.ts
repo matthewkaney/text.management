@@ -36,7 +36,6 @@ const createWindow = () => {
 
   win.on("ready-to-show", () => {
     win.webContents.ipc.on("current", (_, id) => {
-      console.log(id);
       filesystem.currentDocID = id;
     });
 
