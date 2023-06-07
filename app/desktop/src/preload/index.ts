@@ -11,6 +11,10 @@ type Handler<T> = (event: T) => void;
 export type ElectronAPI = typeof api;
 
 const api = {
+  setCurrent(id: string | null) {
+    ipcRenderer.send("current", id);
+  },
+
   onOpen: (handler: Handler<{ id: string; path: string | null }>) => {
     function handleOpen(_: any, id: string, path: string | null) {
       handler({ id, path });
@@ -23,8 +27,8 @@ const api = {
     };
   },
 
-  update: (id: string, update: DocumentUpdate) => {
-    ipcRenderer.send(`doc-${id}-update`, update);
+  update: (id: string, update: DocumentUpdate, saveState: boolean) => {
+    ipcRenderer.send(`doc-${id}-update`, update, saveState);
   },
 
   onContent: (

@@ -16,6 +16,11 @@ import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 import { fileSync } from "./file";
 
+function basename(path: string) {
+  let parts = path.split("/");
+  return parts[parts.length - 1];
+}
+
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
@@ -29,7 +34,7 @@ const { api } = window as Window &
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent);
+    let layout = new LayoutView(parent, api.setCurrent);
 
     api.onOpen(({ id, path }) => {
       let offContent = api.onContent(id, ({ doc: docJSON, version }) => {
@@ -39,7 +44,8 @@ export class Editor {
           current: layout.children.length,
           changes: [
             {
-              name: path || "untitled *",
+              name: path !== null ? basename(path) : "untitled",
+              fileID: id,
               doc,
               extensions: [
                 tidal(),
@@ -47,14 +53,7 @@ export class Editor {
                 evaluation(),
                 basicSetup,
                 oneDark,
-                fileSync(
-                  id,
-                  version,
-                  doc,
-                  (saveState) => {},
-                  api.update,
-                  api.onSaved
-                ),
+                fileSync(id, layout, api.update, api.onSaved),
                 // electronConsole(api),
                 // peer(version),
                 // toolbar(api),

@@ -35,6 +35,11 @@ const createWindow = () => {
   let removeWindowHandlers = () => {};
 
   win.on("ready-to-show", () => {
+    win.webContents.ipc.on("current", (_, id) => {
+      console.log(id);
+      filesystem.currentDocID = id;
+    });
+
     // Attach file handlers
     let unOpen = filesystem.on("open", ({ id, doc }) => {
       let { path, content } = doc;
@@ -49,8 +54,10 @@ const createWindow = () => {
         win.webContents.send(`doc-${id}-saved`, version);
       });
 
-      win.webContents.ipc.on(`doc-${id}-update`, (_, update: DocumentUpdate) =>
-        doc.update(update)
+      win.webContents.ipc.on(
+        `doc-${id}-update`,
+        (_, update: DocumentUpdate, saveState: boolean) =>
+          doc.update(update, saveState)
       );
 
       content.then(({ doc, version }) => {
@@ -117,7 +124,8 @@ async function saveAsFile(window?: BrowserWindow) {
 
     if (result.canceled || !result.filePath) return;
 
-    // filesystem.save(result.filePath);
+    let currentDoc = filesystem.currentDoc;
+    if (currentDoc) currentDoc.save(result.filePath);
   }
 }
 
@@ -126,14 +134,24 @@ let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
 
-// TODO: Save menu logic
-// filesystem.on("open", ({ doc }) => {
-//   if (tab instanceof DesktopTab) {
-//     tab.path$.subscribe({
-//       next: (path) => {
-//         let saveItem = mainMenu.getMenuItemById("save");
-//         if (saveItem) saveItem.enabled = !path;
-//       },
-//     });
-//   }
-// });
+let offSaveStateChanged: (() => void) | null = null;
+updateSaveItem(false);
+
+function updateSaveItem(saveState: boolean) {
+  let saveItem = mainMenu.getMenuItemById("save");
+  if (saveItem) saveItem.enabled = !saveState;
+}
+
+filesystem.on("currentDocChanged", (doc) => {
+  if (offSaveStateChanged) {
+    offSaveStateChanged();
+    offSaveStateChanged = null;
+  }
+
+  if (doc) {
+    updateSaveItem(doc.saveState);
+    offSaveStateChanged = doc.on("saveStateChanged", updateSaveItem);
+  } else {
+    updateSaveItem(false);
+  }
+});

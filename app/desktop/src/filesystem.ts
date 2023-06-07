@@ -200,6 +200,7 @@ import { DocumentUpdate } from "@core/api";
 interface DocumentEvents {
   saved: number;
   pathChanged: string;
+  saveStateChanged: boolean;
 }
 
 interface DocumentState {
@@ -214,8 +215,13 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
 
   lastSavedVersion: Promise<number | null> = Promise.resolve(null);
 
+  // This is not managed by this object, but rather by the editor UI
+  saveState: boolean = true;
+
   constructor(path?: string) {
     super();
+
+    this.path = path ?? null;
 
     this.content = (async () => {
       if (path) {
@@ -262,7 +268,7 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
     });
   }
 
-  public update(update: DocumentUpdate) {
+  public update(update: DocumentUpdate, saveState: boolean) {
     let { changes, version } = update;
     this.content = this.content.then(async (previous) => {
       if (version !== previous.version + 1) {
@@ -272,11 +278,17 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
       let doc = ChangeSet.fromJSON(changes).apply(previous.doc);
       return { doc, version };
     });
+
+    if (this.saveState !== saveState) {
+      this.saveState = saveState;
+      this.emit("saveStateChanged", saveState);
+    }
   }
 }
 
 interface FilesystemEvents {
   open: { id: string; doc: DesktopDocument };
+  currentDocChanged: DesktopDocument | null;
 }
 
 export class Filesystem extends EventEmitter<FilesystemEvents> {
@@ -294,6 +306,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   loadDoc(path?: string) {
     let id = this.getID();
     let doc = new DesktopDocument(path);
+    this.docs.set(id, doc);
 
     this.emit("open", { id, doc });
   }
@@ -304,13 +317,20 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     return (this._nextDocID++).toString();
   }
 
-  private _currentDoc: string | null = null;
+  private _currentDocID: string | null = null;
 
-  get currentDoc() {
-    return this._currentDoc;
+  get currentDocID() {
+    return this._currentDocID;
   }
 
-  set currentDoc(docID) {
-    this._currentDoc = docID;
+  set currentDocID(docID) {
+    this._currentDocID = docID;
+    this.emit("currentDocChanged", this.currentDoc);
+  }
+
+  get currentDoc() {
+    return this._currentDocID !== null
+      ? this.docs.get(this._currentDocID) ?? null
+      : null;
   }
 }

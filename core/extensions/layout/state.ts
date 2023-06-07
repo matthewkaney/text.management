@@ -2,6 +2,7 @@ import { Extension, StateEffect, Text } from "@codemirror/state";
 
 interface NewTab {
   id?: number;
+  fileID: string;
   name: string;
   doc: string | Text;
   extensions: Extension[];
@@ -123,3 +124,13 @@ export class LayoutTransaction {
     );
   }
 }
+
+export const changeNameEffect = StateEffect.define<{
+  id: number;
+  name: string;
+}>();
+
+export const changeSaveStateEffect = StateEffect.define<{
+  id: string;
+  saveState: boolean;
+}>();

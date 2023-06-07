@@ -1,6 +1,10 @@
 import { EditorView } from "@codemirror/view";
 
-import { LayoutTransactionSpec, LayoutTransaction } from "./state";
+import {
+  LayoutTransactionSpec,
+  LayoutTransaction,
+  changeNameEffect,
+} from "./state";
 
 import { library, icon } from "@fortawesome/fontawesome-svg-core";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -19,7 +23,10 @@ export class LayoutView {
 
   private currentEditor: EditorView | null = null;
 
-  constructor(parent: HTMLElement) {
+  constructor(
+    parent: HTMLElement,
+    private updateCurrent: (current: string | null) => void
+  ) {
     this.dom = document.createElement("div");
     this.dom.classList.add("editor-layout");
 
@@ -42,9 +49,9 @@ export class LayoutView {
   }
 
   update(tr: LayoutTransaction) {
+    // TODO: Move to transaction
+    let currentChanged = this.current !== tr.newCurrent;
     this.current = tr.newCurrent;
-
-    let lastAdded: TabView | undefined;
 
     // Update self
     for (let change of tr.changes.changelist) {
@@ -55,30 +62,42 @@ export class LayoutView {
       } else if (Array.isArray(change)) {
         // TODO: Support tab movements
       } else {
-        let { id, name, doc, extensions } = change;
+        let { id, name, doc, extensions, fileID } = change;
         let index = id ?? this.children.length;
         let editor = new EditorView({ doc: doc, extensions });
-        let tab = new TabView(index, name, editor, this);
+        let tab = new TabView(index, name, editor, this, fileID);
         this.tabRegion.insertBefore(tab.tab, this.children[index]?.tab);
         this.children.splice(index, 0, tab);
       }
     }
 
     // Update current editor
-    if (this.currentEditor && this.dom.contains(this.currentEditor.dom)) {
-      this.dom.removeChild(this.currentEditor.dom);
-      this.currentEditor = null;
-    }
+    if (currentChanged) {
+      this.updateCurrent(
+        this.current !== null ? this.children[this.current].fileID : null
+      );
+      if (this.currentEditor && this.dom.contains(this.currentEditor.dom)) {
+        this.dom.removeChild(this.currentEditor.dom);
+        this.currentEditor = null;
+      }
 
-    if (tr.newCurrent !== null) {
-      this.currentEditor = this.children[tr.newCurrent].editor;
-      this.dom.appendChild(this.currentEditor.dom);
+      if (tr.newCurrent !== null) {
+        this.currentEditor = this.children[tr.newCurrent].editor;
+        this.dom.appendChild(this.currentEditor.dom);
+        this.currentEditor.focus();
+      }
     }
 
     // Update children
     for (let tab of this.children) {
       tab.update(tr);
     }
+
+    // Update window title
+    document.title =
+      this.current === null
+        ? "text.management"
+        : this.children[this.current].label;
   }
 }
 
@@ -89,7 +108,8 @@ class TabView {
     private index: number,
     public label: string,
     public editor: EditorView,
-    private layout: LayoutView
+    private layout: LayoutView,
+    public fileID: string | null
   ) {
     this.tab = document.createElement("div");
     this.tab.innerText = label;
@@ -121,6 +141,13 @@ class TabView {
     this.index = index;
 
     this.tab.classList.toggle("current", tr.newCurrent === this.index);
+
+    for (let effect of tr.effects) {
+      if (effect.is(changeNameEffect) && effect.value.id === this.index) {
+        this.label = effect.value.name;
+        this.tab.innerText = this.label;
+      }
+    }
   }
 
   destroy() {

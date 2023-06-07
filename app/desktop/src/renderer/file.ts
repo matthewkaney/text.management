@@ -1,15 +1,16 @@
-import { Text, ChangeSet, StateEffect } from "@codemirror/state";
+import { ChangeSet, StateEffect } from "@codemirror/state";
 import { ViewPlugin } from "@codemirror/view";
+
+import { LayoutView, changeSaveStateEffect } from "@core/extensions/layout";
+
 import { DocumentUpdate } from "@core/api";
 
 const saveEffect = StateEffect.define<number>();
 
 export function fileSync(
   id: string,
-  initialVersion: number,
-  initialDoc: Text,
-  updateSaveState: (saveState: boolean) => void,
-  update: (id: string, update: DocumentUpdate) => void,
+  layout: LayoutView,
+  update: (id: string, update: DocumentUpdate, saveState: boolean) => void,
   onSaved: (id: string, handler: (version: number) => void) => () => void
 ) {
   return ViewPlugin.define((view) => {
@@ -17,8 +18,8 @@ export function fileSync(
       view.dispatch({ effects: saveEffect.of(version) });
     });
 
-    let lastSavedVersion = initialVersion;
-    let lastSavedDoc = initialDoc;
+    let lastSavedVersion = 0;
+    let lastSavedDoc = view.state.doc;
     let history: ChangeSet[] = [];
 
     return {
@@ -41,15 +42,22 @@ export function fileSync(
 
           if (!changes.empty) {
             history.push(changes);
-            update(id, {
-              version: lastSavedVersion + history.length,
-              clientID: "",
-              changes: changes.toJSON(),
-            });
+            update(
+              id,
+              {
+                version: lastSavedVersion + history.length,
+                clientID: "",
+                changes: changes.toJSON(),
+              },
+              lastSavedDoc.eq(doc)
+            );
           }
         }
 
-        updateSaveState(lastSavedDoc.eq(doc));
+        let saveState = lastSavedDoc.eq(doc);
+        layout.dispatch({
+          effects: [changeSaveStateEffect.of({ id, saveState })],
+        });
       },
       destroy: () => {
         offSaved();
