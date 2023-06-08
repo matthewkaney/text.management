@@ -6,7 +6,9 @@ const isMac = process.platform === "darwin";
 interface MenuActions {
   newFile: (window?: BrowserWindow) => void;
   openFile: (window?: BrowserWindow) => void;
+  saveFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
+  showAbout: (window?: BrowserWindow) => void;
 }
 
 export function getTemplate(
@@ -46,7 +48,7 @@ export function getTemplate(
           id: "save",
           label: "Save",
           accelerator: "CommandOrControl+S",
-          click: (_, window) => actions.saveAsFile(window),
+          click: (_, window) => actions.saveFile(window),
         },
         {
           label: "Save As...",
@@ -137,7 +139,13 @@ export function getTemplate(
       ],
     },
     { role: "viewMenu" },
-    { role: "windowMenu" }
+    { role: "windowMenu" },
+    {
+      role: "help",
+      submenu: [
+        { label: "About", click: (_, window) => actions.showAbout(window) },
+      ],
+    }
   );
 
   return template;

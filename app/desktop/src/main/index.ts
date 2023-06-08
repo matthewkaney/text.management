@@ -99,7 +99,7 @@ ipcMain.handle("tidal-version", () => {
   return tidal.getVersion();
 });
 
-async function newFile(window?: BrowserWindow) {
+async function newFile() {
   filesystem.loadDoc();
 }
 
@@ -117,6 +117,11 @@ async function openFile(window?: BrowserWindow) {
   }
 }
 
+async function saveFile(window?: BrowserWindow) {
+  if (window) {
+  }
+}
+
 async function saveAsFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showSaveDialog(window);
@@ -128,7 +133,19 @@ async function saveAsFile(window?: BrowserWindow) {
   }
 }
 
-let menuTemplate = getTemplate({ newFile, openFile, saveAsFile });
+function showAbout(window?: BrowserWindow) {
+  if (window) {
+    window.webContents.send("show-about", app.getVersion());
+  }
+}
+
+let menuTemplate = getTemplate({
+  newFile,
+  openFile,
+  saveFile,
+  saveAsFile,
+  showAbout,
+});
 let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);

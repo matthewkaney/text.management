@@ -2,7 +2,8 @@ import { ElectronAPI } from "../preload";
 
 import { Text } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
@@ -61,6 +62,24 @@ export class Editor {
         });
 
         offContent();
+      });
+    });
+
+    api.onShowAbout((appVersion) => {
+      layout.dispatch({
+        current: layout.children.length,
+        changes: [
+          {
+            name: "About",
+            fileID: "",
+            doc: `text.management version ${appVersion}`,
+            extensions: [
+              oneDark,
+              EditorState.readOnly.of(true),
+              EditorView.editable.of(false),
+            ],
+          },
+        ],
       });
     });
   }

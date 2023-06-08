@@ -74,6 +74,18 @@ const api = {
   requestClose: (id: string) => {},
 
   onClose: (id: string, handler: Handler<void>) => {},
+
+  onShowAbout: (handler: Handler<string>) => {
+    function handleShowAbout(_: any, appVersion: string) {
+      handler(appVersion);
+    }
+
+    ipcRenderer.on("show-about", handleShowAbout);
+
+    return () => {
+      ipcRenderer.off("show-about", handleShowAbout);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld("api", api);
