@@ -50,7 +50,11 @@ export class LayoutView {
 
   update(tr: LayoutTransaction) {
     // TODO: Move to transaction
-    let currentChanged = this.current !== tr.newCurrent;
+    let currentChanged = !(
+      (this.current === null && tr.newCurrent === null) ||
+      (this.current !== null &&
+        tr.changes.mapIndex(this.current) === tr.newCurrent)
+    );
     this.current = tr.newCurrent;
 
     // Update self
