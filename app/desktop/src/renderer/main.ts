@@ -13,6 +13,8 @@ import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
+
+import { editorTab } from "./tabs/editorTab";
 import { fileSync } from "./file";
 
 function basename(path: string) {
@@ -42,9 +44,7 @@ export class Editor {
         layout.dispatch({
           current: layout.children.length,
           changes: [
-            {
-              name: path !== null ? basename(path) : "untitled",
-              fileID: id,
+            editorTab.of({
               doc,
               extensions: [
                 tidal(),
@@ -57,7 +57,7 @@ export class Editor {
                 // peer(version),
                 // toolbar(api),
               ],
-            },
+            }),
           ],
         });
 
@@ -69,16 +69,14 @@ export class Editor {
       layout.dispatch({
         current: layout.children.length,
         changes: [
-          {
-            name: "About",
-            fileID: "",
+          editorTab.of({
             doc: `text.management version ${appVersion}`,
             extensions: [
               oneDark,
               EditorState.readOnly.of(true),
               EditorView.editable.of(false),
             ],
-          },
+          }),
         ],
       });
     });

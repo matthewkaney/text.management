@@ -1,5 +1,7 @@
 import { Extension, StateEffect, Text } from "@codemirror/state";
 
+import { TabState } from "./tab/state";
+
 interface NewTab {
   id?: number;
   fileID: string;
@@ -9,7 +11,7 @@ interface NewTab {
 }
 
 // Changes are NewTab for additions, number for deletion, pairs for movements
-type TabChange = number | [number, number] | NewTab;
+type TabChange = number | [number, number] | TabState<any>;
 
 class TabChanges {
   private constructor(
@@ -74,10 +76,10 @@ class TabChanges {
           }
         }
       } else {
-        let id = change.id;
-        if (change.id !== undefined && change.id < index) {
-          index += 1;
-        }
+        // let id = change.id;
+        // if (change.id !== undefined && change.id < index) {
+        //   index += 1;
+        // }
 
         length += 1;
       }
