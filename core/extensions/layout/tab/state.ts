@@ -1,32 +1,22 @@
-import { Extension } from "@codemirror/state";
+import { EditorState, EditorStateConfig } from "@codemirror/state";
 
-interface TabStateConfig<Input> {
-  value?: Input;
-  extensions?: Extension[];
+export abstract class TabState<T> {
+  abstract readonly name: string;
+  abstract readonly contents: T;
+
+  protected constructor(readonly id = Symbol()) {}
 }
 
-class TabStateType<Input, Value> {
-  constructor(
-    private init: (config: TabStateConfig<Input>) => TabState<Value>
-  ) {}
-
-  of(config: TabStateConfig<Input>) {
-    return this.init(config);
-  }
-}
-
-export class TabState<Value> {
-  static define<Input, Value>(init: (input: Input | undefined) => Value) {
-    let type: TabStateType<Input, Value> = new TabStateType<Input, Value>(
-      ({ value, extensions }) =>
-        new TabState<Value>(type, init(value), extensions)
-    );
-    return type;
+export class EditorTabState extends TabState<EditorState> {
+  static create(config?: EditorStateConfig) {
+    return new EditorTabState(EditorState.create(config));
   }
 
-  private constructor(
-    readonly type: TabStateType<any, Value>,
-    readonly value: Value,
-    extensions: Extension[] = []
-  ) {}
+  private constructor(readonly contents: EditorState, id?: symbol) {
+    super(id);
+  }
+
+  get name() {
+    return "untitled";
+  }
 }
