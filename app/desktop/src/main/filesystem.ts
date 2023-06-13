@@ -79,10 +79,6 @@ class DesktopDocument extends EventEmitter<DocumentEvents> {
   public update(update: DocumentUpdate, saveState: boolean) {
     let { changes, version } = update;
     this.content = this.content.then(async (previous) => {
-      if (version !== previous.version + 1) {
-        throw Error("Not all updates were sent to the filesystem");
-      }
-
       let doc = ChangeSet.fromJSON(changes).apply(previous.doc);
       return { doc, version };
     });

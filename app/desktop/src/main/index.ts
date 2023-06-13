@@ -119,6 +119,13 @@ async function openFile(window?: BrowserWindow) {
 
 async function saveFile(window?: BrowserWindow) {
   if (window) {
+    if (filesystem.currentDoc) {
+      if (filesystem.currentDoc.path === null) {
+        saveAsFile(window);
+      } else {
+        filesystem.currentDoc.save();
+      }
+    }
   }
 }
 
@@ -128,8 +135,9 @@ async function saveAsFile(window?: BrowserWindow) {
 
     if (result.canceled || !result.filePath) return;
 
-    let currentDoc = filesystem.currentDoc;
-    if (currentDoc) currentDoc.save(result.filePath);
+    if (filesystem.currentDoc) {
+      filesystem.currentDoc.save(result.filePath);
+    }
   }
 }
 
@@ -152,10 +160,16 @@ Menu.setApplicationMenu(mainMenu);
 
 let offSaveStateChanged: (() => void) | null = null;
 updateSaveItem(false);
+updateSaveAsItem(false);
 
 function updateSaveItem(saveState: boolean) {
   let saveItem = mainMenu.getMenuItemById("save");
   if (saveItem) saveItem.enabled = !saveState;
+}
+
+function updateSaveAsItem(enabled: boolean) {
+  let saveAsItem = mainMenu.getMenuItemById("saveAs");
+  if (saveAsItem) saveAsItem.enabled = enabled;
 }
 
 filesystem.on("currentDocChanged", (doc) => {
@@ -165,9 +179,13 @@ filesystem.on("currentDocChanged", (doc) => {
   }
 
   if (doc) {
-    updateSaveItem(doc.saveState);
-    offSaveStateChanged = doc.on("saveStateChanged", updateSaveItem);
+    updateSaveItem(doc.path !== null && doc.saveState);
+    offSaveStateChanged = doc.on("saveStateChanged", (saveState) => {
+      updateSaveItem(doc.path !== null && saveState);
+    });
+    updateSaveAsItem(true);
   } else {
     updateSaveItem(false);
+    updateSaveAsItem(false);
   }
 });
