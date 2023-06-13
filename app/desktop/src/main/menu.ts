@@ -51,6 +51,7 @@ export function getTemplate(
           click: (_, window) => actions.saveFile(window),
         },
         {
+          id: "saveAs",
           label: "Save As...",
           accelerator: "CommandOrControl+Shift+S",
           click: (_, window) => actions.saveAsFile(window),
