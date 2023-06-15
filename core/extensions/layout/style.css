@@ -6,6 +6,10 @@
   flex-direction: column;
 }
 
+.tab-content {
+  flex: 1;
+}
+
 .tab-region {
   padding: 0 calc(1.5 * 12px);
   color: var(--col-text);

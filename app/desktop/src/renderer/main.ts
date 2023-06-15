@@ -14,8 +14,8 @@ import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
-import { editorTab } from "./tabs/editorTab";
 import { fileSync } from "./file";
+import { EditorTabView } from "@core/extensions/layout/tab/view";
 
 function basename(path: string) {
   let parts = path.split("/");
@@ -42,22 +42,23 @@ export class Editor {
         let doc = Text.of(docJSON);
 
         layout.dispatch({
-          current: layout.children.length,
           changes: [
-            editorTab.of({
-              doc,
-              extensions: [
-                tidal(),
-                keymap.of([indentWithTab]),
-                evaluation(),
-                basicSetup,
-                oneDark,
-                fileSync(id, layout, api.update, api.onSaved),
-                // electronConsole(api),
-                // peer(version),
-                // toolbar(api),
-              ],
-            }),
+            {
+              view: new EditorTabView(layout, {
+                doc,
+                extensions: [
+                  tidal(),
+                  keymap.of([indentWithTab]),
+                  evaluation(),
+                  basicSetup,
+                  oneDark,
+                  fileSync(id, layout, api.update, api.onSaved),
+                  // electronConsole(api),
+                  // peer(version),
+                  // toolbar(api),
+                ],
+              }),
+            },
           ],
         });
 
@@ -67,16 +68,17 @@ export class Editor {
 
     api.onShowAbout((appVersion) => {
       layout.dispatch({
-        current: layout.children.length,
         changes: [
-          editorTab.of({
-            doc: `text.management version ${appVersion}`,
-            extensions: [
-              oneDark,
-              EditorState.readOnly.of(true),
-              EditorView.editable.of(false),
-            ],
-          }),
+          {
+            view: new EditorTabView(layout, {
+              doc: `text.management version ${appVersion}`,
+              extensions: [
+                oneDark,
+                EditorState.readOnly.of(true),
+                EditorView.editable.of(false),
+              ],
+            }),
+          },
         ],
       });
     });

@@ -1,17 +1,14 @@
-import { Extension, StateEffect, Text } from "@codemirror/state";
+import { StateEffect } from "@codemirror/state";
 
-import { TabState } from "./tab/state";
+import { TabView } from "./tab/view";
 
-interface NewTab {
-  id?: number;
-  fileID: string;
-  name: string;
-  doc: string | Text;
-  extensions: Extension[];
+interface NewTab<T> {
+  index?: number;
+  view: TabView<T>;
 }
 
 // Changes are NewTab for additions, number for deletion, pairs for movements
-type TabChange = number | [number, number] | TabState<any>;
+type TabChange = symbol | [number, number] | NewTab<any>;
 
 class TabChanges {
   private constructor(
@@ -19,7 +16,7 @@ class TabChanges {
     readonly changelist: readonly TabChange[]
   ) {
     for (let change of changelist) {
-      if (typeof change === "number") {
+      if (typeof change === "symbol") {
         length -= 1;
       }
       if (typeof change === "object" && !Array.isArray(change)) {
@@ -39,83 +36,38 @@ class TabChanges {
   static of(length: number, changelist: readonly TabChange[]) {
     return new TabChanges(length, changelist);
   }
-
-  mapIndex(index: number, fallback = 0) {
-    let length = this.length;
-
-    for (let change of this.changelist) {
-      if (typeof change === "number") {
-        length -= 1;
-
-        if (change < index) {
-          index -= 1;
-        } else if (change === index) {
-          if (fallback === 0) {
-            return null;
-          } else if (length === 0) {
-            return null;
-          } else {
-            index = Math.max(
-              0,
-              Math.min(length - 1),
-              Math.sign(fallback) === -1 ? index - 1 : index
-            );
-          }
-        }
-      } else if (Array.isArray(change)) {
-        let [from, to] = change;
-        if (from === index) {
-          index = to;
-        } else {
-          if (from < index) {
-            index -= 1;
-          }
-
-          if (to <= index) {
-            index += 1;
-          }
-        }
-      } else {
-        // let id = change.id;
-        // if (change.id !== undefined && change.id < index) {
-        //   index += 1;
-        // }
-
-        length += 1;
-      }
-    }
-
-    return index;
-  }
 }
 
 export interface LayoutTransactionSpec {
   changes?: TabChange[];
-  current?: number;
+  current?: symbol;
   effects?: StateEffect<any>[];
 }
 
 export class LayoutTransaction {
   private constructor(
-    readonly oldCurrent: number | null,
+    readonly oldCurrent: symbol | null,
     readonly changes: TabChanges,
-    readonly current: number | undefined,
+    readonly current: symbol | undefined,
     readonly effects: readonly StateEffect<any>[]
   ) {
-    this.newCurrent =
-      this.current ??
-      (this.oldCurrent !== null
-        ? this.changes.mapIndex(this.oldCurrent, -1)
-        : null);
+    let lastAddedID: symbol | null = null;
+
+    for (let change of changes.changelist) {
+      if (typeof change === "object" && !Array.isArray(change)) {
+        lastAddedID = change.view.state.id;
+      }
+    }
+    this.newCurrent = this.current ?? lastAddedID ?? this.oldCurrent;
   }
 
-  readonly newCurrent: number | null;
+  readonly newCurrent: symbol | null;
 
   static create(
-    oldCurrent: number | null,
+    oldCurrent: symbol | null,
     oldLength: number,
     changes: TabChange[],
-    current: number | undefined,
+    current: symbol | undefined,
     effects: readonly StateEffect<any>[]
   ) {
     return new LayoutTransaction(

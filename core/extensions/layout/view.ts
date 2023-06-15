@@ -12,7 +12,7 @@ export class LayoutView {
 
   // TODO: The relevant info here should be moved to state
   public children: TabView<any>[] = [];
-  public current: number | null = null;
+  public current: symbol | null = null;
 
   private currentTab: TabView<any> | null = null;
 
@@ -43,24 +43,25 @@ export class LayoutView {
 
   update(tr: LayoutTransaction) {
     // TODO: Move to transaction
-    let currentChanged = !(
-      (this.current === null && tr.newCurrent === null) ||
-      (this.current !== null &&
-        tr.changes.mapIndex(this.current) === tr.newCurrent)
-    );
+    let currentChanged = this.current !== tr.newCurrent;
     this.current = tr.newCurrent;
 
     // Update self
     for (let change of tr.changes.changelist) {
-      if (typeof change === "number") {
-        let [tab] = this.children.splice(change, 1);
-        tab.destroy();
-        this.tabRegion.removeChild(tab.tab);
+      if (typeof change === "symbol") {
+        let changeIndex = this.children.findIndex(
+          ({ state: { id } }) => id === change
+        );
+        if (changeIndex >= 0) {
+          let [tab] = this.children.splice(changeIndex, 1);
+          tab.destroy();
+          this.tabRegion.removeChild(tab.tab);
+        }
       } else if (Array.isArray(change)) {
         // TODO: Support tab movements
       } else {
-        let index = this.children.length;
-        let tab = new TabView(0, this, "", change);
+        let index = change.index ?? this.children.length;
+        let tab = change.view;
         this.tabRegion.insertBefore(tab.tab, this.children[index]?.tab);
         this.children.splice(index, 0, tab);
       }
@@ -68,16 +69,18 @@ export class LayoutView {
 
     // Update current editor
     if (currentChanged) {
-      this.updateCurrent(
-        this.current !== null ? this.children[this.current].fileID : null
-      );
+      // this.updateCurrent(
+      //   this.current !== null ? this.children[this.current].fileID : null
+      // );
       if (this.currentTab && this.dom.contains(this.currentTab.dom)) {
         this.dom.removeChild(this.currentTab.dom);
         this.currentTab = null;
       }
 
-      if (tr.newCurrent !== null) {
-        this.currentTab = this.children[tr.newCurrent];
+      this.currentTab =
+        this.children.find(({ state: { id } }) => id === tr.newCurrent) ?? null;
+
+      if (this.currentTab !== null) {
         this.dom.appendChild(this.currentTab.dom);
         this.currentTab.dom.focus();
       }
@@ -89,10 +92,7 @@ export class LayoutView {
     }
 
     // Update window title
-    // TODO: Fix
-    // document.title =
-    //   this.current === null
-    //     ? "text.management"
-    //     : this.children[this.current].label;
+    document.title =
+      this.currentTab === null ? "text.management" : this.currentTab.state.name;
   }
 }
