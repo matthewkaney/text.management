@@ -38,7 +38,7 @@ export abstract class TabView<T> {
   }
 
   update(tr: LayoutTransaction) {
-    this.tab.classList.toggle("current", tr.newCurrent === this.state.id);
+    this.tab.classList.toggle("current", tr.state.current === this.state.id);
   }
 
   abstract destroy(): void;
@@ -47,7 +47,10 @@ export abstract class TabView<T> {
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
-  constructor(layout: LayoutView, config?: EditorStateConfig) {
+  constructor(
+    layout: LayoutView,
+    config?: EditorStateConfig & { fileID: string }
+  ) {
     const state = EditorTabState.create(config);
     super(layout, state);
 

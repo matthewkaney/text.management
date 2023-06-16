@@ -1,6 +1,66 @@
 import { StateEffect } from "@codemirror/state";
 
 import { TabView } from "./tab/view";
+import { TabState } from "./tab/state";
+
+export class LayoutState {
+  static create() {
+    return new LayoutState({}, [], null);
+  }
+
+  private constructor(
+    readonly tabs: { readonly [id: symbol]: TabState<any> },
+    readonly order: readonly symbol[],
+    readonly current: symbol | null
+  ) {}
+
+  get currentTab() {
+    return this.current ? this.tabs[this.current] : null;
+  }
+
+  applyTransaction(tr: LayoutTransaction) {
+    let current = this.current;
+    let order = [...this.order];
+
+    let newTabs: { [id: symbol]: TabState<any> } = {};
+
+    for (let change of tr.changes.changelist) {
+      if (typeof change === "symbol") {
+        let index = order.indexOf(change);
+
+        if (index >= 0) {
+          order.splice(index, 1);
+
+          if (current === change) {
+            let newCurrentIndex = Math.min(index, order.length - 1);
+            current = newCurrentIndex >= 0 ? order[newCurrentIndex] : null;
+          }
+        }
+      } else if (Array.isArray(change)) {
+        // TODO: Movements
+      } else {
+        let index = Math.min(change.index ?? order.length, order.length);
+        let state = change.view.state;
+        let id = state.id;
+        order.splice(index, 0, id);
+        newTabs[id] = state;
+        current = id;
+      }
+    }
+
+    let tabs: { [id: symbol]: TabState<any> } = {};
+
+    for (let id of order) {
+      let state = this.tabs[id] ?? newTabs[id];
+
+      if (!state) Error("Lost tab state");
+
+      tabs[id] = state;
+    }
+
+    return new LayoutState(tabs, order, current);
+  }
+}
 
 interface NewTab<T> {
   index?: number;
@@ -46,36 +106,34 @@ export interface LayoutTransactionSpec {
 
 export class LayoutTransaction {
   private constructor(
-    readonly oldCurrent: symbol | null,
+    readonly startState: LayoutState,
     readonly changes: TabChanges,
     readonly current: symbol | undefined,
     readonly effects: readonly StateEffect<any>[]
-  ) {
-    let lastAddedID: symbol | null = null;
-
-    for (let change of changes.changelist) {
-      if (typeof change === "object" && !Array.isArray(change)) {
-        lastAddedID = change.view.state.id;
-      }
-    }
-    this.newCurrent = this.current ?? lastAddedID ?? this.oldCurrent;
-  }
-
-  readonly newCurrent: symbol | null;
+  ) {}
 
   static create(
-    oldCurrent: symbol | null,
-    oldLength: number,
+    startState: LayoutState,
     changes: TabChange[],
     current: symbol | undefined,
     effects: readonly StateEffect<any>[]
   ) {
     return new LayoutTransaction(
-      oldCurrent,
-      TabChanges.of(oldLength, changes),
+      startState,
+      TabChanges.of(startState.order.length, changes),
       current,
       effects
     );
+  }
+
+  private _state: LayoutState | null = null;
+
+  get state() {
+    if (!this._state) {
+      this._state = this.startState.applyTransaction(this);
+    }
+
+    return this._state;
   }
 }
 

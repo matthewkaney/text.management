@@ -1,6 +1,4 @@
-import { EditorView } from "@codemirror/view";
-
-import { LayoutTransactionSpec, LayoutTransaction } from "./state";
+import { LayoutState, LayoutTransactionSpec, LayoutTransaction } from "./state";
 
 import { TabView } from "./tab/view";
 
@@ -10,11 +8,10 @@ export class LayoutView {
   readonly dom: HTMLDivElement;
   private tabRegion: HTMLDivElement;
 
-  // TODO: The relevant info here should be moved to state
-  public children: TabView<any>[] = [];
-  public current: symbol | null = null;
+  state: LayoutState = LayoutState.create();
 
-  private currentTab: TabView<any> | null = null;
+  // TODO: The relevant info here should be moved to state
+  private children: Map<symbol, TabView<any>> = new Map();
 
   constructor(
     parent: HTMLElement,
@@ -32,8 +29,7 @@ export class LayoutView {
   dispatch({ changes, current, effects }: LayoutTransactionSpec) {
     this.update(
       LayoutTransaction.create(
-        this.current,
-        this.children.length,
+        this.state,
         changes || [],
         current,
         effects || []
@@ -42,57 +38,58 @@ export class LayoutView {
   }
 
   update(tr: LayoutTransaction) {
-    // TODO: Move to transaction
-    let currentChanged = this.current !== tr.newCurrent;
-    this.current = tr.newCurrent;
+    this.state = tr.state;
+
+    let currentChanged = tr.startState.current !== tr.state.current;
+
+    if (currentChanged) {
+      this.updateCurrent(tr.state.currentTab?.fileID ?? null);
+    }
+
+    // Remove currently active tab
+    if (currentChanged && tr.startState.current !== null) {
+      let currentTab = this.children.get(tr.startState.current);
+
+      if (!currentTab) throw Error("View doesn't have old current tab");
+
+      this.dom.removeChild(currentTab.dom);
+    }
 
     // Update self
     for (let change of tr.changes.changelist) {
       if (typeof change === "symbol") {
-        let changeIndex = this.children.findIndex(
-          ({ state: { id } }) => id === change
-        );
-        if (changeIndex >= 0) {
-          let [tab] = this.children.splice(changeIndex, 1);
-          tab.destroy();
-          this.tabRegion.removeChild(tab.tab);
+        let deletedTab = this.children.get(change);
+        if (deletedTab) {
+          deletedTab.destroy();
+          this.tabRegion.removeChild(deletedTab.tab);
+          this.children.delete(change);
         }
       } else if (Array.isArray(change)) {
         // TODO: Support tab movements
       } else {
-        let index = change.index ?? this.children.length;
         let tab = change.view;
-        this.tabRegion.insertBefore(tab.tab, this.children[index]?.tab);
-        this.children.splice(index, 0, tab);
+        this.children.set(tab.state.id, tab);
+        // TODO: This assumes that all added tabs are added to the end
+        this.tabRegion.appendChild(tab.tab);
       }
     }
 
-    // Update current editor
-    if (currentChanged) {
-      // this.updateCurrent(
-      //   this.current !== null ? this.children[this.current].fileID : null
-      // );
-      if (this.currentTab && this.dom.contains(this.currentTab.dom)) {
-        this.dom.removeChild(this.currentTab.dom);
-        this.currentTab = null;
-      }
+    // Remove currently active tab
+    if (currentChanged && this.state.current !== null) {
+      let currentTab = this.children.get(this.state.current);
 
-      this.currentTab =
-        this.children.find(({ state: { id } }) => id === tr.newCurrent) ?? null;
+      if (!currentTab) throw Error("View doesn't have old new tab");
 
-      if (this.currentTab !== null) {
-        this.dom.appendChild(this.currentTab.dom);
-        this.currentTab.dom.focus();
-      }
+      this.dom.appendChild(currentTab.dom);
+      currentTab.dom.focus();
     }
 
     // Update children
-    for (let tab of this.children) {
+    for (let [_, tab] of this.children) {
       tab.update(tr);
     }
 
     // Update window title
-    document.title =
-      this.currentTab === null ? "text.management" : this.currentTab.state.name;
+    document.title = this.state.currentTab?.name ?? "text.management";
   }
 }
