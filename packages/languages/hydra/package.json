@@ -1,5 +1,5 @@
 {
-  "name": "@management/engine-hydra",
+  "name": "@management/lang-hydra",
   "version": "1.0.0",
   "description": "",
   "browser": "dist/editor.js",

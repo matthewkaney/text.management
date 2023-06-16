@@ -6,7 +6,10 @@ import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
-import { tidal } from "@management/lang-tidal/editor";
+
+import { languageMode } from "@core/extensions/language/editor";
+import tidal from "@management/lang-tidal/editor";
+import hydra from "@management/lang-hydra/editor";
 
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
@@ -48,7 +51,7 @@ export class Editor {
                 fileID: id,
                 doc,
                 extensions: [
-                  tidal(),
+                  languageMode(tidal),
                   keymap.of([indentWithTab]),
                   evaluation(),
                   basicSetup,

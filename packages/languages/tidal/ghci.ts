@@ -27,7 +27,6 @@ interface GHCIEvents {
 }
 
 export class GHCI extends Engine<GHCIEvents> {
-  private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: TerminalMessage[] = [];
@@ -38,7 +37,6 @@ export class GHCI extends Engine<GHCIEvents> {
   constructor(opts: GHCIOptions = defaultOpts) {
     super();
 
-    this.socket = this.initSocket();
     this.process = this.initProcess(opts);
 
     this.onListener["message"] = (listener) => {
@@ -48,26 +46,10 @@ export class GHCI extends Engine<GHCIEvents> {
     };
   }
 
-  private initSocket() {
-    return new Promise<Socket>((resolve) => {
-      const socket = createSocket("udp4");
-      socket.bind(0, "localhost", () => {
-        resolve(socket);
-      });
-
-      // socket.on("message", (data) => {
-      //   this.emit("message", data);
-      // });
-    });
-  }
-
   private async initProcess({ defaultBoot, customBootfiles }: GHCIOptions) {
-    const port = (await this.socket).address().port.toString();
-
     const child = spawn("ghci", ["-XOverloadedStrings"], {
       env: {
         ...process.env,
-        editor_port: port,
       },
     });
 
