@@ -1,7 +1,6 @@
 import { StateEffect } from "@codemirror/state";
 
-import { TabView } from "./tab/view";
-import { TabState } from "./tab/state";
+import { TabView } from "./view";
 
 export class LayoutState {
   static create() {
@@ -146,3 +145,12 @@ export const changeSaveStateEffect = StateEffect.define<{
   id: string;
   saveState: boolean;
 }>();
+
+export abstract class TabState<T> {
+  abstract readonly name: string;
+  abstract readonly contents: T;
+
+  abstract readonly fileID: string | null;
+
+  protected constructor(readonly id = Symbol()) {}
+}

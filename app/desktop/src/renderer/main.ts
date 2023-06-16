@@ -2,8 +2,7 @@ import { ElectronAPI } from "../preload";
 
 import { Text } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
-import { EditorView, keymap } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
@@ -15,7 +14,8 @@ import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
 import { fileSync } from "./file";
-import { EditorTabView } from "@core/extensions/layout/tab/view";
+import { EditorTabView } from "@core/extensions/layout/tabs/editor";
+import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
 function basename(path: string) {
   let parts = path.split("/");
@@ -45,6 +45,7 @@ export class Editor {
           changes: [
             {
               view: new EditorTabView(layout, {
+                fileID: id,
                 doc,
                 extensions: [
                   tidal(),
@@ -70,14 +71,7 @@ export class Editor {
       layout.dispatch({
         changes: [
           {
-            view: new EditorTabView(layout, {
-              doc: `text.management version ${appVersion}`,
-              extensions: [
-                oneDark,
-                EditorState.readOnly.of(true),
-                EditorView.editable.of(false),
-              ],
-            }),
+            view: new AboutTabView(layout, appVersion),
           },
         ],
       });
