@@ -107,7 +107,6 @@ export abstract class TabView<T> {
   readonly tab = document.createElement("div");
 
   constructor(readonly layout: LayoutView, readonly state: TabState<T>) {
-    console.log("tab view created");
     this.dom.classList.add("tab-content");
 
     this.tab.innerText = state.name;
