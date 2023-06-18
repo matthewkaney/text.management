@@ -11,6 +11,8 @@ const app = express();
 
 app.use(express.static(join(__dirname, "../../dist/client")));
 
+app.use("/model", express.static(join(__dirname, "../../../../model")));
+
 import { networkInterfaces } from "os";
 
 const server = app.listen(1234, () => {
