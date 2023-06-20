@@ -24,9 +24,7 @@ interface DocumentState {
   version: number;
 }
 
-export type { DesktopDocument };
-
-class DesktopDocument extends EventEmitter<DocumentEvents> {
+export class DesktopDocument extends EventEmitter<DocumentEvents> {
   fileStatus: FileStatus = { path: null, version: null, saved: false };
   content: DocumentState | null = null;
 
