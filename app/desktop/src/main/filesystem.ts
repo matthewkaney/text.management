@@ -6,93 +6,131 @@ import { EventEmitter } from "@core/events";
 import { DocumentUpdate } from "@core/api";
 
 interface DocumentEvents {
-  saved: number;
-  pathChanged: string;
+  loaded: FileStatus & { doc: Text };
+  status: SavedStatus;
   saveStateChanged: boolean;
 }
+
+interface FileStatus {
+  path: string | null;
+  version: number | null;
+  saved: true | false | "saving";
+}
+
+type SavedStatus = FileStatus & { path: string; version: number };
 
 interface DocumentState {
   doc: Text;
   version: number;
 }
 
+export type { DesktopDocument };
+
 class DesktopDocument extends EventEmitter<DocumentEvents> {
-  path: string | null = null;
+  fileStatus: FileStatus = { path: null, version: null, saved: false };
+  content: DocumentState | null = null;
 
-  content: Promise<DocumentState>;
+  get path() {
+    return this.fileStatus.path;
+  }
 
-  lastSavedVersion: Promise<number | null> = Promise.resolve(null);
+  get saved() {
+    return this.fileStatus.saved;
+  }
 
-  // This is not managed by this object, but rather by the editor UI
-  saveState: boolean = true;
-
-  constructor(path?: string) {
+  constructor(path: string | null = null) {
     super();
 
-    this.path = path ?? null;
+    const loadContent = async () => {
+      let doc = Text.empty;
+      let version = 0;
+      let saved = false;
 
-    this.content = (async () => {
-      if (path) {
+      if (!path) {
+        this.content = { doc, version };
+        this.fileStatus = { path, version, saved };
+      } else {
         try {
-          let doc = Text.of(
+          doc = Text.of(
             (await readFile(path, { encoding: "utf-8" })).split(/\r?\n/)
           );
-          let version = 0;
-          this.lastSavedVersion = Promise.resolve(0);
-          return { doc, version };
+
+          saved = true;
         } catch (err) {
           if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
             throw err;
           }
         }
-      }
 
-      return { doc: Text.of([""]), version: 0 };
-    })();
+        this.content = { doc, version };
+        this.fileStatus = { path, version, saved };
+        this.emit("loaded", { ...this.fileStatus, doc });
+      }
+    };
+
+    loadContent();
   }
 
-  public save(newPath: string | null = null) {
-    if (newPath && this.path !== newPath) {
-      this.path = newPath;
-      this.emit("pathChanged", newPath);
-    }
+  private saveQueue: Map<string, DocumentState> = new Map();
 
-    let path = this.path;
+  async save(newPath: string | null = null) {
+    let { path, version } = this.fileStatus;
+    path = newPath ?? path;
+
     let content = this.content;
 
-    if (!path) {
-      throw Error("Can't save a document without a path");
+    if (version === null || content === null)
+      throw Error("Can't save an unloaded document.");
+
+    if (path === null) throw Error("Can't save a document with no path.");
+
+    let fileStatus: SavedStatus = { path, version, saved: "saving" };
+    this.fileStatus = fileStatus;
+    this.emit("status", fileStatus);
+
+    // Get the previous save for this file path
+    let currentSave = this.saveQueue.get(path);
+
+    // If there's a currently-active save, then queue this one and exit
+    if (currentSave) {
+      if (content.version > currentSave.version) {
+        this.saveQueue.set(path, content);
+      }
+      return;
     }
 
-    this.lastSavedVersion = this.lastSavedVersion.then(async () => {
-      if (path) {
-        let { doc, version } = await content;
-        await writeFile(path, doc.sliceString(0));
-        this.emit("saved", version);
-        return version;
-      } else {
-        throw Error("Lost document path during save");
-      }
-    });
+    currentSave = content;
+
+    // Process saves
+    while (currentSave) {
+      let doc: Text;
+      ({ doc, version } = currentSave);
+      await writeFile(path, doc.sliceString(0));
+      currentSave = this.saveQueue.get(path);
+      this.saveQueue.delete(path);
+    }
+
+    if (this.fileStatus.path === path) {
+      fileStatus = { path, version, saved: true };
+      this.fileStatus = fileStatus;
+      this.emit("status", fileStatus);
+    }
   }
 
-  public update(update: DocumentUpdate, saveState: boolean) {
-    let { changes, version } = update;
-    this.content = this.content.then(async (previous) => {
-      let doc = ChangeSet.fromJSON(changes).apply(previous.doc);
-      return { doc, version };
-    });
+  update(update: DocumentUpdate) {
+    if (!this.content) throw Error("Can't update an unloaded document");
 
-    if (this.saveState !== saveState) {
-      this.saveState = saveState;
-      this.emit("saveStateChanged", saveState);
-    }
+    let { changes, version } = update;
+
+    let doc = ChangeSet.fromJSON(changes).apply(this.content.doc);
+
+    this.content = { doc, version };
   }
 }
 
 interface FilesystemEvents {
-  open: { id: string; doc: DesktopDocument };
-  currentDocChanged: DesktopDocument | null;
+  open: { id: string; document: DesktopDocument };
+  current: DesktopDocument | null;
 }
 
 export class Filesystem extends EventEmitter<FilesystemEvents> {
@@ -109,10 +147,10 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
 
   loadDoc(path?: string) {
     let id = this.getID();
-    let doc = new DesktopDocument(path);
-    this.docs.set(id, doc);
+    let document = new DesktopDocument(path);
+    this.docs.set(id, document);
 
-    this.emit("open", { id, doc });
+    this.emit("open", { id, document });
   }
 
   private _nextDocID = 0;
@@ -129,7 +167,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
 
   set currentDocID(docID) {
     this._currentDocID = docID;
-    this.emit("currentDocChanged", this.currentDoc);
+    this.emit("current", this.currentDoc);
   }
 
   get currentDoc() {

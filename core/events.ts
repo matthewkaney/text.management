@@ -25,7 +25,7 @@ export class EventEmitter<T extends EventMap> {
       onListener(handler);
     }
 
-    let listeners: typeof handler[];
+    let listeners: (typeof handler)[];
 
     let maybeListeners = this.listeners[event];
 
@@ -44,6 +44,18 @@ export class EventEmitter<T extends EventMap> {
         listeners.splice(index, 1);
       }
     };
+  }
+
+  once<E extends EventKey<T>>(
+    event: E,
+    handler: EventHandler<T[E]>
+  ): EventDisconnect {
+    let disconnect = this.on(event, (value) => {
+      handler(value);
+      disconnect();
+    });
+
+    return disconnect;
   }
 
   protected emit<E extends EventKey<T>>(event: E, value: T[E]) {

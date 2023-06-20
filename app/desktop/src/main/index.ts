@@ -11,7 +11,7 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Filesystem } from "./filesystem";
+import { Filesystem, DesktopDocument } from "./filesystem";
 
 import { getTemplate } from "./menu";
 
@@ -40,28 +40,37 @@ const createWindow = () => {
     });
 
     // Attach file handlers
-    let unOpen = filesystem.on("open", ({ id, doc }) => {
-      let { path, content } = doc;
+    let unOpen = filesystem.on("open", ({ id, document }) => {
+      let { path, content } = document;
 
       win.webContents.send("open", id, path);
 
-      let unPathChanged = doc.on("pathChanged", (path) => {
-        win.webContents.send(`doc-${id}-path`, path);
+      if (content) {
+        let { doc, version } = content;
+        win.webContents.send(
+          `doc-${id}-content`,
+          doc.toJSON(),
+          version,
+          document.saved
+        );
+      } else {
+        document.once("loaded", ({ doc, version, saved }) => {
+          win.webContents.send(
+            `doc-${id}-content`,
+            doc.toJSON(),
+            version,
+            saved
+          );
+        });
+      }
+
+      let unStatus = document.on("status", (status) => {
+        win.webContents.send(`doc-${id}-status`, status);
       });
 
-      let unSaved = doc.on("saved", (version) => {
-        win.webContents.send(`doc-${id}-saved`, version);
-      });
-
-      win.webContents.ipc.on(
-        `doc-${id}-update`,
-        (_, update: DocumentUpdate, saveState: boolean) =>
-          doc.update(update, saveState)
+      win.webContents.ipc.on(`doc-${id}-update`, (_, update: DocumentUpdate) =>
+        document.update(update)
       );
-
-      content.then(({ doc, version }) => {
-        win.webContents.send(`doc-${id}-content`, doc.toJSON(), version);
-      });
     });
 
     // For now, load a blank document on startup
@@ -158,13 +167,9 @@ let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
 
-let offSaveStateChanged: (() => void) | null = null;
-updateSaveItem(false);
-updateSaveAsItem(false);
-
-function updateSaveItem(saveState: boolean) {
+function updateSaveItem(enabled: boolean) {
   let saveItem = mainMenu.getMenuItemById("save");
-  if (saveItem) saveItem.enabled = !saveState;
+  if (saveItem) saveItem.enabled = enabled;
 }
 
 function updateSaveAsItem(enabled: boolean) {
@@ -172,20 +177,25 @@ function updateSaveAsItem(enabled: boolean) {
   if (saveAsItem) saveAsItem.enabled = enabled;
 }
 
-filesystem.on("currentDocChanged", (doc) => {
+let offSaveStateChanged: (() => void) | null = null;
+
+function updateSaveMenu(document: DesktopDocument | null) {
   if (offSaveStateChanged) {
     offSaveStateChanged();
     offSaveStateChanged = null;
   }
 
-  if (doc) {
-    updateSaveItem(doc.path !== null && doc.saveState);
-    offSaveStateChanged = doc.on("saveStateChanged", (saveState) => {
-      updateSaveItem(doc.path !== null && saveState);
-    });
-    updateSaveAsItem(true);
-  } else {
-    updateSaveItem(false);
-    updateSaveAsItem(false);
-  }
-});
+  // if (document) {
+  //   updateSaveItem(doc.path === null || !doc.saveState);
+  //   offSaveStateChanged = doc.on("saveStateChanged", (saveState) => {
+  //     updateSaveItem(doc.path === null || !saveState);
+  //   });
+  //   updateSaveAsItem(true);
+  // } else {
+  //   updateSaveItem(false);
+  //   updateSaveAsItem(false);
+  // }
+}
+
+updateSaveMenu(filesystem.currentDoc);
+filesystem.on("current", updateSaveMenu);
