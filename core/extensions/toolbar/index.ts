@@ -1,24 +1,23 @@
 import { EditorView, showPanel, Panel } from "@codemirror/view";
-import { TextManagementAPI } from "@core/api";
+import { ElectronAPI } from "@core/api";
 
-export function toolbar(api: TextManagementAPI) {
+export function toolbar(api: typeof ElectronAPI, version?: string) {
   function toolbarConstructor(view: EditorView): Panel {
     let consoleNode = document.createElement("div");
     consoleNode.classList.add("cm-toolbar");
 
     let tidalInfo = consoleNode.appendChild(document.createElement("div"));
-    tidalInfo.innerText = "Tidal (Disconnected)";
+    tidalInfo.innerText = `Tidal (${version ?? "Disconnected"})`;
 
-    api.getTidalVersion().then((v) => {
-      if (tidalInfo) {
-        tidalInfo.innerText = `Tidal (${v})`;
-      }
+    let offTidalVersion = api.onTidalVersion((version) => {
+      tidalInfo.innerText = `Tidal (${version})`;
     });
 
     return {
       dom: consoleNode,
-      update(update) {},
-      destroy() {},
+      destroy() {
+        offTidalVersion();
+      },
     };
   }
 

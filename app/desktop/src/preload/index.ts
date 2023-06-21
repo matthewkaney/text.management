@@ -58,27 +58,19 @@ const ElectronAPI = {
     send("update", { withID: id, value: update });
   },
 
-  onConsoleMessage: (handler: Handler<TerminalMessage>) => {},
-
-  getTidalVersion: () => {
-    return new Promise<string>(() => {});
-  },
-
   requestClose: (id: string) => {},
 
   onClose: (id: string, handler: Handler<void>) => {},
 
-  onShowAbout: (handler: Handler<string>) => {
-    function handleShowAbout(_: any, appVersion: string) {
-      handler(appVersion);
-    }
+  onShowAbout: listen("showAbout"),
 
-    ipcRenderer.on("show-about", handleShowAbout);
-
-    return () => {
-      ipcRenderer.off("show-about", handleShowAbout);
-    };
+  evaluate: (code: string) => {
+    send("evaluation", code);
   },
+
+  onConsoleMessage: listen("console"),
+
+  onTidalVersion: listen("tidalVersion"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);

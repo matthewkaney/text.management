@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 
 import { resolve } from "path";
 
@@ -18,8 +18,6 @@ import { getTemplate } from "./menu";
 
 const filesystem = new Filesystem();
 
-const tidal = new GHCI();
-
 const createWindow = () => {
   const win = new BrowserWindow({
     show: false,
@@ -30,55 +28,88 @@ const createWindow = () => {
     },
   });
 
+  const tidal = new GHCI();
+
   // TODO: IMPLEMENT
-  let removeWindowHandlers = () => {};
+  let listeners: (() => void)[] = [];
+  let docsListeners: { [id: string]: typeof listeners } = {};
 
   win.on("ready-to-show", () => {
     const [send, listen] = wrapIPC(win.webContents);
 
-    win.webContents.ipc.on("current", (_, id) => {
-      filesystem.currentDocID = id;
-    });
+    listeners.push(
+      listen("current", ({ id }) => {
+        filesystem.currentDocID = id;
+      })
+    );
 
     // Attach file handlers
-    let unOpen = filesystem.on("open", ({ id, document }) => {
-      let { path, content, saved } = document;
+    listeners.push(
+      filesystem.on("open", ({ id, document }) => {
+        let docListeners: typeof listeners = [];
+        docsListeners[id] = docListeners;
 
-      send("open", { id, path });
+        let { path, content, saved } = document;
 
-      if (content) {
-        let { doc, version } = content;
-        send("content", {
-          withID: id,
-          content: { doc: doc.toJSON(), version, saved },
-        });
-      } else {
-        document.once("loaded", (content) => {
+        send("open", { id, path });
+
+        if (content) {
+          let { doc, version } = content;
           send("content", {
             withID: id,
-            content: { ...content, doc: content.doc.toJSON() },
+            content: { doc: doc.toJSON(), version, saved },
           });
-        });
-      }
-
-      let unStatus = document.on("status", (status) => {
-        win.webContents.send("status", { withID: id, content: status });
-      });
-
-      let unUpdate = listen("update", ({ withID, value }) => {
-        if (withID === id) {
-          document.update(value);
+        } else {
+          document.once("loaded", (content) => {
+            send("content", {
+              withID: id,
+              content: { ...content, doc: content.doc.toJSON() },
+            });
+          });
         }
-      });
 
-      let unRequestClose = listen("requestClose", async ({ id: withID }) => {
-        if (withID === id) {
-          if (document.saved !== false) {
-            // TODO: Implement menu item here...
-          }
-        }
-      });
+        docListeners.push(
+          document.on("status", (status) => {
+            win.webContents.send("status", { withID: id, content: status });
+          })
+        );
+
+        docListeners.push(
+          listen("update", ({ withID, value }) => {
+            if (withID === id) {
+              document.update(value);
+            }
+          })
+        );
+
+        docListeners.push(
+          listen("requestClose", async ({ id: withID }) => {
+            if (withID === id) {
+              if (document.saved !== false) {
+                // TODO: Implement menu item here...
+              }
+            }
+          })
+        );
+      })
+    );
+
+    // Set up tidal communication
+    tidal.getVersion().then((version) => {
+      send("tidalVersion", version);
     });
+
+    listeners.push(
+      listen("evaluation", (code) => {
+        tidal.send(code);
+      })
+    );
+
+    listeners.push(
+      tidal.on("message", (message) => {
+        send("console", message);
+      })
+    );
 
     // For now, load a blank document on startup
     filesystem.loadDoc();
@@ -90,9 +121,18 @@ const createWindow = () => {
   win.loadFile("./dist/renderer/index.html");
 
   win.on("closed", () => {
-    // unOpen();
-    // unClose();
-    // unMessage();
+    for (let listener of listeners) {
+      listener();
+    }
+    listeners = [];
+
+    for (let docListeners of Object.values(docsListeners)) {
+      for (let listener of docListeners) {
+        listener();
+      }
+    }
+    docsListeners = {};
+
     tidal.close();
   });
 };
@@ -110,10 +150,6 @@ app.whenReady().then(() => {
 // });
 
 import { dialog } from "electron";
-
-ipcMain.handle("tidal-version", () => {
-  return tidal.getVersion();
-});
 
 async function newFile() {
   filesystem.loadDoc();
