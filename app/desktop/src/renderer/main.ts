@@ -17,11 +17,6 @@ import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
-function basename(path: string) {
-  let parts = path.split("/");
-  return parts[parts.length - 1];
-}
-
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
@@ -30,7 +25,7 @@ window.addEventListener("load", () => {
 
 const { api } = window as Window &
   typeof globalThis & {
-    api: ElectronAPI;
+    api: typeof ElectronAPI;
   };
 
 export class Editor {
@@ -38,7 +33,7 @@ export class Editor {
     let layout = new LayoutView(parent, api.setCurrent);
 
     api.onOpen(({ id, path }) => {
-      let offContent = api.onContent(id, ({ doc: docJSON, version }) => {
+      let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
 
         layout.dispatch({
@@ -53,7 +48,11 @@ export class Editor {
                   evaluation(),
                   basicSetup,
                   oneDark,
-                  fileSync(id, layout, api.update, api.onSaved),
+                  fileSync(
+                    id,
+                    { path, saved, version, thisVersion: version },
+                    api
+                  ),
                   // electronConsole(api),
                   // peer(version),
                   // toolbar(api),

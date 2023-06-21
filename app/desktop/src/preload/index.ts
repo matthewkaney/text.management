@@ -1,68 +1,61 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+import { ToMainChannels, ToRendererChannels, Handler } from "../ipc";
+
 import { TerminalMessage, DocumentUpdate } from "@core/api";
 
-type Handler<T> = (event: T) => void;
+function send<K extends keyof ToMainChannels>(
+  channel: K,
+  value: ToMainChannels[K]
+) {
+  ipcRenderer.send(channel, value);
+}
 
-export type ElectronAPI = typeof api;
+function listen<K extends keyof ToRendererChannels>(channel: K) {
+  return (handler: Handler<ToRendererChannels[K]>) => {
+    function handle(_: any, value: ToRendererChannels[K]) {
+      handler(value);
+    }
 
-const api = {
+    ipcRenderer.on(channel, handle);
+
+    return () => {
+      ipcRenderer.off(channel, handle);
+    };
+  };
+}
+
+export type { ElectronAPI };
+
+const ElectronAPI = {
   setCurrent(id: string | null) {
     ipcRenderer.send("current", id);
   },
 
-  onOpen: (handler: Handler<{ id: string; path: string | null }>) => {
-    function handleOpen(_: any, id: string, path: string | null) {
-      handler({ id, path });
-    }
-
-    ipcRenderer.on("open", handleOpen);
-
-    return () => {
-      ipcRenderer.off("open", handleOpen);
-    };
-  },
-
-  update: (id: string, update: DocumentUpdate, saveState: boolean) => {
-    ipcRenderer.send(`doc-${id}-update`, update, saveState);
-  },
+  onOpen: listen("open"),
 
   onContent: (
     id: string,
-    handler: Handler<{ doc: string[]; version: number }>
-  ) => {
-    function handleContent(_: any, doc: string[], version: number) {
-      handler({ doc, version });
-    }
-    ipcRenderer.on(`doc-${id}-content`, handleContent);
+    handler: Handler<ToRendererChannels["content"]["content"]>
+  ) =>
+    listen("content")(({ withID, content }) => {
+      if (id === withID) {
+        handler(content);
+      }
+    }),
 
-    return () => {
-      ipcRenderer.off(`doc-${id}-content`, handleContent);
-    };
-  },
+  onStatus: (
+    id: string,
+    handler: Handler<ToRendererChannels["status"]["content"]>
+  ) =>
+    listen("status")(({ withID, content }) => {
+      if (id === withID) {
+        handler(content);
+      }
+    }),
 
-  onPath: (id: string, handler: Handler<string>) => {
-    function handlePath(_: any, path: string) {
-      handler(path);
-    }
-
-    ipcRenderer.on(`doc-${id}-path`, handlePath);
-
-    return () => {
-      ipcRenderer.off(`doc-${id}-path`, handlePath);
-    };
-  },
-
-  onSaved: (id: string, handler: Handler<number>) => {
-    function handleSaved(_: any, version: number) {
-      handler(version);
-    }
-
-    ipcRenderer.on(`doc-${id}-saved`, handleSaved);
-
-    return () => {
-      ipcRenderer.off(`doc-${id}-saved`, handleSaved);
-    };
+  update: (id: string, update: DocumentUpdate) => {
+    send("update", { withID: id, value: update });
   },
 
   onConsoleMessage: (handler: Handler<TerminalMessage>) => {},
@@ -88,4 +81,4 @@ const api = {
   },
 };
 
-contextBridge.exposeInMainWorld("api", api);
+contextBridge.exposeInMainWorld("api", ElectronAPI);

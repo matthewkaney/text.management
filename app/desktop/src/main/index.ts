@@ -12,10 +12,9 @@ fixPath();
 
 import { GHCI } from "@management/lang-tidal";
 import { Filesystem, DesktopDocument } from "./filesystem";
+import { wrapIPC } from "./ipcMain";
 
 import { getTemplate } from "./menu";
-
-import { DocumentUpdate } from "@core/api";
 
 const filesystem = new Filesystem();
 
@@ -35,42 +34,50 @@ const createWindow = () => {
   let removeWindowHandlers = () => {};
 
   win.on("ready-to-show", () => {
+    const [send, listen] = wrapIPC(win.webContents);
+
     win.webContents.ipc.on("current", (_, id) => {
       filesystem.currentDocID = id;
     });
 
     // Attach file handlers
     let unOpen = filesystem.on("open", ({ id, document }) => {
-      let { path, content } = document;
+      let { path, content, saved } = document;
 
-      win.webContents.send("open", id, path);
+      send("open", { id, path });
 
       if (content) {
         let { doc, version } = content;
-        win.webContents.send(
-          `doc-${id}-content`,
-          doc.toJSON(),
-          version,
-          document.saved
-        );
+        send("content", {
+          withID: id,
+          content: { doc: doc.toJSON(), version, saved },
+        });
       } else {
-        document.once("loaded", ({ doc, version, saved }) => {
-          win.webContents.send(
-            `doc-${id}-content`,
-            doc.toJSON(),
-            version,
-            saved
-          );
+        document.once("loaded", (content) => {
+          send("content", {
+            withID: id,
+            content: { ...content, doc: content.doc.toJSON() },
+          });
         });
       }
 
       let unStatus = document.on("status", (status) => {
-        win.webContents.send(`doc-${id}-status`, status);
+        win.webContents.send("status", { withID: id, content: status });
       });
 
-      win.webContents.ipc.on(`doc-${id}-update`, (_, update: DocumentUpdate) =>
-        document.update(update)
-      );
+      let unUpdate = listen("update", ({ withID, value }) => {
+        if (withID === id) {
+          document.update(value);
+        }
+      });
+
+      let unRequestClose = listen("requestClose", async ({ id: withID }) => {
+        if (withID === id) {
+          if (document.saved !== false) {
+            // TODO: Implement menu item here...
+          }
+        }
+      });
     });
 
     // For now, load a blank document on startup
@@ -167,34 +174,52 @@ let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
 
-function updateSaveItem(enabled: boolean) {
-  let saveItem = mainMenu.getMenuItemById("save");
-  if (saveItem) saveItem.enabled = enabled;
-}
+// TODO: Get a better reference to these menu items so it doesn't require the typecast
+let saveItem = mainMenu.getMenuItemById("save") as Electron.MenuItem;
+let saveAsItem = mainMenu.getMenuItemById("saveAs") as Electron.MenuItem;
 
-function updateSaveAsItem(enabled: boolean) {
-  let saveAsItem = mainMenu.getMenuItemById("saveAs");
-  if (saveAsItem) saveAsItem.enabled = enabled;
-}
-
-let offSaveStateChanged: (() => void) | null = null;
+let untrackDocument: (() => void) | null = null;
 
 function updateSaveMenu(document: DesktopDocument | null) {
-  if (offSaveStateChanged) {
-    offSaveStateChanged();
-    offSaveStateChanged = null;
+  if (untrackDocument) {
+    untrackDocument();
+    untrackDocument = null;
   }
 
-  // if (document) {
-  //   updateSaveItem(doc.path === null || !doc.saveState);
-  //   offSaveStateChanged = doc.on("saveStateChanged", (saveState) => {
-  //     updateSaveItem(doc.path === null || !saveState);
-  //   });
-  //   updateSaveAsItem(true);
-  // } else {
-  //   updateSaveItem(false);
-  //   updateSaveAsItem(false);
-  // }
+  if (document) {
+    const trackSaveState = () => {
+      saveItem.enabled = document.saved !== true;
+      saveAsItem.enabled = true;
+
+      let unStatus = document.on("status", () => {
+        saveItem.enabled = document.saved !== true;
+      });
+      let unUpdate = document.on("update", () => {
+        saveItem.enabled = document.saved !== true;
+      });
+
+      if (untrackDocument) untrackDocument();
+
+      untrackDocument = () => {
+        unStatus();
+        unUpdate();
+      };
+    };
+
+    if (document.content) {
+      trackSaveState();
+    } else {
+      saveItem.enabled = false;
+      saveAsItem.enabled = false;
+
+      untrackDocument = document.once("loaded", () => {
+        trackSaveState();
+      });
+    }
+  } else {
+    saveItem.enabled = false;
+    saveAsItem.enabled = false;
+  }
 }
 
 updateSaveMenu(filesystem.currentDoc);

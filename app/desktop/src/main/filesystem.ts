@@ -6,18 +6,18 @@ import { EventEmitter } from "@core/events";
 import { DocumentUpdate } from "@core/api";
 
 interface DocumentEvents {
-  loaded: FileStatus & { doc: Text };
+  loaded: FileStatus & { doc: Text; version: number };
   status: SavedStatus;
-  saveStateChanged: boolean;
+  update: DocumentState;
 }
 
 interface FileStatus {
   path: string | null;
   version: number | null;
-  saved: true | false | "saving";
+  saved: boolean | "saving";
 }
 
-type SavedStatus = FileStatus & { path: string; version: number };
+export type SavedStatus = FileStatus & { path: string; version: number };
 
 interface DocumentState {
   doc: Text;
@@ -33,7 +33,9 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
   }
 
   get saved() {
-    return this.fileStatus.saved;
+    return this.fileStatus.version === this.content?.version
+      ? this.fileStatus.saved
+      : false;
   }
 
   constructor(path: string | null = null) {
@@ -61,8 +63,9 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
         }
 
         this.content = { doc, version };
-        this.fileStatus = { path, version, saved };
-        this.emit("loaded", { ...this.fileStatus, doc });
+        let fileStatus = { path, version, saved };
+        this.fileStatus = fileStatus;
+        this.emit("loaded", { ...fileStatus, doc });
       }
     };
 
@@ -121,8 +124,10 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
     let { changes, version } = update;
 
     let doc = ChangeSet.fromJSON(changes).apply(this.content.doc);
+    let content = { doc, version };
 
-    this.content = { doc, version };
+    this.content = content;
+    this.emit("update", content);
   }
 }
 
