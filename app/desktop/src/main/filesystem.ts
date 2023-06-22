@@ -50,6 +50,7 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
         this.content = { doc, version };
         this.fileStatus = { path, version, saved };
       } else {
+        this.fileStatus = { path, version: null, saved: true };
         try {
           doc = Text.of(
             (await readFile(path, { encoding: "utf-8" })).split(/\r?\n/)

@@ -9,7 +9,6 @@ import { EditorTabView } from "./editor";
 export class AboutTabView extends EditorTabView {
   constructor(layout: LayoutView, appVersion: string) {
     super(layout, {
-      fileID: null,
       doc: `text.management version ${appVersion}`,
       extensions: [
         oneDark,

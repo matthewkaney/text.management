@@ -5,7 +5,7 @@ import type { SavedStatus } from "./main/filesystem";
 export type Handler<T> = (event: T) => void;
 
 export interface ToMainChannels {
-  current: { id: string };
+  current: { id: string | null };
   update: { withID: string; value: DocumentUpdate };
   requestClose: { id: string };
   evaluation: string;

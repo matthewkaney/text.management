@@ -57,6 +57,15 @@ export class LayoutState {
       tabs[id] = state;
     }
 
+    for (let effect of tr.effects) {
+      if (effect.is(swapContents)) {
+        let { id, contents } = effect.value;
+        if (id in tabs) {
+          tabs[id] = tabs[id].swapContents(contents);
+        }
+      }
+    }
+
     return new LayoutState(tabs, order, tr.current ?? current);
   }
 }
@@ -136,21 +145,16 @@ export class LayoutTransaction {
   }
 }
 
-export const changeNameEffect = StateEffect.define<{
-  id: number;
-  name: string;
-}>();
-
-export const changeSaveStateEffect = StateEffect.define<{
-  id: string;
-  saveState: boolean;
+export const swapContents = StateEffect.define<{
+  id: symbol;
+  contents: any;
 }>();
 
 export abstract class TabState<T> {
   abstract readonly name: string;
-  abstract readonly contents: T;
-
   abstract readonly fileID: string | null;
 
-  protected constructor(readonly id = Symbol()) {}
+  protected constructor(readonly contents: T, readonly id = Symbol()) {}
+
+  abstract swapContents(contents: T): TabState<T>;
 }

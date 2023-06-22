@@ -53,7 +53,6 @@ export class Editor {
           changes: [
             {
               view: new EditorTabView(layout, {
-                fileID: id,
                 doc,
                 extensions: [
                   tidal(),

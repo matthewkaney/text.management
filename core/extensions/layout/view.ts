@@ -106,14 +106,18 @@ export abstract class TabView<T> {
   readonly dom = document.createElement("div");
   readonly tab = document.createElement("div");
 
-  constructor(readonly layout: LayoutView, readonly state: TabState<T>) {
+  private label = document.createElement("span");
+
+  constructor(readonly layout: LayoutView, public state: TabState<T>) {
     this.dom.classList.add("tab-content");
 
-    this.tab.innerText = state.name;
     this.tab.classList.add("tab");
     this.tab.addEventListener("click", () => {
       this.layout.dispatch({ current: this.state.id });
     });
+
+    this.label.innerText = state.name;
+    this.tab.appendChild(this.label);
 
     let closeButton = this.tab.appendChild(document.createElement("a"));
     closeButton.classList.add("close-button");
@@ -127,7 +131,10 @@ export abstract class TabView<T> {
   }
 
   update(tr: LayoutTransaction) {
+    this.state = tr.state.tabs[this.state.id];
+
     this.tab.classList.toggle("current", tr.state.current === this.state.id);
+    this.label.innerText = this.state.name;
   }
 
   abstract destroy(): void;

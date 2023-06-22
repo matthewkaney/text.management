@@ -2,35 +2,34 @@ import { EditorState, EditorStateConfig } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 import { LayoutView, TabView } from "../view";
-import { TabState } from "../state";
+import { TabState, swapContents } from "../state";
+import {
+  getFileName,
+  getFileID,
+} from "../../../../app/desktop/src/renderer/file";
 
 export class EditorTabState extends TabState<EditorState> {
-  static create(config?: EditorStateConfig & { fileID: string | null }) {
-    return new EditorTabState(
-      EditorState.create(config),
-      config?.fileID ?? null
-    );
+  static create(config?: EditorStateConfig) {
+    return new EditorTabState(EditorState.create(config));
   }
 
-  private constructor(
-    readonly contents: EditorState,
-    readonly fileID: string | null
-  ) {
-    super();
+  swapContents(contents: EditorState) {
+    return new EditorTabState(contents, this.id);
   }
 
   get name() {
-    return "untitled";
+    return getFileName(this.contents);
+  }
+
+  get fileID() {
+    return getFileID(this.contents);
   }
 }
 
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
-  constructor(
-    layout: LayoutView,
-    config?: EditorStateConfig & { fileID: string | null }
-  ) {
+  constructor(layout: LayoutView, config?: EditorStateConfig) {
     const state = EditorTabState.create(config);
     super(layout, state);
 
@@ -39,6 +38,12 @@ export class EditorTabView extends TabView<EditorState> {
     this.editor = new EditorView({
       state: this.state.contents,
       parent: this.dom,
+      dispatch: (tr) => {
+        this.layout.dispatch({
+          effects: [swapContents.of({ id: this.state.id, contents: tr.state })],
+        });
+        this.editor.update([tr]);
+      },
     });
   }
 

@@ -29,7 +29,7 @@ export type { ElectronAPI };
 
 const ElectronAPI = {
   setCurrent(id: string | null) {
-    ipcRenderer.send("current", id);
+    send("current", { id });
   },
 
   onOpen: listen("open"),
