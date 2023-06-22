@@ -130,7 +130,7 @@ export class GHCI extends Engine<GHCIEvents> {
     return join(stdout, "BootTidal.hs");
   }
 
-  protected async send(text: string) {
+  async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))

@@ -1,33 +1,34 @@
-import { Text, ChangeSet, StateField, StateEffect } from "@codemirror/state";
+import { ElectronAPI } from "../preload";
+
+import { EditorState, StateField, StateEffect } from "@codemirror/state";
 import { ViewPlugin } from "@codemirror/view";
 
-import { LayoutView, changeSaveStateEffect } from "@core/extensions/layout";
+import { SavedStatus } from "../main/filesystem";
 
-import { DocumentUpdate } from "@core/api";
+const statusEffect = StateEffect.define<SavedStatus>();
 
-const saveEffect = StateEffect.define<number>();
+interface FileStatus {
+  path: null | string;
+  saved: boolean | "saving";
+  version: number;
+  thisVersion: number;
+}
 
-const saveHistoryState = StateField.define({
-  create: (state) => ({
-    lastSaved: 0,
-    lastSavedDoc: state.doc,
-    history: [] as Text[],
+const saveState = StateField.define<FileStatus>({
+  create: () => ({
+    path: null,
+    saved: false,
+    version: 0,
+    thisVersion: 0,
   }),
   update: (value, tr) => {
     if (!tr.changes.empty) {
-      value = {
-        ...value,
-        history: [...value.history, tr.newDoc],
-      };
+      value = { ...value, thisVersion: value.thisVersion + 1 };
     }
 
     for (let effect of tr.effects) {
-      if (effect.is(saveEffect) && effect.value > value.lastSaved) {
-        value = {
-          lastSaved: effect.value,
-          lastSavedDoc: value.history[effect.value - value.lastSaved - 1],
-          history: value.history.slice(effect.value - value.lastSaved),
-        };
+      if (effect.is(statusEffect) && effect.value.version >= value.version) {
+        value = { ...value, ...effect.value };
       }
     }
 
@@ -37,46 +38,52 @@ const saveHistoryState = StateField.define({
 
 export function fileSync(
   id: string,
-  layout: LayoutView,
-  update: (id: string, update: DocumentUpdate, saveState: boolean) => void,
-  onSaved: (id: string, handler: (version: number) => void) => () => void
+  status: FileStatus,
+  api: typeof ElectronAPI
 ) {
   return ViewPlugin.define(
     (view) => {
-      let offSaved = onSaved(id, (version) => {
-        view.dispatch({ effects: saveEffect.of(version) });
+      let offStatus = api.onStatus(id, (status) => {
+        view.dispatch({ effects: statusEffect.of(status) });
       });
 
-      let saveHistory = view.state.field(saveHistoryState);
+      let saveHistory = view.state.field(saveState);
 
       return {
-        update: ({ state, changes, transactions }) => {
-          if (saveHistory !== state.field(saveHistoryState)) {
-            saveHistory = state.field(saveHistoryState);
+        update: ({ state, changes }) => {
+          if (saveHistory !== state.field(saveState)) {
+            saveHistory = state.field(saveState);
 
-            let { lastSaved, lastSavedDoc, history } = saveHistory;
-            let saveState = lastSavedDoc.eq(state.doc);
-
-            update(
-              id,
-              {
-                version: lastSaved + history.length,
-                clientID: "",
-                changes: changes.toJSON(),
-              },
-              saveState
-            );
-
-            layout.dispatch({
-              effects: [changeSaveStateEffect.of({ id, saveState })],
+            api.update(id, {
+              version: saveHistory.thisVersion,
+              clientID: "",
+              changes: changes.toJSON(),
             });
           }
         },
         destroy: () => {
-          offSaved();
+          offStatus();
         },
       };
     },
-    { provide: () => saveHistoryState }
+    { provide: () => saveState.init(() => status) }
   );
+}
+
+export function getSaveStatus(state: EditorState) {
+  const { version, thisVersion, saved } = state.field(saveState);
+
+  return version === thisVersion ? saved : false;
+}
+
+function basename(path: string) {
+  let parts = path.split("/");
+  return parts[parts.length - 1];
+}
+
+export function getFileName(state: EditorState) {
+  const { path } = state.field(saveState);
+  const saved = getSaveStatus(state);
+
+  return (path ? basename(path) : "untitled") + (saved === true ? "" : " •");
 }

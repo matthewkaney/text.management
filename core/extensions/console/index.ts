@@ -7,13 +7,11 @@ import {
   console as rootConsole,
 } from "@management/cm-console";
 
-import { TextManagementAPI } from "@core/api";
+import { ElectronAPI } from "@core/api";
 
-export function console(api: TextManagementAPI) {
-  let initialConsole: ConsoleMessage[] = [];
-
+export function console(api: typeof ElectronAPI, initial: ConsoleMessage[]) {
   const consoleListener = ViewPlugin.define((view) => {
-    const unlisten = api.on("consoleMessage", (message) => {
+    const unlisten = api.onConsoleMessage((message) => {
       view.dispatch(sendToConsole(view.state, message));
     });
 
@@ -25,7 +23,7 @@ export function console(api: TextManagementAPI) {
   });
 
   return [
-    consoleState.init(() => initialConsole),
+    consoleState.init(() => [...initial]),
     consoleListener,
     rootConsole(),
     keymap.of([{ key: "Escape", run: clearConsole }]),

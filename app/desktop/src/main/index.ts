@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 
 import { resolve } from "path";
 
@@ -11,15 +11,12 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Filesystem } from "./filesystem";
+import { Filesystem, DesktopDocument } from "./filesystem";
+import { wrapIPC } from "./ipcMain";
 
 import { getTemplate } from "./menu";
 
-import { DocumentUpdate } from "@core/api";
-
 const filesystem = new Filesystem();
-
-const tidal = new GHCI();
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -31,38 +28,88 @@ const createWindow = () => {
     },
   });
 
+  const tidal = new GHCI();
+
   // TODO: IMPLEMENT
-  let removeWindowHandlers = () => {};
+  let listeners: (() => void)[] = [];
+  let docsListeners: { [id: string]: typeof listeners } = {};
 
   win.on("ready-to-show", () => {
-    win.webContents.ipc.on("current", (_, id) => {
-      filesystem.currentDocID = id;
-    });
+    const [send, listen] = wrapIPC(win.webContents);
+
+    listeners.push(
+      listen("current", ({ id }) => {
+        filesystem.currentDocID = id;
+      })
+    );
 
     // Attach file handlers
-    let unOpen = filesystem.on("open", ({ id, doc }) => {
-      let { path, content } = doc;
+    listeners.push(
+      filesystem.on("open", ({ id, document }) => {
+        let docListeners: typeof listeners = [];
+        docsListeners[id] = docListeners;
 
-      win.webContents.send("open", id, path);
+        let { path, content, saved } = document;
 
-      let unPathChanged = doc.on("pathChanged", (path) => {
-        win.webContents.send(`doc-${id}-path`, path);
-      });
+        send("open", { id, path });
 
-      let unSaved = doc.on("saved", (version) => {
-        win.webContents.send(`doc-${id}-saved`, version);
-      });
+        if (content) {
+          let { doc, version } = content;
+          send("content", {
+            withID: id,
+            content: { doc: doc.toJSON(), version, saved },
+          });
+        } else {
+          document.once("loaded", (content) => {
+            send("content", {
+              withID: id,
+              content: { ...content, doc: content.doc.toJSON() },
+            });
+          });
+        }
 
-      win.webContents.ipc.on(
-        `doc-${id}-update`,
-        (_, update: DocumentUpdate, saveState: boolean) =>
-          doc.update(update, saveState)
-      );
+        docListeners.push(
+          document.on("status", (status) => {
+            win.webContents.send("status", { withID: id, content: status });
+          })
+        );
 
-      content.then(({ doc, version }) => {
-        win.webContents.send(`doc-${id}-content`, doc.toJSON(), version);
-      });
+        docListeners.push(
+          listen("update", ({ withID, value }) => {
+            if (withID === id) {
+              document.update(value);
+            }
+          })
+        );
+
+        docListeners.push(
+          listen("requestClose", async ({ id: withID }) => {
+            if (withID === id) {
+              if (document.saved !== false) {
+                // TODO: Implement menu item here...
+              }
+            }
+          })
+        );
+      })
+    );
+
+    // Set up tidal communication
+    tidal.getVersion().then((version) => {
+      send("tidalVersion", version);
     });
+
+    listeners.push(
+      listen("evaluation", (code) => {
+        tidal.send(code);
+      })
+    );
+
+    listeners.push(
+      tidal.on("message", (message) => {
+        send("console", message);
+      })
+    );
 
     // For now, load a blank document on startup
     filesystem.loadDoc();
@@ -74,9 +121,18 @@ const createWindow = () => {
   win.loadFile("./dist/renderer/index.html");
 
   win.on("closed", () => {
-    // unOpen();
-    // unClose();
-    // unMessage();
+    for (let listener of listeners) {
+      listener();
+    }
+    listeners = [];
+
+    for (let docListeners of Object.values(docsListeners)) {
+      for (let listener of docListeners) {
+        listener();
+      }
+    }
+    docsListeners = {};
+
     tidal.close();
   });
 };
@@ -94,10 +150,6 @@ app.whenReady().then(() => {
 // });
 
 import { dialog } from "electron";
-
-ipcMain.handle("tidal-version", () => {
-  return tidal.getVersion();
-});
 
 async function newFile() {
   filesystem.loadDoc();
@@ -158,34 +210,53 @@ let mainMenu = Menu.buildFromTemplate(menuTemplate);
 
 Menu.setApplicationMenu(mainMenu);
 
-let offSaveStateChanged: (() => void) | null = null;
-updateSaveItem(false);
-updateSaveAsItem(false);
+// TODO: Get a better reference to these menu items so it doesn't require the typecast
+let saveItem = mainMenu.getMenuItemById("save") as Electron.MenuItem;
+let saveAsItem = mainMenu.getMenuItemById("saveAs") as Electron.MenuItem;
 
-function updateSaveItem(saveState: boolean) {
-  let saveItem = mainMenu.getMenuItemById("save");
-  if (saveItem) saveItem.enabled = !saveState;
-}
+let untrackDocument: (() => void) | null = null;
 
-function updateSaveAsItem(enabled: boolean) {
-  let saveAsItem = mainMenu.getMenuItemById("saveAs");
-  if (saveAsItem) saveAsItem.enabled = enabled;
-}
-
-filesystem.on("currentDocChanged", (doc) => {
-  if (offSaveStateChanged) {
-    offSaveStateChanged();
-    offSaveStateChanged = null;
+function updateSaveMenu(document: DesktopDocument | null) {
+  if (untrackDocument) {
+    untrackDocument();
+    untrackDocument = null;
   }
 
-  if (doc) {
-    updateSaveItem(doc.path !== null && doc.saveState);
-    offSaveStateChanged = doc.on("saveStateChanged", (saveState) => {
-      updateSaveItem(doc.path !== null && saveState);
-    });
-    updateSaveAsItem(true);
+  if (document) {
+    const trackSaveState = () => {
+      saveItem.enabled = document.saved !== true;
+      saveAsItem.enabled = true;
+
+      let unStatus = document.on("status", () => {
+        saveItem.enabled = document.saved !== true;
+      });
+      let unUpdate = document.on("update", () => {
+        saveItem.enabled = document.saved !== true;
+      });
+
+      if (untrackDocument) untrackDocument();
+
+      untrackDocument = () => {
+        unStatus();
+        unUpdate();
+      };
+    };
+
+    if (document.content) {
+      trackSaveState();
+    } else {
+      saveItem.enabled = false;
+      saveAsItem.enabled = false;
+
+      untrackDocument = document.once("loaded", () => {
+        trackSaveState();
+      });
+    }
   } else {
-    updateSaveItem(false);
-    updateSaveAsItem(false);
+    saveItem.enabled = false;
+    saveAsItem.enabled = false;
   }
-});
+}
+
+updateSaveMenu(filesystem.currentDoc);
+filesystem.on("current", updateSaveMenu);

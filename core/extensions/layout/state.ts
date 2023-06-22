@@ -57,7 +57,7 @@ export class LayoutState {
       tabs[id] = state;
     }
 
-    return new LayoutState(tabs, order, current);
+    return new LayoutState(tabs, order, tr.current ?? current);
   }
 }
 

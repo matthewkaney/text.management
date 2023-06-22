@@ -13,17 +13,13 @@ import hydra from "@management/lang-hydra/editor";
 
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
-import { peer } from "@core/extensions/peer";
+// import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
-
-function basename(path: string) {
-  let parts = path.split("/");
-  return parts[parts.length - 1];
-}
+import { ConsoleMessage } from "packages/codemirror/console/src";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -33,15 +29,27 @@ window.addEventListener("load", () => {
 
 const { api } = window as Window &
   typeof globalThis & {
-    api: ElectronAPI;
+    api: typeof ElectronAPI;
   };
 
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new LayoutView(parent, api.setCurrent);
 
+    // Keep track of Tidal state
+    let tidalVersion: string | undefined;
+    let tidalConsole: ConsoleMessage[] = [];
+
+    api.onTidalVersion((version) => {
+      tidalVersion = version;
+    });
+
+    api.onConsoleMessage((message) => {
+      tidalConsole.push(message);
+    });
+
     api.onOpen(({ id, path }) => {
-      let offContent = api.onContent(id, ({ doc: docJSON, version }) => {
+      let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
 
         layout.dispatch({
@@ -53,13 +61,17 @@ export class Editor {
                 extensions: [
                   languageMode(tidal),
                   keymap.of([indentWithTab]),
-                  evaluation(),
+                  evaluation(api.evaluate),
                   basicSetup,
                   oneDark,
-                  fileSync(id, layout, api.update, api.onSaved),
-                  // electronConsole(api),
+                  fileSync(
+                    id,
+                    { path, saved, version, thisVersion: version },
+                    api
+                  ),
+                  electronConsole(api, tidalConsole),
+                  toolbar(api, tidalVersion),
                   // peer(version),
-                  // toolbar(api),
                 ],
               }),
             },

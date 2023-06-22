@@ -34,13 +34,4 @@ export interface TerminalMessage {
   text: string;
 }
 
-export interface TextManagementEvents {
-  open: { id: string; tab: Tab };
-  close: { id: string };
-  consoleMessage: TerminalMessage;
-  code: string;
-}
-
-export abstract class TextManagementAPI extends EventEmitter<TextManagementEvents> {
-  abstract getTidalVersion(): Promise<string>;
-}
+export { ElectronAPI } from "../app/desktop/src/preload";
