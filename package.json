@@ -10,7 +10,8 @@
     "@core/*": "./core/$1"
   },
   "scripts": {
-    "test": "jest",
+    "test": "npm run typecheck && jest",
+    "typecheck": "tsc --noEmit",
     "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",
     "build:desktop": "parcel build app/desktop/ --target main --target preload --target renderer",
     "start:web": "parcel app/web",
