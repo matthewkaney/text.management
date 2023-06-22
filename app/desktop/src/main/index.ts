@@ -195,7 +195,8 @@ async function saveAsFile(window?: BrowserWindow) {
 
 function showAbout(window?: BrowserWindow) {
   if (window) {
-    window.webContents.send("show-about", app.getVersion());
+    let [send] = wrapIPC(window.webContents);
+    send("showAbout", app.getVersion());
   }
 }
 
