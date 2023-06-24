@@ -29,9 +29,17 @@ const { api } = window as Window &
     api: typeof ElectronAPI;
   };
 
+const background: string | null = null;
+
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new LayoutView(parent, api.setCurrent);
+
+    if (background) {
+      let canvas = parent.appendChild(document.createElement("iframe"));
+      canvas.src = background;
+      canvas.classList.add("background");
+    }
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;
