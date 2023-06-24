@@ -84,7 +84,6 @@ export class LayoutView {
       if (!currentTab) throw Error("View doesn't have old new tab");
 
       this.dom.appendChild(currentTab.dom);
-      currentTab.dom.focus();
     }
 
     // Update children

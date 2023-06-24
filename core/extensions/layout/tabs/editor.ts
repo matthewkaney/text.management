@@ -2,7 +2,7 @@ import { EditorState, EditorStateConfig } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 import { LayoutView, TabView } from "../view";
-import { TabState, swapContents } from "../state";
+import { LayoutTransaction, TabState, swapContents } from "../state";
 import {
   getFileName,
   getFileID,
@@ -45,6 +45,17 @@ export class EditorTabView extends TabView<EditorState> {
         this.editor.update([tr]);
       },
     });
+  }
+
+  update(tr: LayoutTransaction) {
+    super.update(tr);
+
+    if (
+      tr.startState.current !== this.state.id &&
+      tr.state.current === this.state.id
+    ) {
+      this.editor.focus();
+    }
   }
 
   destroy() {
