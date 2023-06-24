@@ -1,4 +1,5 @@
 import { StateEffect } from "@codemirror/state";
+import { getID } from "@core/ids";
 
 import { TabView } from "./view";
 
@@ -8,9 +9,9 @@ export class LayoutState {
   }
 
   private constructor(
-    readonly tabs: { readonly [id: symbol]: TabState<any> },
-    readonly order: readonly symbol[],
-    readonly current: symbol | null
+    readonly tabs: { readonly [id: string]: TabState<any> },
+    readonly order: readonly string[],
+    readonly current: string | null
   ) {}
 
   get currentTab() {
@@ -21,10 +22,10 @@ export class LayoutState {
     let current = this.current;
     let order = [...this.order];
 
-    let newTabs: { [id: symbol]: TabState<any> } = {};
+    let newTabs: { [id: string]: TabState<any> } = {};
 
     for (let change of tr.changes.changelist) {
-      if (typeof change === "symbol") {
+      if (typeof change === "string") {
         let index = order.indexOf(change);
 
         if (index >= 0) {
@@ -47,7 +48,7 @@ export class LayoutState {
       }
     }
 
-    let tabs: { [id: symbol]: TabState<any> } = {};
+    let tabs: { [id: string]: TabState<any> } = {};
 
     for (let id of order) {
       let state = this.tabs[id] ?? newTabs[id];
@@ -76,7 +77,7 @@ interface NewTab<T> {
 }
 
 // Changes are NewTab for additions, number for deletion, pairs for movements
-type TabChange = symbol | [number, number] | NewTab<any>;
+type TabChange = string | [number, number] | NewTab<any>;
 
 class TabChanges {
   private constructor(
@@ -84,7 +85,7 @@ class TabChanges {
     readonly changelist: readonly TabChange[]
   ) {
     for (let change of changelist) {
-      if (typeof change === "symbol") {
+      if (typeof change === "string") {
         length -= 1;
       }
       if (typeof change === "object" && !Array.isArray(change)) {
@@ -108,7 +109,7 @@ class TabChanges {
 
 export interface LayoutTransactionSpec {
   changes?: TabChange[];
-  current?: symbol;
+  current?: string;
   effects?: StateEffect<any>[];
 }
 
@@ -116,14 +117,14 @@ export class LayoutTransaction {
   private constructor(
     readonly startState: LayoutState,
     readonly changes: TabChanges,
-    readonly current: symbol | undefined,
+    readonly current: string | undefined,
     readonly effects: readonly StateEffect<any>[]
   ) {}
 
   static create(
     startState: LayoutState,
     changes: TabChange[],
-    current: symbol | undefined,
+    current: string | undefined,
     effects: readonly StateEffect<any>[]
   ) {
     return new LayoutTransaction(
@@ -146,7 +147,7 @@ export class LayoutTransaction {
 }
 
 export const swapContents = StateEffect.define<{
-  id: symbol;
+  id: string;
   contents: any;
 }>();
 
@@ -154,7 +155,7 @@ export abstract class TabState<T> {
   abstract readonly name: string;
   abstract readonly fileID: string | null;
 
-  protected constructor(readonly contents: T, readonly id = Symbol()) {}
+  protected constructor(readonly contents: T, readonly id = getID()) {}
 
   abstract swapContents(contents: T): TabState<T>;
 }

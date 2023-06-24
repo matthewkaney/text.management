@@ -4,6 +4,7 @@ import { ChangeSet, Text } from "@codemirror/state";
 
 import { EventEmitter } from "@core/events";
 import { DocumentUpdate } from "@core/api";
+import { getID } from "@core/ids";
 
 interface DocumentEvents {
   loaded: FileStatus & { doc: Text; version: number };
@@ -150,17 +151,11 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   }
 
   loadDoc(path?: string) {
-    let id = this.getID();
+    let id = getID();
     let document = new DesktopDocument(path);
     this.docs.set(id, document);
 
     this.emit("open", { id, document });
-  }
-
-  private _nextDocID = 0;
-
-  private getID() {
-    return (this._nextDocID++).toString();
   }
 
   private _currentDocID: string | null = null;

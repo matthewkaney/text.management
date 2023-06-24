@@ -29,7 +29,7 @@ export class EditorTabState extends TabState<EditorState> {
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
-  constructor(layout: LayoutView, config?: EditorStateConfig) {
+  constructor(layout: LayoutView, id: string, config?: EditorStateConfig) {
     const state = EditorTabState.create(config);
     super(layout, state);
 
