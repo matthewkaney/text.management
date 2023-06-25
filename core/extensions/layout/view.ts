@@ -14,7 +14,7 @@ export class LayoutView {
   state: LayoutState = LayoutState.create();
 
   // TODO: The relevant info here should be moved to state
-  private children: Map<symbol, TabView<any>> = new Map();
+  private children: Map<string, TabView<any>> = new Map();
 
   constructor(
     parent: HTMLElement,
@@ -60,7 +60,7 @@ export class LayoutView {
 
     // Update self
     for (let change of tr.changes.changelist) {
-      if (typeof change === "symbol") {
+      if (typeof change === "string") {
         let deletedTab = this.children.get(change);
         if (deletedTab) {
           deletedTab.destroy();
@@ -125,7 +125,9 @@ export abstract class TabView<T> {
       closeButton.appendChild(n);
     });
     closeButton.addEventListener("click", (event) => {
-      this.layout.dispatch({ changes: [this.state.id] });
+      if (this.beforeClose()) {
+        this.layout.dispatch({ changes: [this.state.id] });
+      }
       event.stopPropagation();
     });
   }
@@ -135,6 +137,10 @@ export abstract class TabView<T> {
 
     this.tab.classList.toggle("current", tr.state.current === this.state.id);
     this.label.innerText = this.state.name;
+  }
+
+  beforeClose() {
+    return true;
   }
 
   abstract destroy(): void;

@@ -49,7 +49,6 @@ export function fileSync(
   status: FileStatus,
   api: typeof ElectronAPI
 ) {
-  console.log(status);
   return ViewPlugin.define(
     (view) => {
       let offStatus = api.onStatus(id, (status) => {

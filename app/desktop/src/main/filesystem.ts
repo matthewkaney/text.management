@@ -142,12 +142,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   docs = new Map<string, DesktopDocument>();
 
   getDoc(id: string) {
-    let doc: DesktopDocument | undefined;
-    if ((doc = this.docs.get(id))) {
-      return doc;
-    }
-
-    throw Error("Tried to fetch a non-existent doc.");
+    return this.docs.get(id) ?? null;
   }
 
   loadDoc(path?: string) {
@@ -170,8 +165,6 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   }
 
   get currentDoc() {
-    return this._currentDocID !== null
-      ? this.docs.get(this._currentDocID) ?? null
-      : null;
+    return this._currentDocID !== null ? this.getDoc(this._currentDocID) : null;
   }
 }

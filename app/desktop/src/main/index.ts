@@ -81,16 +81,41 @@ const createWindow = () => {
             }
           })
         );
+      })
+    );
 
-        docListeners.push(
-          listen("requestClose", async ({ id: withID }) => {
-            if (withID === id) {
-              if (document.saved !== false) {
-                // TODO: Implement menu item here...
+    listeners.push(
+      listen("requestClose", async ({ id }) => {
+        let document = filesystem.getDoc(id);
+
+        if (!document) throw Error("Tried to close a non-existent document");
+
+        if (!document.saved) {
+          let { response } = await dialog.showMessageBox(win, {
+            type: "warning",
+            message: "Do you want to save your changes?",
+            buttons: ["Save", "Don't Save", "Cancel"],
+          });
+
+          // Cancelled
+          if (response === 2) return;
+
+          // Save
+          if (response === 0) {
+            if (document.path) {
+              document.save();
+            } else {
+              let { canceled, filePath } = await dialog.showSaveDialog(win);
+
+              if (!canceled && filePath) {
+                document.save(filePath);
               }
             }
-          })
-        );
+          }
+        }
+
+        // We're done here, so close the file
+        send("close", { id });
       })
     );
 
