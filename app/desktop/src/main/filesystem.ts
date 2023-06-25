@@ -4,6 +4,7 @@ import { ChangeSet, Text } from "@codemirror/state";
 
 import { EventEmitter } from "@core/events";
 import { DocumentUpdate } from "@core/api";
+import { getID } from "@core/ids";
 
 interface DocumentEvents {
   loaded: FileStatus & { doc: Text; version: number };
@@ -141,26 +142,15 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   docs = new Map<string, DesktopDocument>();
 
   getDoc(id: string) {
-    let doc: DesktopDocument | undefined;
-    if ((doc = this.docs.get(id))) {
-      return doc;
-    }
-
-    throw Error("Tried to fetch a non-existent doc.");
+    return this.docs.get(id) ?? null;
   }
 
   loadDoc(path?: string) {
-    let id = this.getID();
+    let id = getID();
     let document = new DesktopDocument(path);
     this.docs.set(id, document);
 
     this.emit("open", { id, document });
-  }
-
-  private _nextDocID = 0;
-
-  private getID() {
-    return (this._nextDocID++).toString();
   }
 
   private _currentDocID: string | null = null;
@@ -175,8 +165,6 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   }
 
   get currentDoc() {
-    return this._currentDocID !== null
-      ? this.docs.get(this._currentDocID) ?? null
-      : null;
+    return this._currentDocID !== null ? this.getDoc(this._currentDocID) : null;
   }
 }

@@ -60,7 +60,7 @@ export class Editor {
         layout.dispatch({
           changes: [
             {
-              view: new EditorTabView(layout, {
+              view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
                   tidal(),
@@ -84,6 +84,11 @@ export class Editor {
 
         offContent();
       });
+    });
+
+    api.onClose(({ id }) => {
+      console.log("Close ", id);
+      layout.dispatch({ changes: [id] });
     });
 
     api.onShowAbout((appVersion) => {

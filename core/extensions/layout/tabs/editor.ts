@@ -8,9 +8,11 @@ import {
   getFileID,
 } from "../../../../app/desktop/src/renderer/file";
 
+import { ElectronAPI } from "@core/api";
+
 export class EditorTabState extends TabState<EditorState> {
-  static create(config?: EditorStateConfig) {
-    return new EditorTabState(EditorState.create(config));
+  static create(config?: EditorStateConfig, id?: string) {
+    return new EditorTabState(EditorState.create(config), id);
   }
 
   swapContents(contents: EditorState) {
@@ -29,8 +31,13 @@ export class EditorTabState extends TabState<EditorState> {
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
-  constructor(layout: LayoutView, config?: EditorStateConfig) {
-    const state = EditorTabState.create(config);
+  constructor(
+    layout: LayoutView,
+    id: string,
+    private api: typeof ElectronAPI,
+    config?: EditorStateConfig
+  ) {
+    const state = EditorTabState.create(config, id);
     super(layout, state);
 
     // Set up dom...
@@ -56,6 +63,11 @@ export class EditorTabView extends TabView<EditorState> {
     ) {
       this.editor.focus();
     }
+  }
+
+  beforeClose() {
+    this.api.requestClose(this.state.id);
+    return false;
   }
 
   destroy() {

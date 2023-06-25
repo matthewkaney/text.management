@@ -58,9 +58,9 @@ const ElectronAPI = {
     send("update", { withID: id, value: update });
   },
 
-  requestClose: (id: string) => {},
+  requestClose: (id: string) => send("requestClose", { id }),
 
-  onClose: (id: string, handler: Handler<void>) => {},
+  onClose: listen("close"),
 
   onShowAbout: listen("showAbout"),
 
