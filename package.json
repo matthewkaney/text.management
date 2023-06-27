@@ -13,7 +13,7 @@
     "test": "npm run typecheck && jest",
     "typecheck": "tsc --noEmit",
     "build-packages": "parcel build packages/languages/tidal packages/codemirror/*",
-    "build:desktop": "parcel build app/desktop/ --target main --target preload --target renderer",
+    "build:desktop": "npm run build -w app/desktop",
     "start:web": "parcel app/web",
     "build:web": "parcel build app/web",
     "start:desktop": "electron app/desktop",

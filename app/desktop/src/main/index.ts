@@ -24,7 +24,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: resolve(app.getAppPath(), "dist/preload/index.js"),
+      preload: resolve(app.getAppPath(), "build/preload/index.js"),
     },
   });
 
@@ -143,7 +143,7 @@ const createWindow = () => {
     win.show();
   });
 
-  win.loadFile("./dist/renderer/index.html");
+  win.loadFile("./build/renderer/index.html");
 
   win.on("closed", () => {
     for (let listener of listeners) {
