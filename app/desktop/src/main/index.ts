@@ -2,10 +2,6 @@ import { app, BrowserWindow, Menu } from "electron";
 
 import { resolve } from "path";
 
-// @ts-ignore
-import squirrelStartup from "electron-squirrel-startup";
-if (squirrelStartup) app.quit();
-
 import fixPath from "fix-path";
 
 fixPath();
