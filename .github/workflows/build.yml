@@ -29,7 +29,6 @@ jobs:
           version: ${{ steps.version.outputs.current-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "${{ steps.release-info.outputs.data }}"
       - id: release
         run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> $GITHUB_OUTPUT
 
