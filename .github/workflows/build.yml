@@ -22,7 +22,7 @@ jobs:
           path: app/desktop
       - name: Get release information
         uses: octokit/request-action@v2.x
-        id: releaseiinfo
+        id: release-info
         with:
           route: GET /repos/{repository}/releases/tags/v{version}
           repository: ${{ github.repository }}
@@ -31,7 +31,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "${{ steps.release-info.outputs.data }}"
       - id: release
-        run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> "$GITHUB_OUTPUT"
+        run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> $GITHUB_OUTPUT
 
   build:
     runs-on: ubuntu-latest
