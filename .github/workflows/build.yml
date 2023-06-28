@@ -24,8 +24,8 @@ jobs:
         id: release_info
         with:
           route: GET /repos/{repository}/releases/tags/v{version}
-          repository: ${{ env.GITHUB_REPOSITORY }}
-          version: ${{ steps.version.outputs.current_version }}
+          repository: ${{ GITHUB_REPOSITORY }}
+          version: ${{ steps.version.outputs.current-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: release
