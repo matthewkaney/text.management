@@ -54,7 +54,11 @@ export class Editor {
               // evaluation(),
               basicSetup,
               oneDark,
-              fileSync("editor", {}, emptyApi),
+              fileSync(
+                "editor",
+                { path: null, saved: false, version: 0, thisVersion: 0 },
+                emptyApi
+              ),
               // electronConsole(api),
               // peer(api, 0),
               // @ts-ignore
