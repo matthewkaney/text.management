@@ -14,6 +14,7 @@ jobs:
     outputs:
       unreleased: ${{ contains(fromJSON('[null, true]'), steps.release.outputs.draft) }}
     steps:
+      - uses: actions/checkout@v3
       - name: Get current package version
         id: version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
