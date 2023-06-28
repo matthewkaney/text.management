@@ -12,7 +12,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
-      unreleased: ${{ contains(fromJSON("[null, true]"), steps.release.outputs.draft) }}
+      unreleased: ${{ contains(fromJSON('[null, true]'), steps.release.outputs.draft) }}
     steps:
       - name: Get current package version
         id: version
