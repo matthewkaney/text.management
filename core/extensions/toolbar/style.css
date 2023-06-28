@@ -1,0 +1,31 @@
+.cm-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px;
+  border-top: solid 2px var(--col-bg-shadow-soft);
+  line-height: 30px;
+  font-size: 15.2724px;
+  margin-top: -1px;
+}
+
+.cm-menu-item-list {
+  background-color: var(--col-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.cm-menu-trigger, .cm-menu-item {
+  border: none;
+  outline: none;
+  font: inherit;
+  line-height: inherit;
+  margin-top: -1px;
+  padding: 0 6px;
+  background-color: var(--col-bg-shadow-soft);
+}
+
+.cm-menu-trigger:hover,
+.cm-menu-trigger.cm-menu-active,
+.cm-menu-item:hover {
+  background-color: var(--col-bg-shadow);
+}
