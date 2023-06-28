@@ -18,13 +18,13 @@ jobs:
         id: version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
         with:
-          path: packages/<yourpackage>
+          path: app/desktop
       - name: Get release information
         uses: octokit/request-action@v2.x
         id: release_info
         with:
           route: GET /repos/{repository}/releases/tags/v{version}
-          repository: $GITHUB_REPOSITORY
+          repository: ${{ $GITHUB_REPOSITORY }}
           version: ${{ steps.version.outputs.current-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
