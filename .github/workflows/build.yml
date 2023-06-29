@@ -35,7 +35,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: [run-tests, check-version]
-    if: ${{ needs.check-version.outputs.unreleased === true }}
+    if: ${{ needs.check-version.outputs.unreleased == true }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
