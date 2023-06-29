@@ -39,7 +39,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - run: echo ${{ needs.check-version.outputs.unreleased }}
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
