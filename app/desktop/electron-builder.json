@@ -1,0 +1,20 @@
+{
+  "appId": "management.text",
+  "productName": "Text Management",
+  "directories": {
+    "buildResources": "./resources"
+  },
+  "linux": {
+    "category": "Development",
+    "target": ["AppImage", "deb"]
+  },
+  "mac": {
+    "category": "public.app-category.developer-tools"
+  },
+  "windows": {},
+  "files": ["./build/**/*"],
+  "npmRebuild": false,
+  "extraMetadata": {
+    "name": "text.management"
+  }
+}

@@ -20,26 +20,6 @@
     "dist": "electron-builder",
     "postversion": "git add package.json"
   },
-  "build": {
-    "appId": "management.text",
-    "productName": "Text Management",
-    "directories": {
-      "buildResources": "./resources"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ]
-    },
-    "files": [
-      "./build/**/*"
-    ],
-    "npmRebuild": false,
-    "extraMetadata": {
-      "name": "text.management"
-    }
-  },
   "main": "build/main.js",
   "targets": {
     "renderer": {
