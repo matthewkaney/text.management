@@ -35,10 +35,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: [run-tests, check-version]
-    if: ${{ needs.check-version.outputs.unreleased }}
+    if: ${{ needs.check-version.outputs.unreleased === true }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - run: echo ${{ needs.check-version.outputs.unreleased }}
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
