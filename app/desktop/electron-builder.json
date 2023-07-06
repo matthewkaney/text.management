@@ -9,9 +9,12 @@
     "target": ["AppImage", "deb"]
   },
   "mac": {
-    "category": "public.app-category.developer-tools"
+    "category": "public.app-category.developer-tools",
+    "hardenedRuntime": true,
+    "entitlements": "resources/entitlements.mac.plist",
+    "entitlementsInherit": "resources/entitlements.mac.plist",
+    "gatekeeperAssess": false
   },
-  "windows": {},
   "files": ["./build/**/*"],
   "npmRebuild": false,
   "extraMetadata": {
