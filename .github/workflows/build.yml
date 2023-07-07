@@ -1,0 +1,49 @@
+name: Build Artifacts
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/tests.yml
+
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      unreleased: contains(fromJSON('[null, true]'), steps.release.outputs.draft)
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get current package version
+        id: version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        with:
+          path: app/desktop
+      - name: Get release information
+        uses: octokit/request-action@v2.x
+        id: release-info
+        with:
+          route: GET /repos/{repository}/releases/tags/v{version}
+          repository: ${{ github.repository }}
+          version: ${{ steps.version.outputs.current-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: release
+        run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [run-tests, check-version]
+    if: ${{ needs.check-version.outputs.unreleased == true }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build:desktop
+      - run: npm run pack -w app/desktop

@@ -14,6 +14,8 @@ export function evalAction(action: evalHandler) {
       if (effect.is(evalEffect)) {
         let { from, to } = effect.value;
         action(tr.newDoc.sliceString(from, to));
+      } else if (effect.is(commandEffect)) {
+        action(effect.value.method);
       }
     }
 

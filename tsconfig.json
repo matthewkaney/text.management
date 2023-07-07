@@ -14,7 +14,6 @@
     }
   },
   "exclude": [
-    "app/web/*",
     "core/extensions/firebase/*",
     "packages/languages/supercollider/*"
   ]

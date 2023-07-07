@@ -2,10 +2,6 @@ import { app, BrowserWindow, Menu } from "electron";
 
 import { resolve } from "path";
 
-// @ts-ignore
-import squirrelStartup from "electron-squirrel-startup";
-if (squirrelStartup) app.quit();
-
 import fixPath from "fix-path";
 
 fixPath();
@@ -24,7 +20,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: resolve(app.getAppPath(), "dist/preload/index.js"),
+      preload: resolve(app.getAppPath(), "build/preload/index.js"),
     },
   });
 
@@ -81,16 +77,41 @@ const createWindow = () => {
             }
           })
         );
+      })
+    );
 
-        docListeners.push(
-          listen("requestClose", async ({ id: withID }) => {
-            if (withID === id) {
-              if (document.saved !== false) {
-                // TODO: Implement menu item here...
+    listeners.push(
+      listen("requestClose", async ({ id }) => {
+        let document = filesystem.getDoc(id);
+
+        if (!document) throw Error("Tried to close a non-existent document");
+
+        if (!document.saved) {
+          let { response } = await dialog.showMessageBox(win, {
+            type: "warning",
+            message: "Do you want to save your changes?",
+            buttons: ["Save", "Don't Save", "Cancel"],
+          });
+
+          // Cancelled
+          if (response === 2) return;
+
+          // Save
+          if (response === 0) {
+            if (document.path) {
+              document.save();
+            } else {
+              let { canceled, filePath } = await dialog.showSaveDialog(win);
+
+              if (!canceled && filePath) {
+                document.save(filePath);
               }
             }
-          })
-        );
+          }
+        }
+
+        // We're done here, so close the file
+        send("close", { id });
       })
     );
 
@@ -118,7 +139,7 @@ const createWindow = () => {
     win.show();
   });
 
-  win.loadFile("./dist/renderer/index.html");
+  win.loadFile("./build/renderer/index.html");
 
   win.on("closed", () => {
     for (let listener of listeners) {
@@ -195,7 +216,8 @@ async function saveAsFile(window?: BrowserWindow) {
 
 function showAbout(window?: BrowserWindow) {
   if (window) {
-    window.webContents.send("show-about", app.getVersion());
+    let [send] = wrapIPC(window.webContents);
+    send("showAbout", app.getVersion());
   }
 }
 

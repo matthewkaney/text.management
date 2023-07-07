@@ -8,6 +8,7 @@
 
 .tab-content {
   flex: 1;
+  overflow: hidden;
 }
 
 .tab-region {
@@ -19,6 +20,10 @@
   border-bottom: solid 2px var(--col-bg-shadow);
   margin-bottom: -1px;
   display: flex;
+}
+
+.tab-region:empty {
+  display: none;
 }
 
 .tab {
@@ -58,6 +63,10 @@
   height: calc(1.5 * 12px);
   line-height: calc(1.5 * 12px);
   text-align: center;
+}
+
+.tab:not(.current):not(:hover) .close-button {
+  display: none;
 }
 
 .tab .close-button:hover {

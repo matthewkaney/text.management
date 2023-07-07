@@ -32,9 +32,17 @@ const { api } = window as Window &
     api: typeof ElectronAPI;
   };
 
+const background: string | null = null;
+
 export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new LayoutView(parent, api.setCurrent);
+
+    if (background) {
+      let canvas = parent.appendChild(document.createElement("iframe"));
+      canvas.src = background;
+      canvas.classList.add("background");
+    }
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;
@@ -55,8 +63,7 @@ export class Editor {
         layout.dispatch({
           changes: [
             {
-              view: new EditorTabView(layout, {
-                fileID: id,
+              view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
                   languageMode(tidal),
@@ -80,6 +87,11 @@ export class Editor {
 
         offContent();
       });
+    });
+
+    api.onClose(({ id }) => {
+      console.log("Close ", id);
+      layout.dispatch({ changes: [id] });
     });
 
     api.onShowAbout((appVersion) => {

@@ -15,6 +15,11 @@ describe("DesktopDocument", () => {
   test("Loading an existing document", (done) => {
     const doc = new DesktopDocument("existing.txt");
     expect(doc.content).toEqual(null);
+    expect(doc.fileStatus).toEqual({
+      path: "existing.txt",
+      saved: true,
+      version: null,
+    });
 
     const unload = doc.on("loaded", (status) => {
       expect(doc.content).toEqual({

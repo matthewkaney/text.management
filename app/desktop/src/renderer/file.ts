@@ -1,9 +1,17 @@
 import { ElectronAPI } from "../preload";
 
-import { EditorState, StateField, StateEffect } from "@codemirror/state";
+import { EditorState, StateField, StateEffect, Facet } from "@codemirror/state";
 import { ViewPlugin } from "@codemirror/view";
 
 import { SavedStatus } from "../main/filesystem";
+
+type FileID = string | null;
+const fileID = Facet.define<FileID, FileID>({
+  combine: (inputs) => {
+    return inputs[0] ?? null;
+  },
+  static: true,
+});
 
 const statusEffect = StateEffect.define<SavedStatus>();
 
@@ -66,7 +74,7 @@ export function fileSync(
         },
       };
     },
-    { provide: () => saveState.init(() => status) }
+    { provide: () => [saveState.init(() => status), fileID.of(id)] }
   );
 }
 
@@ -85,5 +93,9 @@ export function getFileName(state: EditorState) {
   const { path } = state.field(saveState);
   const saved = getSaveStatus(state);
 
-  return (path ? basename(path) : "untitled") + (saved === true ? "" : " •");
+  return (saved === true ? "" : "•") + (path ? basename(path) : "untitled");
+}
+
+export function getFileID(state: EditorState) {
+  return state.facet(fileID);
 }

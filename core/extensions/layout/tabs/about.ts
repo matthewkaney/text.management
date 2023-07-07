@@ -1,15 +1,34 @@
-import { EditorState } from "@codemirror/state";
+import { EditorState, EditorStateConfig } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 import { oneDark } from "@core/extensions/theme/theme";
 
-import { LayoutView } from "../view";
-import { EditorTabView } from "./editor";
+import { LayoutView, TabView } from "../view";
+import { EditorTabState } from "./editor";
 
-export class AboutTabView extends EditorTabView {
+export class AboutTabState extends EditorTabState {
+  static create(config?: EditorStateConfig) {
+    return new AboutTabState(EditorState.create(config));
+  }
+
+  swapContents(contents: EditorState) {
+    return new EditorTabState(contents, this.id);
+  }
+
+  get name() {
+    return "About";
+  }
+
+  get fileID() {
+    return null;
+  }
+}
+
+export class AboutTabView extends TabView<EditorState> {
+  private editor;
+
   constructor(layout: LayoutView, appVersion: string) {
-    super(layout, {
-      fileID: null,
+    const state = AboutTabState.create({
       doc: `text.management version ${appVersion}`,
       extensions: [
         oneDark,
@@ -17,5 +36,17 @@ export class AboutTabView extends EditorTabView {
         EditorView.editable.of(false),
       ],
     });
+    super(layout, state);
+
+    // Set up dom...
+
+    this.editor = new EditorView({
+      state: this.state.contents,
+      parent: this.dom,
+    });
+  }
+
+  destroy() {
+    this.editor.destroy();
   }
 }

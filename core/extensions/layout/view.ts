@@ -14,7 +14,7 @@ export class LayoutView {
   state: LayoutState = LayoutState.create();
 
   // TODO: The relevant info here should be moved to state
-  private children: Map<symbol, TabView<any>> = new Map();
+  private children: Map<string, TabView<any>> = new Map();
 
   constructor(
     parent: HTMLElement,
@@ -60,7 +60,7 @@ export class LayoutView {
 
     // Update self
     for (let change of tr.changes.changelist) {
-      if (typeof change === "symbol") {
+      if (typeof change === "string") {
         let deletedTab = this.children.get(change);
         if (deletedTab) {
           deletedTab.destroy();
@@ -84,7 +84,6 @@ export class LayoutView {
       if (!currentTab) throw Error("View doesn't have old new tab");
 
       this.dom.appendChild(currentTab.dom);
-      currentTab.dom.focus();
     }
 
     // Update children
@@ -106,14 +105,18 @@ export abstract class TabView<T> {
   readonly dom = document.createElement("div");
   readonly tab = document.createElement("div");
 
-  constructor(readonly layout: LayoutView, readonly state: TabState<T>) {
+  private label = document.createElement("span");
+
+  constructor(readonly layout: LayoutView, public state: TabState<T>) {
     this.dom.classList.add("tab-content");
 
-    this.tab.innerText = state.name;
     this.tab.classList.add("tab");
     this.tab.addEventListener("click", () => {
       this.layout.dispatch({ current: this.state.id });
     });
+
+    this.label.innerText = state.name;
+    this.tab.appendChild(this.label);
 
     let closeButton = this.tab.appendChild(document.createElement("a"));
     closeButton.classList.add("close-button");
@@ -121,13 +124,22 @@ export abstract class TabView<T> {
       closeButton.appendChild(n);
     });
     closeButton.addEventListener("click", (event) => {
-      this.layout.dispatch({ changes: [this.state.id] });
+      if (this.beforeClose()) {
+        this.layout.dispatch({ changes: [this.state.id] });
+      }
       event.stopPropagation();
     });
   }
 
   update(tr: LayoutTransaction) {
+    this.state = tr.state.tabs[this.state.id];
+
     this.tab.classList.toggle("current", tr.state.current === this.state.id);
+    this.label.innerText = this.state.name;
+  }
+
+  beforeClose() {
+    return true;
   }
 
   abstract destroy(): void;
