@@ -8,15 +8,22 @@ export class LanguageMode {
 }
 
 export class JavascriptLanguageMode extends LanguageMode {
-  constructor(name: string, extensions: Extension) {
-    // let channel = new MessagePort();
+  constructor(name: string, extensions: Extension, src: string) {
+    let channel = new MessageChannel();
 
     super(name, [
       extensions,
       evaluation((code) => {
-        console.log(code);
+        channel.port1.postMessage({ method: "evaluate", code });
       }),
     ]);
+
+    this.display = document.createElement("iframe");
+    this.display.srcdoc = src;
+
+    this.display.addEventListener("load", () => {
+      this.display?.contentWindow?.postMessage("channel", "*", [channel.port2]);
+    });
   }
 }
 

@@ -38,9 +38,8 @@ export class Editor {
   constructor(parent: HTMLElement) {
     let layout = new LayoutView(parent, api.setCurrent);
 
-    if (background) {
-      let canvas = parent.appendChild(document.createElement("iframe"));
-      canvas.src = background;
+    if (hydra.display) {
+      let canvas = parent.appendChild(hydra.display);
       canvas.classList.add("background");
     }
 
