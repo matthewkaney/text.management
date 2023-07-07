@@ -1,5 +1,5 @@
-import { LanguageMode } from "@core/extensions/language/editor";
+import { JavascriptLanguageMode } from "@core/extensions/language/editor";
 
 import { javascript } from "@codemirror/lang-javascript";
 
-export default LanguageMode.define("Hydra", [javascript()]);
+export default new JavascriptLanguageMode("Hydra", []);

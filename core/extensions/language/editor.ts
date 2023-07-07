@@ -1,11 +1,23 @@
 import { Extension, Compartment } from "@codemirror/state";
+import { evaluation } from "@management/cm-evaluate";
 
 export class LanguageMode {
-  static define(name: string, extensions: Extension) {
-    return new LanguageMode(name, extensions);
-  }
+  display: HTMLIFrameElement | null = null;
 
-  private constructor(readonly name: string, readonly extensions: Extension) {}
+  constructor(readonly name: string, readonly extensions: Extension) {}
+}
+
+export class JavascriptLanguageMode extends LanguageMode {
+  constructor(name: string, extensions: Extension) {
+    // let channel = new MessagePort();
+
+    super(name, [
+      extensions,
+      evaluation((code) => {
+        console.log(code);
+      }),
+    ]);
+  }
 }
 
 const languageModeExtensions = new Compartment();

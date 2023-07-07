@@ -6,7 +6,7 @@ import fixPath from "fix-path";
 
 fixPath();
 
-import { GHCI } from "@management/lang-tidal";
+import { GHCI } from "@management/lang-tidal/ghci";
 import { Filesystem, DesktopDocument } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 

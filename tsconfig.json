@@ -9,7 +9,7 @@
     "baseUrl": "./",
     "paths": {
       "@core/*": ["core/*"],
-      "@management/lang-tidal": ["packages/languages/tidal/ghci.ts"],
+      "@management/lang-*": ["packages/languages/*"],
       "@management/*": ["node_modules/@management/*/src"]
     }
   },

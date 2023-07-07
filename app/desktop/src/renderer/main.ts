@@ -8,7 +8,7 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 
 import { languageMode } from "@core/extensions/language/editor";
-import tidal from "@management/lang-tidal/editor";
+// import tidal from "@management/lang-tidal/editor";
 import hydra from "@management/lang-hydra/editor";
 
 import { LayoutView } from "@core/extensions/layout";
@@ -66,9 +66,9 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
-                  languageMode(tidal),
+                  languageMode(hydra),
                   keymap.of([indentWithTab]),
-                  evaluation(api.evaluate),
+                  // evaluation(api.evaluate),
                   basicSetup,
                   oneDark,
                   fileSync(
