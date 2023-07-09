@@ -3,7 +3,8 @@ name: Check if Version is Released
 on:
   workflow_call:
     outputs:
-      unreleased: ${{ jobs.check-version.outputs.unreleased }}
+      unreleased:
+        value: ${{ jobs.check-version.outputs.unreleased }}
 
 jobs:
   check-version:
