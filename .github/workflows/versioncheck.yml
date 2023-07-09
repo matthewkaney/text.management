@@ -32,5 +32,5 @@ jobs:
               }
               throw e;
             }
-      - if: ! steps.release-info.outputs.result
+      - if: ${{ ! steps.release-info.outputs.result }}
         run: echo "Version is already released, skipping build process"
