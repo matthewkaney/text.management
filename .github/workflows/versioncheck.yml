@@ -6,7 +6,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
-      unreleased: ${{ steps.release-info.outputs.results }}
+      unreleased: ${{ steps.release-info.outputs.result }}
     steps:
       - uses: actions/checkout@v3
       - name: Get current package version
@@ -32,3 +32,5 @@ jobs:
               }
               throw e;
             }
+      - if: ! steps.release-info.outputs.result
+        run: echo "Version is already released, skipping build process"
