@@ -19,10 +19,11 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     needs: [run-tests, check-version]
-    if: needs.check-version.outputs.unreleased == true
+    # if: needs.check-version.outputs.unreleased == true
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - run: echo "${{ needs.check-version.outputs.unreleased }}"
       - if: matrix.os == 'mac-latest'
         uses: ./.github/workflows/mac_keychain.yml
       - uses: actions/checkout@v3
