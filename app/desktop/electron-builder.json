@@ -13,7 +13,12 @@
     "hardenedRuntime": true,
     "entitlements": "resources/entitlements.mac.plist",
     "entitlementsInherit": "resources/entitlements.mac.plist",
-    "gatekeeperAssess": false
+    "gatekeeperAssess": false,
+    "artifactName": "${name}-${version}-${arch}.${ext}",
+    "target": {
+      "target": "default",
+      "arch": ["x64", "arm64"]
+    }
   },
   "files": ["./build/**/*"],
   "npmRebuild": false,
