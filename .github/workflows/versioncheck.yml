@@ -18,7 +18,7 @@ jobs:
         id: release-info
         env:
           version: ${{ steps.version.outputs.current-version }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           script: |
             try {
