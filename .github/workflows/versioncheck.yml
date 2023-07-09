@@ -32,10 +32,9 @@ jobs:
               return data.draft;
             } catch (e) {
               if (e.status === 404) {
-                return true;
+                return false;
               }
               throw e;
             }
-      - run: echo "${{ steps.release-info.outputs.result }}"
       - if: ${{ ! steps.release-info.outputs.result }}
-        run: echo "Version is already released, skipping build process"
+        run: echo "No draft release exists, skipping build step"
