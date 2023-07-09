@@ -23,7 +23,7 @@ jobs:
           script: |
             try {
               const { data } = await github.rest.repos.getReleaseByTag(
-                { "mindofmatthew", "text.management", process.env.version }
+                { owner: "mindofmatthew", repo: "text.management", tag: process.env.version }
               );
               return data.draft;
             } catch (e) {
