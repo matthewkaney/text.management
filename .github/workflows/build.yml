@@ -10,35 +10,21 @@ jobs:
     uses: ./.github/workflows/tests.yml
 
   check-version:
-    runs-on: ubuntu-latest
-    outputs:
-      unreleased: contains(fromJSON('[null, true]'), steps.release.outputs.draft)
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get current package version
-        id: version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
-        with:
-          path: app/desktop
-      - name: Get release information
-        uses: octokit/request-action@v2.x
-        id: release-info
-        with:
-          route: GET /repos/{repository}/releases/tags/v{version}
-          repository: ${{ github.repository }}
-          version: ${{ steps.version.outputs.current-version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - id: release
-        run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> $GITHUB_OUTPUT
+    uses: ./.github/workflows/versioncheck.yml
 
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [mac-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
     needs: [run-tests, check-version]
-    if: ${{ needs.check-version.outputs.unreleased == true }}
+    if: needs.check-version.outputs.unreleased == true
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - if: matrix.os == "mac-latest"
+        uses: ./.github/workflows/mac_keychain.yml
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
