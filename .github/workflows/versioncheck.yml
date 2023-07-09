@@ -6,7 +6,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
-      unreleased: contains(fromJSON('[null, true]'), steps.release.outputs.draft)
+      unreleased: ${{ steps.release-info.outputs.results }}
     steps:
       - uses: actions/checkout@v3
       - name: Get current package version
@@ -17,20 +17,18 @@ jobs:
       - name: Get release information
         id: release-info
         env:
-          version: ${{ steps.version.outputs.result }}
+          version: ${{ steps.version.outputs.current-version }}
         uses: actions/github-script@v3
-          with:
-            script: |
-              try {
-                const { data } = await github.rest.repos.getReleaseByTag(
-                  { "mindofmatthew", "text.management", process.env.version }
-                );
-                return data.draft;
-              } catch (e) {
-                if (e.status === 404) {
-                  return true;
-                }
-                throw e;
+        with:
+          script: |
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag(
+                { "mindofmatthew", "text.management", process.env.version }
+              );
+              return data.draft;
+            } catch (e) {
+              if (e.status === 404) {
+                return true;
               }
-      - id: release
-        run: echo "draft=${{ fromJSON(steps.release-info.outputs.data).draft }}" >> $GITHUB_OUTPUT
+              throw e;
+            }
