@@ -11,7 +11,8 @@
       "@core/*": ["core/*"],
       "@management/lang-tidal": ["packages/languages/tidal/ghci.ts"],
       "@management/*": ["node_modules/@management/*/src"]
-    }
+    },
+    "resolveJsonModule": true
   },
   "exclude": [
     "core/extensions/firebase/*",
