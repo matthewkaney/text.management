@@ -24,8 +24,8 @@ jobs:
         os: [mac-latest, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
-    needs: [run-tests, check-version]
-    if: needs.check-version.outputs.unreleased == 'true'
+    needs: [run-tests]
+    # if: ${{ needs.check-version.outputs.unreleased == 'true' }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
