@@ -39,3 +39,4 @@ jobs:
       - run: npm ci
       - run: npm run build:desktop
       - run: npm run pack -w app/desktop
+        shell: bash
