@@ -54,7 +54,8 @@
   },
   "devDependencies": {
     "electron": "^22.3.15",
-    "electron-builder": "^24.4.0"
+    "electron-builder": "^24.4.0",
+    "electron-notarize": "^1.2.2"
   },
   "dependencies": {
     "fix-path": "^4.0.0"

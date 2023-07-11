@@ -56,6 +56,10 @@ jobs:
           node-version: 18.x
           cache: "npm"
       - run: npm ci
-      - run: npm run build:desktop
-      - run: npm run pack -w app/desktop
-        shell: bash
+      - name: Build Desktop App
+        run: npm run build:desktop
+      - name: Package Desktop App
+        run: npm run pack -w app/desktop
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
