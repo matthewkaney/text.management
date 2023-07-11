@@ -29,9 +29,9 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v3
       - if: matrix.os == 'macos-latest'
         uses: ./.github/workflows/mac_keychain.yml
-      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 18.x
