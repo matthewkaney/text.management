@@ -29,7 +29,7 @@ jobs:
         env:
           APPLICATION_CERTIFICATE: ${{ secrets.APPLE_APPLICATION_CERTIFICATE }}
           INSTALLER_CERTIFICATE: ${{ secrets.APPLE_INSTALLER_CERTIFICATE }}
-          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
         run: |
           # create variables
