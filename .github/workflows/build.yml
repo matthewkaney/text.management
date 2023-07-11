@@ -21,7 +21,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [mac-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
     needs: [run-tests]
@@ -29,7 +29,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - if: matrix.os == 'mac-latest'
+      - if: matrix.os == 'macos-latest'
         uses: ./.github/workflows/mac_keychain.yml
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
