@@ -22,7 +22,6 @@ module.exports = {
       arch: ["x64", "arm64"],
     },
   },
-  afterSign: "notarize.js",
   files: ["./build/**/*"],
   npmRebuild: false,
   extraMetadata: {
