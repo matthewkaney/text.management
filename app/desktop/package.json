@@ -1,30 +1,37 @@
 {
   "name": "@management/text-management-desktop",
-  "productName": "Text Management",
-  "author": "Matthew Kaney",
-  "version": "0.7.0",
+  "author": {
+    "name": "Matthew Kaney",
+    "email": "matthew.s.kaney@gmail.com"
+  },
+  "version": "0.8.0",
   "private": "true",
   "description": "Live code editor",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://text.management",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mindofmatthew/text.management.git"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
+    "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
+    "build": "parcel build --target main --target preload --target renderer",
+    "pack": "electron-builder --config build.config.js",
+    "dist": "electron-builder",
     "postversion": "git add package.json"
   },
-  "main": "dist/main.js",
-  "license": "GPL-3.0-or-later",
+  "main": "build/main.js",
   "targets": {
     "renderer": {
       "source": "src/renderer/index.html",
-      "distDir": "dist",
+      "distDir": "build",
       "context": "browser",
       "publicUrl": "./..",
       "includeNodeModules": true
     },
     "preload": {
       "source": "src/preload/index.ts",
-      "distDir": "dist",
+      "distDir": "build",
       "context": "electron-main",
       "sourceMap": {
         "inline": true
@@ -35,7 +42,7 @@
     },
     "main": {
       "source": "src/main/index.ts",
-      "distDir": "dist",
+      "distDir": "build",
       "context": "electron-main",
       "includeNodeModules": {
         "electron": false,
@@ -46,15 +53,10 @@
     }
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.4",
-    "@electron-forge/maker-deb": "^6.0.4",
-    "@electron-forge/maker-squirrel": "^6.0.4",
-    "@electron-forge/maker-zip": "^6.0.4",
-    "electron": "^22.0.0",
-    "electron-packager": "^17.1.1"
+    "electron": "^22.3.15",
+    "electron-builder": "^24.4.0"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
     "fix-path": "^4.0.0"
   }
 }
