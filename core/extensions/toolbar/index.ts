@@ -8,8 +8,14 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
     let consoleNode = document.createElement("div");
     consoleNode.classList.add("cm-toolbar");
 
+    // Status indicators for future use: ◯◉✕
     let tidalInfo = new ToolbarMenu(`Tidal (${version ?? "Disconnected"})`, [
-      { label: "Restart Tidal", action: () => {} },
+      {
+        label: "Restart Tidal",
+        action: () => {
+          api.restart();
+        },
+      },
       { label: "Boot Files", action: () => {} },
     ]);
     consoleNode.appendChild(tidalInfo.dom);
@@ -76,11 +82,12 @@ class ToolbarMenu {
     itemsNode.style.position = "absolute";
     itemsNode.style.display = "none";
 
-    for (let item of items) {
+    for (let { label, action } of items) {
       let itemNode = itemsNode.appendChild(document.createElement("div"));
       let itemButton = itemNode.appendChild(document.createElement("button"));
       itemButton.classList.add("cm-menu-item");
-      itemButton.innerText = item.label;
+      itemButton.innerText = label;
+      itemButton.addEventListener("click", action);
     }
   }
 }

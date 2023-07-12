@@ -127,6 +127,12 @@ const createWindow = () => {
     );
 
     listeners.push(
+      listen("restart", () => {
+        tidal.restart();
+      })
+    );
+
+    listeners.push(
       tidal.on("message", (message) => {
         send("console", message);
       })

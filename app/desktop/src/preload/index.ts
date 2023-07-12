@@ -68,6 +68,10 @@ const ElectronAPI = {
     send("evaluation", code);
   },
 
+  restart: () => {
+    send("restart", undefined);
+  },
+
   onConsoleMessage: listen("console"),
 
   onTidalVersion: listen("tidalVersion"),
