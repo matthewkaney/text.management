@@ -104,7 +104,7 @@ class ToolbarMenu {
       if (relatedTarget instanceof Node && this.dom.contains(relatedTarget))
         return;
 
-      // this.active = false;
+      this.active = false;
     });
 
     this.menu = this.dom.appendChild(document.createElement("div"));
