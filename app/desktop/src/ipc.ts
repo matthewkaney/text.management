@@ -9,6 +9,7 @@ export interface ToMainChannels {
   update: { withID: string; value: DocumentUpdate };
   requestClose: { id: string };
   evaluation: string;
+  restart: undefined;
 }
 
 export interface ToRendererChannels {

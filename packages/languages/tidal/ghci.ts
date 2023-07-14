@@ -1,7 +1,6 @@
 import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
-// import { Duplex } from "stream";
 //@ts-ignore
 import { Duplex, compose } from "stream";
 import { once } from "events";
@@ -31,13 +30,10 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private history: TerminalMessage[] = [];
 
-  private outBatch: string[] | null = null;
-  private errBatch: string[] | null = null;
-
-  constructor(opts: GHCIOptions = defaultOpts) {
+  constructor(private options: GHCIOptions = defaultOpts) {
     super();
 
-    this.process = this.initProcess(opts);
+    this.process = this.initProcess(options);
 
     this.onListener["message"] = (listener) => {
       for (let message of this.history) {
@@ -64,23 +60,25 @@ export class GHCI extends Engine<GHCIEvents> {
       await this.loadFile(path, child);
     }
 
+    let outBatch: string[] | null = null;
+    let errBatch: string[] | null = null;
+
     out.on("line", (data) => {
       if (!data.endsWith("> ")) {
-        if (this.outBatch) {
-          this.outBatch.push(data);
+        if (outBatch) {
+          outBatch.push(data);
         } else {
-          this.outBatch = [data];
+          outBatch = [data];
 
           setTimeout(() => {
-            if (this.outBatch) {
-              const outBatch = this.outBatch;
-              this.outBatch = null;
-
+            if (outBatch) {
               let m: TerminalMessage = {
                 level: "info",
                 source: "Tidal",
                 text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
               };
+
+              outBatch = null;
 
               this.history.push(m);
               this.emit("message", m);
@@ -92,21 +90,20 @@ export class GHCI extends Engine<GHCIEvents> {
 
     err.on("line", (data) => {
       if (data !== "") {
-        if (this.errBatch) {
-          this.errBatch.push(data);
+        if (errBatch) {
+          errBatch.push(data);
         } else {
-          this.errBatch = [data];
+          errBatch = [data];
 
           setTimeout(() => {
-            if (this.errBatch) {
-              const errBatch = this.errBatch;
-              this.errBatch = null;
-
+            if (errBatch) {
               let m: TerminalMessage = {
                 level: "error",
                 source: "Tidal",
                 text: errBatch.join("\n"),
               };
+
+              errBatch = null;
 
               this.history.push(m);
               this.emit("message", m);
@@ -182,6 +179,28 @@ export class GHCI extends Engine<GHCIEvents> {
   }
 
   async close() {
-    (await this.process).kill();
+    let process = await this.process;
+
+    if (!process.killed) {
+      (await this.process).kill();
+    }
+
+    if (process.exitCode === null) {
+      await new Promise<void>((resolve) => {
+        process.once("close", () => {
+          resolve();
+        });
+      });
+
+      this.emit("stopped", undefined);
+    }
+  }
+
+  async restart() {
+    await this.close();
+
+    this.process = this.initProcess(this.options);
+    await this.process;
+    this.emit("started", undefined);
   }
 }

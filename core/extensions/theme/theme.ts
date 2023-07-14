@@ -29,10 +29,6 @@ export const base = EditorView.theme({
   ".cm-line": {
     width: "fit-content",
   },
-
-  ".cm-toolbar": {
-    textAlign: "right",
-  },
 });
 
 export const layoutTheme = EditorView.theme({
@@ -86,7 +82,6 @@ export const layoutTheme = EditorView.theme({
 
   ".cm-toolbar": {
     marginTop: `${1.5 * size}px`,
-    padding: `${0.25 * size}px ${2 * size}px`,
   },
 
   "*::-webkit-scrollbar": {
@@ -221,13 +216,6 @@ export const oneDarkTheme = EditorView.theme(
       borderTop: `solid 2px ${col("bg-shadow")}`,
     },
 
-    ".cm-toolbar div": {
-      clipPath: "inset(1px 0 0 0)",
-    },
-
-    "*::-webkit-scrollbar-track-piece": {
-      backgroundColor: col("bg-shadow"),
-    },
     "*::-webkit-scrollbar-thumb": {
       backgroundColor: col("bg-shadow"),
     },
