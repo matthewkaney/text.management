@@ -42,7 +42,10 @@ interface MenuItem {
 
 class ToolbarMenu {
   readonly dom: HTMLElement;
+
   private trigger: HTMLElement;
+  private menu: HTMLElement;
+  private menuItems: HTMLButtonElement[];
 
   private _label: string;
 
@@ -57,6 +60,7 @@ class ToolbarMenu {
 
   constructor(label: string, items: MenuItem[]) {
     this.dom = document.createElement("div");
+    this.dom.classList.add("cm-menu");
     this.dom.style.position = "relative";
 
     this.trigger = this.dom.appendChild(document.createElement("button"));
@@ -67,27 +71,87 @@ class ToolbarMenu {
     this.trigger.tabIndex = 0;
 
     this.trigger.addEventListener("click", () => {
-      this.trigger.classList.toggle("cm-menu-active");
-      if (itemsNode.style.display === "none") {
-        itemsNode.style.bottom =
-          this.trigger.getBoundingClientRect().height + "px";
-        itemsNode.style.right = "0";
-        itemsNode.style.display = "initial";
-      } else {
-        itemsNode.style.display = "none";
+      this.active = !this.active;
+    });
+
+    this.dom.addEventListener("keydown", ({ code }) => {
+      if (this.active) {
+        if (code === "ArrowDown") {
+          this.focusedChild =
+            (1 + (this.focusedChild ?? -1)) % this.menuItems.length;
+        }
+
+        if (code === "ArrowUp") {
+          this.focusedChild =
+            ((this.focusedChild ?? this.menuItems.length) +
+              this.menuItems.length -
+              1) %
+            this.menuItems.length;
+        }
+
+        if (code === "Escape") {
+          this.active = false;
+          this.trigger.focus();
+        }
       }
     });
 
-    let itemsNode = this.dom.appendChild(document.createElement("div"));
-    itemsNode.style.position = "absolute";
-    itemsNode.style.display = "none";
+    this.dom.addEventListener("focusout", ({ relatedTarget }) => {
+      if (relatedTarget instanceof Node && this.dom.contains(relatedTarget))
+        return;
+
+      this.active = false;
+    });
+
+    this.menu = this.dom.appendChild(document.createElement("div"));
+    this.menu.classList.add("cm-menu-item-list");
+
+    this.menuItems = [];
 
     for (let { label, action } of items) {
-      let itemNode = itemsNode.appendChild(document.createElement("div"));
+      let itemNode = this.menu.appendChild(document.createElement("div"));
       let itemButton = itemNode.appendChild(document.createElement("button"));
       itemButton.classList.add("cm-menu-item");
       itemButton.innerText = label;
-      itemButton.addEventListener("click", action);
+      itemButton.addEventListener("click", () => {
+        this.active = false;
+        action();
+      });
+      itemButton.tabIndex = -1;
+      this.menuItems.push(itemButton);
     }
+  }
+
+  private _active = false;
+
+  get active() {
+    return this._active;
+  }
+
+  set active(value) {
+    if (this.active === value) return;
+
+    this.dom.classList.toggle("cm-active-menu", value);
+
+    if (value) {
+      this.menu.style.bottom =
+        this.trigger.getBoundingClientRect().height + "px";
+    }
+
+    this._active = value;
+  }
+
+  private _focusedChild: number | null = null;
+
+  get focusedChild() {
+    return this._focusedChild;
+  }
+
+  set focusedChild(value) {
+    if (typeof value === "number") {
+      this.menuItems[value].focus();
+    }
+
+    this._focusedChild = value;
   }
 }
