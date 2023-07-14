@@ -1,0 +1,40 @@
+name: Check if Version is Released
+
+on:
+  workflow_call:
+    outputs:
+      unreleased:
+        value: ${{ jobs.check-version.outputs.unreleased }}
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      unreleased: ${{ steps.release-info.outputs.result }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get current package version
+        id: version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        with:
+          path: app/desktop
+      - name: Get release information
+        id: release-info
+        env:
+          version: ${{ steps.version.outputs.current-version }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag(
+                { owner: "mindofmatthew", repo: "text.management", tag: process.env.version }
+              );
+              return data.draft;
+            } catch (e) {
+              if (e.status === 404) {
+                return false;
+              }
+              throw e;
+            }
+      - if: ${{ ! steps.release-info.outputs.result }}
+        run: echo "No draft release exists, skipping build step"

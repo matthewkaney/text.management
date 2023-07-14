@@ -11,7 +11,8 @@
       "@core/*": ["core/*"],
       "@management/lang-*": ["packages/languages/*"],
       "@management/*": ["node_modules/@management/*/src"]
-    }
+    },
+    "resolveJsonModule": true
   },
   "exclude": [
     "core/extensions/firebase/*",
