@@ -93,6 +93,10 @@ class ToolbarMenu {
           this.active = false;
           this.trigger.focus();
         }
+      } else {
+        if (code === "Escape") {
+          this.trigger.blur();
+        }
       }
     });
 
@@ -100,7 +104,7 @@ class ToolbarMenu {
       if (relatedTarget instanceof Node && this.dom.contains(relatedTarget))
         return;
 
-      this.active = false;
+      // this.active = false;
     });
 
     this.menu = this.dom.appendChild(document.createElement("div"));
@@ -108,9 +112,11 @@ class ToolbarMenu {
 
     this.menuItems = [];
 
+    let itemGroup = this.menu.appendChild(document.createElement("div"));
+    itemGroup.classList.add("cm-menu-item-group");
+
     for (let { label, action } of items) {
-      let itemNode = this.menu.appendChild(document.createElement("div"));
-      let itemButton = itemNode.appendChild(document.createElement("button"));
+      let itemButton = itemGroup.appendChild(document.createElement("button"));
       itemButton.classList.add("cm-menu-item");
       itemButton.innerText = label;
       itemButton.addEventListener("click", () => {
