@@ -10,11 +10,12 @@
     },
     "viewer": {
       "context": "browser",
-      "source": "./viewer.html"
+      "source": "./viewer.html",
+      "distDir": "../../../app/desktop/build/hydra"
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "parcel build --target viewer"
   },
   "author": "Matthew Kaney",
   "license": "AGPL-3.0-or-later",

@@ -16,26 +16,22 @@
     </style>
     <script type="module">
       //@ts-ignore
-      // import Hydra from "hydra-synth";
+      import Hydra from "hydra-synth";
 
       window.addEventListener("message", ({ data, ports }) => {
         if (data === "channel" && ports.length > 0) {
           let [port] = ports;
 
           port.addEventListener("message", ({ data }) => {
-            console.log(data);
-            // for (let {
-            //   address,
-            //   args: [code],
-            // } of getMessages(data)) {
-            //   if (address === "/code" && typeof code === "string") {
-            //     try {
-            //       eval(code);
-            //     } catch (error) {
-            //       console.log(error.message);
-            //     }
-            //   }
-            // }
+            if (data.method === "evaluate") {
+              let {code} = data;
+
+              try {
+                eval(code);
+              } catch (error) {
+                console.log(error.message);
+              }
+            }
           });
 
           port.addEventListener("messageerror", (event) => {

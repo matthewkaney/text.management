@@ -19,7 +19,7 @@ export class JavascriptLanguageMode extends LanguageMode {
     ]);
 
     this.display = document.createElement("iframe");
-    this.display.srcdoc = src;
+    this.display.src = src;
 
     this.display.addEventListener("load", () => {
       this.display?.contentWindow?.postMessage("channel", "*", [channel.port2]);
