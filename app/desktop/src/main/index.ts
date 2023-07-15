@@ -138,6 +138,12 @@ const createWindow = () => {
       })
     );
 
+    listeners.push(
+      tidal.on("now", (now) => {
+        send("tidalNow", now);
+      })
+    );
+
     // For now, load a blank document on startup
     filesystem.loadDoc();
 

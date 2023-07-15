@@ -22,5 +22,6 @@ export interface ToRendererChannels {
   close: { id: string };
   console: TerminalMessage;
   tidalVersion: string;
+  tidalNow: number;
   showAbout: string;
 }

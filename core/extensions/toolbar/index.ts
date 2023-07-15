@@ -24,10 +24,22 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
       tidalInfo.label = `Tidal (${version})`;
     });
 
+    // Tempo info
+    let tempoInfo = new ToolbarMenu(`◯ 0`, []);
+    consoleNode.appendChild(tempoInfo.dom);
+
+    let offTidalNow = api.onTidalNow((cycle) => {
+      cycle = Math.max(0, cycle);
+      let whole = Math.floor(cycle);
+      let part = "◐◓◑◒"[Math.floor(cycle * 4) % 4];
+      tempoInfo.label = `${part} ${whole}`;
+    });
+
     return {
       dom: consoleNode,
       destroy() {
         offTidalVersion();
+        offTidalNow();
       },
     };
   }

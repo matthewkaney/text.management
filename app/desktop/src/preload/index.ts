@@ -75,6 +75,8 @@ const ElectronAPI = {
   onConsoleMessage: listen("console"),
 
   onTidalVersion: listen("tidalVersion"),
+
+  onTidalNow: listen("tidalNow"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);

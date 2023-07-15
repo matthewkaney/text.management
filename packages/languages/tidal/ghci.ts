@@ -8,8 +8,12 @@ import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
 
+import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
+
+//@ts-ignore
+import preBoot from "bundle-text:./PreBoot.hs";
 
 interface GHCIOptions {
   defaultBoot: boolean;
@@ -23,6 +27,7 @@ const defaultOpts: GHCIOptions = {
 
 interface GHCIEvents {
   message: TerminalMessage;
+  now: number;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -51,9 +56,15 @@ export class GHCI extends Engine<GHCIEvents> {
         resolve(socket);
       });
 
-      // socket.on("message", (data) => {
-      //   this.emit("message", data);
-      // });
+      socket.on("message", (data) => {
+        let message = parse(data);
+
+        if ("address" in message && message.address === "/now") {
+          if (typeof message.args[0] === "number") {
+            this.emit("now", message.args[0]);
+          }
+        }
+      });
     });
   }
 
@@ -69,6 +80,8 @@ export class GHCI extends Engine<GHCIEvents> {
 
     const out = createInterface({ input: child.stdout });
     const err = createInterface({ input: child.stderr });
+
+    child.stdin.write(preBoot);
 
     if (defaultBoot) {
       await this.loadFile(await this.defaultBootfile(), child);
@@ -149,6 +162,7 @@ export class GHCI extends Engine<GHCIEvents> {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
+      .filter((l) => !l.match(/^\s*import\s+Sound\.Tidal\.Context.*/))
       .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
@@ -161,7 +175,10 @@ export class GHCI extends Engine<GHCIEvents> {
         for (let line of chunk.split(/(?<=\r?\n)/)) {
           line = remainder + line;
           if (line.match(/.*?\r?\n$/)) {
-            if (!line.match(/^\s*:set\s+prompt.*/)) {
+            if (
+              !line.match(/^\s*:set\s+prompt.*/) &&
+              !line.match(/^\s*import\s+Sound\.Tidal\.Context.*/)
+            ) {
               yield line;
             }
             remainder = "";
