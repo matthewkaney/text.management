@@ -7,7 +7,7 @@ import fixPath from "fix-path";
 fixPath();
 
 import { GHCI } from "@management/lang-tidal";
-import { Filesystem, DesktopDocument } from "./filesystem";
+import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
 import { menu } from "./menu";
@@ -15,7 +15,7 @@ import { menu } from "./menu";
 const filesystem = new Filesystem();
 
 const createWindow = () => {
-  const win = new BrowserWindow({
+  const window = new BrowserWindow({
     show: false,
     width: 800,
     height: 600,
@@ -30,8 +30,8 @@ const createWindow = () => {
   let listeners: (() => void)[] = [];
   let docsListeners: { [id: string]: typeof listeners } = {};
 
-  win.on("ready-to-show", () => {
-    const [send, listen] = wrapIPC(win.webContents);
+  window.on("ready-to-show", () => {
+    const [send, listen] = wrapIPC(window.webContents);
 
     listeners.push(
       listen("current", ({ id }) => {
@@ -66,7 +66,7 @@ const createWindow = () => {
 
         docListeners.push(
           document.on("status", (status) => {
-            win.webContents.send("status", { withID: id, content: status });
+            window.webContents.send("status", { withID: id, content: status });
           })
         );
 
@@ -80,7 +80,11 @@ const createWindow = () => {
       })
     );
 
-    listeners.push(listen("requestClose", async ({ id }) => {}));
+    listeners.push(
+      listen("requestClose", ({ id }) => {
+        close({ window, id });
+      })
+    );
 
     // Set up tidal communication
     tidal.getVersion().then((version) => {
@@ -103,12 +107,12 @@ const createWindow = () => {
     filesystem.loadDoc();
 
     // Show the window
-    win.show();
+    window.show();
   });
 
-  win.loadFile("./build/renderer/index.html");
+  window.loadFile("./build/renderer/index.html");
 
-  win.on("closed", () => {
+  window.on("closed", () => {
     for (let listener of listeners) {
       listener();
     }
@@ -134,7 +138,7 @@ app.whenReady().then(() => {
 });
 
 // app.on("window-all-closed", () => {
-//   if (process.platform !== "darwin") app.quit();
+//   if (process.platform !== "darwindow") app.quit();
 // });
 
 import { dialog } from "electron";
