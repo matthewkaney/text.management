@@ -7,9 +7,13 @@ export interface ConsoleMessage {
   text: string;
 }
 
-export function clearConsole({ dispatch }: EditorView) {
-  dispatch({ effects: consoleClearEffect.of() });
-  return true;
+export function clearConsole({ state, dispatch }: EditorView) {
+  if (state.field(consoleState).length > 0) {
+    dispatch({ effects: consoleClearEffect.of() });
+    return true;
+  } else {
+    return false;
+  }
 }
 
 export function sendToConsole(state: EditorState, message: ConsoleMessage) {
