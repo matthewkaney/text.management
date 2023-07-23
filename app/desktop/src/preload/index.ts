@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 import { ToMainChannels, ToRendererChannels, Handler } from "../ipc";
 
-import { TerminalMessage, DocumentUpdate } from "@core/api";
+import { DocumentUpdate } from "@core/api";
 
 function send<K extends keyof ToMainChannels>(
   channel: K,
@@ -64,7 +64,7 @@ const ElectronAPI = {
 
   onShowAbout: listen("showAbout"),
 
-  evaluate: (code: string) => {
+  evaluate: ({ code }: { code: string }) => {
     send("evaluation", code);
   },
 

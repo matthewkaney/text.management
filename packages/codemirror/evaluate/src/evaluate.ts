@@ -1,24 +1,31 @@
-import { EditorState, StateEffect } from "@codemirror/state";
+import { EditorState, Facet, StateEffect } from "@codemirror/state";
 
-export const evalEffect = StateEffect.define<{ from: number; to: number }>();
-export const commandEffect = StateEffect.define<{
-  method: string;
-  arg?: any;
-}>();
+export type Evaluation =
+  | { from: number; to: number; code: string }
+  | { from: number; to: number }
+  | { code: string };
+export const evalEffect = StateEffect.define<Evaluation>();
 
-export type evalHandler = (code: string) => void;
+export type EvaluationHandler = (
+  evaluation: Evaluation & { code: string }
+) => void;
 
-export function evalAction(action: evalHandler) {
-  return EditorState.transactionExtender.of((tr) => {
+export const evalActions = Facet.define<EvaluationHandler>({
+  enables: EditorState.transactionExtender.of((tr) => {
     for (let effect of tr.effects) {
       if (effect.is(evalEffect)) {
-        let { from, to } = effect.value;
-        action(tr.newDoc.sliceString(from, to));
-      } else if (effect.is(commandEffect)) {
-        action(effect.value.method);
+        for (let action of tr.startState.facet(evalActions)) {
+          if (!("code" in effect.value)) {
+            let { from, to } = effect.value;
+            let code = tr.newDoc.sliceString(from, to);
+            action({ from, to, code });
+          } else {
+            action(effect.value);
+          }
+        }
       }
     }
 
     return null;
-  });
-}
+  }),
+});
