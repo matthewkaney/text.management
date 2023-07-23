@@ -14,6 +14,10 @@ export class TabBar {
   constructor(private parent: LayoutView) {
     this.dom = document.createElement("div");
     this.dom.classList.add("tab-region");
+
+    this.dom.addEventListener("keydown", (event) => {
+      console.log(event.code);
+    });
   }
 
   update(tr: LayoutTransaction) {
@@ -55,6 +59,7 @@ class TabButton {
 
     this.dom = document.createElement("div");
     this.dom.classList.add("tab");
+    this.dom.tabIndex = 0;
     this.dom.addEventListener("click", () => {
       this.parent.dispatch({ current: this.state.id });
     });
