@@ -26,11 +26,15 @@ jobs:
         with:
           script: |
             try {
-              const response = await github.rest.repos.listReleases(
+              const { data } = await github.rest.repos.listReleases(
                 { owner: "mindofmatthew", repo: "text.management" }
               );
 
-              console.log(JSON.stringify(response, null, 2));
+              for (let release of data) {
+                if (release.draft && release.tag_name === process.env.version) {
+                  return true;
+                }
+              }
 
               return false;
             } catch (e) {
