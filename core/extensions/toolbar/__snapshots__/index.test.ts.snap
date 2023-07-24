@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Toolbar Menu Snapshot test 1`] = `
+<div
+  class="cm-menu"
+  style="position: relative;"
+>
+  <button
+    class="cm-menu-trigger"
+    style="user-select: none;"
+    tabindex="0"
+  />
+  <div
+    class="cm-menu-item-list"
+  >
+    <div
+      class="cm-menu-item-group"
+    />
+  </div>
+</div>
+`;

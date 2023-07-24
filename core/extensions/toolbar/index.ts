@@ -52,7 +52,7 @@ interface MenuItem {
   action: () => void;
 }
 
-class ToolbarMenu {
+export class ToolbarMenu {
   readonly dom: HTMLElement;
 
   private trigger: HTMLElement;
