@@ -1,12 +1,5 @@
 import { initializeApp } from "firebase/app";
-import {
-  getDatabase,
-  ref,
-  push,
-  get,
-  set,
-  DatabaseReference,
-} from "firebase/database";
+import { getDatabase, ref } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCCI6aaQue3ouM3xwhpnZN13NV1FVHOTr8",
@@ -22,35 +15,17 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 const db = getDatabase();
-const sessionListRef = ref(db, "sessions");
 
-export interface Session {
-  id: string;
-  ref: DatabaseReference;
+export function getSession(id: string) {
+  return ref(db, `sessions/${id}`);
 }
 
-export async function getSession(id: string): Promise<Session> {
-  let session: DatabaseReference;
-
-  let longID = await get(ref(db, `sessionIds/${id}`));
-
-  if (longID.exists()) {
-    session = ref(db, `sessions/${longID.val()}`);
-  } else {
-    session = push(sessionListRef);
-  }
-
-  return { id, ref: session };
-}
-
-export async function createSession(initial = "") {
-  let session: DatabaseReference;
-  session = push(sessionListRef, { initial });
-
+export function createSession() {
   let id = `${randomChars(4)}-${randomChars(4)}`;
-  await set(ref(db, `sessionIds/${id}`), session.key);
 
-  return { id, ref: session };
+  // TODO: Check that the generated ID isn't already used...
+
+  return ref(db, `sessions/${id}`);
 }
 
 function randomChars(length: number) {

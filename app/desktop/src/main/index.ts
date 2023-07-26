@@ -221,12 +221,20 @@ function showAbout(window?: BrowserWindow) {
   }
 }
 
+function joinRemote(window?: BrowserWindow) {
+  if (window) {
+    let [send] = wrapIPC(window.webContents);
+    send("joinRemote", { session: null });
+  }
+}
+
 let menuTemplate = getTemplate({
   newFile,
   openFile,
   saveFile,
   saveAsFile,
   showAbout,
+  joinRemote,
 });
 let mainMenu = Menu.buildFromTemplate(menuTemplate);
 

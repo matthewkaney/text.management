@@ -1,6 +1,6 @@
 import { ElectronAPI } from "../preload";
 
-import { Text } from "@codemirror/state";
+import { EditorState, Text, StateEffect } from "@codemirror/state";
 import { indentWithTab } from "@codemirror/commands";
 import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
@@ -8,7 +8,7 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { LayoutView } from "@core/extensions/layout";
+import { applyTransaction, LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 // import { peer } from "@core/extensions/peer";
 import { toolbar } from "@core/extensions/toolbar";
@@ -17,6 +17,9 @@ import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 import { ConsoleMessage } from "packages/codemirror/console/src";
+
+import { set, child, onChildAdded, query } from "firebase/database";
+import { getSession, createSession } from "@core/extensions/firebase/session";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -87,7 +90,6 @@ export class Editor {
     });
 
     api.onClose(({ id }) => {
-      console.log("Close ", id);
       layout.dispatch({ changes: [id] });
     });
 
@@ -98,6 +100,51 @@ export class Editor {
             view: new AboutTabView(layout, appVersion),
           },
         ],
+      });
+    });
+
+    api.onJoinRemote(async ({ session }) => {
+      let sessionRef =
+        typeof session === "string" ? getSession(session) : createSession();
+
+      let documents: {
+        [id: string]: { start: { text: string; version: number } };
+      } = {};
+
+      for (let tabID in layout.state.tabs) {
+        let { contents } = layout.state.tabs[tabID];
+        if (contents instanceof EditorState) {
+          let text = contents.doc.toString();
+          let version = 0;
+          documents[tabID] = { start: { text, version } };
+        }
+      }
+
+      set(sessionRef, { documents });
+
+      onChildAdded(child(sessionRef, "documents"), (doc) => {
+        let id = doc.key;
+        if (id === null) throw Error("Firebase somehow added a null child");
+
+        if (id in layout.state.tabs) {
+          let tabState = layout.state.tabs[id];
+
+          if (!(tabState instanceof EditorState))
+            throw Error("Tried to sync a non-editor tab");
+
+          layout.dispatch({
+            effects: [
+              applyTransaction.of({
+                id,
+                transaction: tabState.update({
+                  effects: StateEffect.appendConfig.of([]),
+                }),
+              }),
+            ],
+          });
+        } else {
+          // TODO: Open new tab...
+        }
       });
     });
   }

@@ -1,8 +1,8 @@
-import { EditorState, EditorStateConfig } from "@codemirror/state";
+import { EditorState, EditorStateConfig, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 import { LayoutView, TabView } from "../view";
-import { LayoutTransaction, TabState, swapContents } from "../state";
+import { LayoutTransaction, TabState, applyTransaction } from "../state";
 import {
   getFileName,
   getFileID,
@@ -15,8 +15,8 @@ export class EditorTabState extends TabState<EditorState> {
     return new EditorTabState(EditorState.create(config), id);
   }
 
-  swapContents(contents: EditorState) {
-    return new EditorTabState(contents, this.id);
+  applyTransaction(transaction: Transaction) {
+    return new EditorTabState(transaction.state, this.id);
   }
 
   get name() {
@@ -45,17 +45,22 @@ export class EditorTabView extends TabView<EditorState> {
     this.editor = new EditorView({
       state: this.state.contents,
       parent: this.dom,
-      dispatch: (tr) => {
+      dispatch: (transaction) => {
         this.layout.dispatch({
-          effects: [swapContents.of({ id: this.state.id, contents: tr.state })],
+          effects: [applyTransaction.of({ id: this.state.id, transaction })],
         });
-        this.editor.update([tr]);
       },
     });
   }
 
   update(tr: LayoutTransaction) {
     super.update(tr);
+
+    for (let effect of tr.effects) {
+      if (effect.is(applyTransaction)) {
+        this.editor.update([effect.value.transaction]);
+      }
+    }
 
     if (
       tr.startState.current !== this.state.id &&

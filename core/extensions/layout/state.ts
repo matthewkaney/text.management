@@ -59,10 +59,10 @@ export class LayoutState {
     }
 
     for (let effect of tr.effects) {
-      if (effect.is(swapContents)) {
-        let { id, contents } = effect.value;
+      if (effect.is(applyTransaction)) {
+        let { id, transaction } = effect.value;
         if (id in tabs) {
-          tabs[id] = tabs[id].swapContents(contents);
+          tabs[id] = tabs[id].applyTransaction(transaction);
         }
       }
     }
@@ -146,9 +146,9 @@ export class LayoutTransaction {
   }
 }
 
-export const swapContents = StateEffect.define<{
+export const applyTransaction = StateEffect.define<{
   id: string;
-  contents: any;
+  transaction: any;
 }>();
 
 export abstract class TabState<T> {
@@ -157,5 +157,5 @@ export abstract class TabState<T> {
 
   protected constructor(readonly contents: T, readonly id = getID()) {}
 
-  abstract swapContents(contents: T): TabState<T>;
+  abstract applyTransaction(tr: any): TabState<T>;
 }

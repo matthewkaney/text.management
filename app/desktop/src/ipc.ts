@@ -22,4 +22,5 @@ export interface ToRendererChannels {
   console: TerminalMessage;
   tidalVersion: string;
   showAbout: string;
+  joinRemote: { session: string | null };
 }

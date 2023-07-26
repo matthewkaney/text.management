@@ -9,6 +9,7 @@ interface MenuActions {
   saveFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
   showAbout: (window?: BrowserWindow) => void;
+  joinRemote: (window?: BrowserWindow) => void;
 }
 
 export function getTemplate(
@@ -55,6 +56,11 @@ export function getTemplate(
           label: "Save As...",
           accelerator: "CommandOrControl+Shift+S",
           click: (_, window) => actions.saveAsFile(window),
+        },
+        { type: "separator" },
+        {
+          label: "Create Remote Session",
+          click: (_, window) => actions.joinRemote(window),
         },
         { type: "separator" },
         { role: isMac ? "close" : "quit" },

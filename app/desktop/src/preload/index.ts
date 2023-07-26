@@ -64,6 +64,8 @@ const ElectronAPI = {
 
   onShowAbout: listen("showAbout"),
 
+  onJoinRemote: listen("joinRemote"),
+
   evaluate: (code: string) => {
     send("evaluation", code);
   },
