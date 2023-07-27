@@ -46,6 +46,7 @@
   background-color: var(--col-bg-shadow-soft);
   clip-path: inset(var(--in-top,0)var(--in-right,0)var(--in-bottom,0)var(--in-left,0));
   white-space: nowrap;
+  user-select: none;
 }
 
 .cm-menu-trigger {

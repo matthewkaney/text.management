@@ -4,9 +4,10 @@ import { ElectronAPI } from "@core/api";
 import "./style.css";
 
 export function toolbar(api: typeof ElectronAPI, version?: string) {
-  function toolbarConstructor(view: EditorView): Panel {
-    let consoleNode = document.createElement("div");
-    consoleNode.classList.add("cm-toolbar");
+  function toolbarConstructor(): Panel {
+    let toolbarNode = document.createElement("div");
+    toolbarNode.classList.add("cm-toolbar");
+    toolbarNode.setAttribute("role", "menubar");
 
     // Status indicators for future use: ◯◉✕
     let tidalInfo = new ToolbarMenu(`Tidal (${version ?? "Disconnected"})`, [
@@ -18,28 +19,28 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
       },
       { label: "Boot Files", action: () => {} },
     ]);
-    consoleNode.appendChild(tidalInfo.dom);
+    toolbarNode.appendChild(tidalInfo.dom);
 
     let offTidalVersion = api.onTidalVersion((version) => {
       tidalInfo.label = `Tidal (${version})`;
     });
 
     // Tempo info
-    let tempoInfo = new ToolbarMenu(`◯ 0`, []);
-    consoleNode.appendChild(tempoInfo.dom);
+    // let tempoInfo = new ToolbarMenu(`◯ 0`, []);
+    // consoleNode.appendChild(tempoInfo.dom);
 
-    let offTidalNow = api.onTidalNow((cycle) => {
-      cycle = Math.max(0, cycle);
-      let whole = Math.floor(cycle);
-      let part = "◐◓◑◒"[Math.floor(cycle * 4) % 4];
-      tempoInfo.label = `${part} ${whole}`;
-    });
+    // let offTidalNow = api.onTidalNow((cycle) => {
+    //   cycle = Math.max(0, cycle);
+    //   let whole = Math.floor(cycle);
+    //   let part = "◐◓◑◒"[Math.floor(cycle * 4) % 4];
+    //   tempoInfo.label = `${part} ${whole}`;
+    // });
 
     return {
-      dom: consoleNode,
+      dom: toolbarNode,
       destroy() {
         offTidalVersion();
-        offTidalNow();
+        // offTidalNow();
       },
     };
   }
@@ -73,13 +74,15 @@ export class ToolbarMenu {
   constructor(label: string, items: MenuItem[]) {
     this.dom = document.createElement("div");
     this.dom.classList.add("cm-menu");
-    this.dom.style.position = "relative";
 
     this.trigger = this.dom.appendChild(document.createElement("button"));
     this.trigger.classList.add("cm-menu-trigger");
+    this.trigger.setAttribute("role", "menuitem");
+    this.trigger.ariaHasPopup = "true";
+    this.trigger.ariaExpanded = "false";
+    this.trigger.id = label.replace(/\W+/g, "-");
     this._label = label;
     this.trigger.innerText = this._label;
-    this.trigger.style.userSelect = "none";
     this.trigger.tabIndex = 0;
 
     this.trigger.addEventListener("click", () => {
@@ -121,6 +124,8 @@ export class ToolbarMenu {
 
     this.menu = this.dom.appendChild(document.createElement("div"));
     this.menu.classList.add("cm-menu-item-list");
+    this.menu.setAttribute("role", "menu");
+    this.menu.setAttribute("aria-labelledby", this.trigger.id);
 
     this.menuItems = [];
 
@@ -151,9 +156,12 @@ export class ToolbarMenu {
 
     this.dom.classList.toggle("cm-active-menu", value);
 
+    this.trigger.ariaExpanded = value.toString();
+
     if (value) {
       this.menu.style.bottom =
         this.trigger.getBoundingClientRect().height + "px";
+      this.focusedChild = 0;
     }
 
     this._active = value;
