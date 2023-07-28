@@ -27,7 +27,7 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
 
     // Tempo info
     // let tempoInfo = new ToolbarMenu(`◯ 0`, []);
-    // consoleNode.appendChild(tempoInfo.dom);
+    // toolbarNode.appendChild(tempoInfo.dom);
 
     // let offTidalNow = api.onTidalNow((cycle) => {
     //   cycle = Math.max(0, cycle);
@@ -74,6 +74,7 @@ export class ToolbarMenu {
   constructor(label: string, items: MenuItem[]) {
     this.dom = document.createElement("div");
     this.dom.classList.add("cm-menu");
+    this.dom.setAttribute("role", "none");
 
     this.trigger = this.dom.appendChild(document.createElement("button"));
     this.trigger.classList.add("cm-menu-trigger");
@@ -131,11 +132,13 @@ export class ToolbarMenu {
 
     let itemGroup = this.menu.appendChild(document.createElement("div"));
     itemGroup.classList.add("cm-menu-item-group");
+    itemGroup.setAttribute("role", "none");
 
     for (let { label, action } of items) {
       let itemButton = itemGroup.appendChild(document.createElement("button"));
       itemButton.classList.add("cm-menu-item");
       itemButton.innerText = label;
+      itemButton.setAttribute("role", "menuitem");
       itemButton.addEventListener("click", () => {
         this.active = false;
         action();
