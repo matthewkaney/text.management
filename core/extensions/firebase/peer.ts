@@ -10,16 +10,15 @@ import {
 } from "@codemirror/collab";
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
 import { DocumentUpdate } from "@core/api";
+import { DatabaseReference } from "firebase/database";
 
 interface Authority {
   pushUpdate: (update: DocumentUpdate) => Promise<boolean>;
 }
 
-export function peer(startVersion: number) {
-  let plugin = ViewPlugin.fromClass(
-    class {
-      private upstream: Authority | null = null;
-
+export function peer(docRef: DatabaseReference) {
+  let plugin = ViewPlugin.define((view) => {
+    return {
       constructor(private view: EditorView) {
         this.view = view;
 

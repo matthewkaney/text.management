@@ -10,7 +10,7 @@ import { tidal } from "@management/lang-tidal/editor";
 
 import { applyTransaction, LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
-// import { peer } from "@core/extensions/peer";
+import { peer } from "@core/extensions/firebase/peer";
 import { toolbar } from "@core/extensions/toolbar";
 
 import { fileSync } from "./file";
@@ -78,7 +78,6 @@ export class Editor {
                   ),
                   electronConsole(api, tidalConsole),
                   toolbar(api, tidalVersion),
-                  // peer(version),
                 ],
               }),
             },
@@ -127,7 +126,7 @@ export class Editor {
         if (id === null) throw Error("Firebase somehow added a null child");
 
         if (id in layout.state.tabs) {
-          let tabState = layout.state.tabs[id];
+          let tabState = layout.state.tabs[id].contents;
 
           if (!(tabState instanceof EditorState))
             throw Error("Tried to sync a non-editor tab");
@@ -137,7 +136,7 @@ export class Editor {
               applyTransaction.of({
                 id,
                 transaction: tabState.update({
-                  effects: StateEffect.appendConfig.of([]),
+                  effects: StateEffect.appendConfig.of([peer(doc.ref)]),
                 }),
               }),
             ],

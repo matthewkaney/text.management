@@ -1,7 +1,7 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
 import { get, DatabaseReference } from "firebase/database";
 
-import { peer } from "@core/extensions/peer";
+import { peer } from "./peer";
 // import { console as firebaseConsole } from "@core/extensions/console";
 import { firebaseConsole } from "./console";
 
@@ -23,7 +23,7 @@ export async function stateFromDatabase(
     doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
     startVersion += 1;
   }
-  dbExtensions.push(peer(getAPI(reference), startVersion));
+  dbExtensions.push(peer(reference));
 
   return EditorState.create({
     doc,
