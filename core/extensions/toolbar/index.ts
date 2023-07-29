@@ -132,7 +132,6 @@ export class ToolbarMenu {
 
     let itemGroup = this.menu.appendChild(document.createElement("div"));
     itemGroup.classList.add("cm-menu-item-group");
-    itemGroup.setAttribute("role", "none");
 
     for (let { label, action } of items) {
       let itemButton = itemGroup.appendChild(document.createElement("button"));
