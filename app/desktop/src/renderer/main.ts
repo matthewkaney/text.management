@@ -106,6 +106,8 @@ export class Editor {
       let sessionRef =
         typeof session === "string" ? getSession(session) : createSession();
 
+      console.log(`Joined session: ${sessionRef.key}`);
+
       let documents: {
         [id: string]: { start: { text: string; version: number } };
       } = {};
@@ -136,7 +138,7 @@ export class Editor {
               applyTransaction.of({
                 id,
                 transaction: tabState.update({
-                  effects: StateEffect.appendConfig.of([peer(doc.ref)]),
+                  effects: StateEffect.appendConfig.of([peer(doc)]),
                 }),
               }),
             ],
