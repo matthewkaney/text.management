@@ -9,6 +9,8 @@ library.add(faXmark);
 export class TabBar {
   readonly dom: HTMLDivElement;
 
+  private focused: string | null = null;
+
   private children: Map<string, TabButton> = new Map();
 
   constructor(private parent: LayoutView) {
@@ -16,7 +18,46 @@ export class TabBar {
     this.dom.classList.add("tab-region");
     this.dom.setAttribute("role", "tablist");
 
+    this.dom.addEventListener("focusin", () => {
+      console.log("focusin");
+      this.focused = this.parent.state.current;
+    });
+
+    this.dom.addEventListener("focusout", () => {
+      console.log("focusout");
+      this.focused = null;
+    });
+
     this.dom.addEventListener("keydown", (event) => {
+      if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
+        let order = this.parent.state.order;
+
+        if (this.focused === null)
+          throw Error(
+            "Tab bar is focused but doesn't know what tab is focused"
+          );
+
+        let focusedIndex = order.indexOf(this.focused);
+
+        if (focusedIndex === -1)
+          throw Error("Focused tab isn't contained within state");
+
+        if (event.code === "ArrowRight") {
+          focusedIndex = (focusedIndex + 1) % order.length;
+        } else if (event.code === "ArrowLeft") {
+          focusedIndex = (focusedIndex + order.length - 1) % order.length;
+        }
+
+        let focusedButton = this.children.get(order[focusedIndex]);
+
+        if (focusedButton === undefined)
+          throw Error("Tried to change focus to a non-existent tab");
+
+        focusedButton.dom.focus();
+        this.focused = this.focused = order[focusedIndex];
+      } else if (event.code === "Enter" || event.code === "Space") {
+      }
+
       console.log(event.code);
     });
   }
@@ -62,7 +103,6 @@ class TabButton {
     this.dom.classList.add("tab");
     this.dom.setAttribute("role", "tab");
     this.dom.setAttribute("aria-controls", this.state.id);
-    this.dom.tabIndex = 0;
     this.dom.addEventListener("click", () => {
       this.parent.dispatch({ current: this.state.id });
     });
@@ -90,6 +130,7 @@ class TabButton {
     let selected = tr.state.current === this.state.id;
     this.dom.classList.toggle("current", selected);
     this.dom.setAttribute("aria-selected", selected.toString());
+    this.dom.tabIndex = selected ? 0 : -1;
     this.label.innerText = this.state.name;
   }
 }

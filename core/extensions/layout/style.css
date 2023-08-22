@@ -36,6 +36,7 @@
   clip-path: inset(
     var(--in-top, 0) var(--in-right, 0) var(--in-bottom, 1px) var(--in-left, 0)
   );
+  outline: none;
 }
 
 .tab.current, .tab:hover:not(:has(.close-button:hover)) {
@@ -53,6 +54,16 @@
 
 .tab:not(:last-child) {
   --in-right: 1px;
+}
+
+.tab:focus {
+  box-shadow: inset 0 0 0 4px orange;
+}
+
+.tab.current:focus {
+  padding-bottom: 1px;
+  margin-bottom: -2px;
+  --in-bottom: 0;
 }
 
 .tab .close-button {
