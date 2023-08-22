@@ -14,6 +14,7 @@ export class TabBar {
   constructor(private parent: LayoutView) {
     this.dom = document.createElement("div");
     this.dom.classList.add("tab-region");
+    this.dom.setAttribute("role", "tablist");
 
     this.dom.addEventListener("keydown", (event) => {
       console.log(event.code);
@@ -59,6 +60,8 @@ class TabButton {
 
     this.dom = document.createElement("div");
     this.dom.classList.add("tab");
+    this.dom.setAttribute("role", "tab");
+    this.dom.setAttribute("aria-controls", this.state.id);
     this.dom.tabIndex = 0;
     this.dom.addEventListener("click", () => {
       this.parent.dispatch({ current: this.state.id });
@@ -84,7 +87,9 @@ class TabButton {
   update(tr: LayoutTransaction) {
     this.state = tr.state.tabs[this.state.id];
 
-    this.dom.classList.toggle("current", tr.state.current === this.state.id);
+    let selected = tr.state.current === this.state.id;
+    this.dom.classList.toggle("current", selected);
+    this.dom.setAttribute("aria-selected", selected.toString());
     this.label.innerText = this.state.name;
   }
 }

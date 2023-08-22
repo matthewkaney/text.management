@@ -101,6 +101,7 @@ export abstract class TabView<T> {
 
   constructor(readonly layout: LayoutView, public state: TabState<T>) {
     this.dom.classList.add("tab-content");
+    this.dom.setAttribute("role", "tabpanel");
   }
 
   update(tr: LayoutTransaction) {
