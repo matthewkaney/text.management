@@ -57,7 +57,7 @@ export class EditorTabView extends TabView<EditorState> {
     super.update(tr);
 
     for (let effect of tr.effects) {
-      if (effect.is(applyTransaction)) {
+      if (effect.is(applyTransaction) && effect.value.id === this.state.id) {
         this.editor.update([effect.value.transaction]);
       }
     }
