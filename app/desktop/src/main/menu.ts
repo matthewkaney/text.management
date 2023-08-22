@@ -9,6 +9,7 @@ interface MenuActions {
   saveFile: (window?: BrowserWindow) => void;
   saveAsFile: (window?: BrowserWindow) => void;
   showAbout: (window?: BrowserWindow) => void;
+  createRemote: (window?: BrowserWindow) => void;
   joinRemote: (window?: BrowserWindow) => void;
 }
 
@@ -60,6 +61,10 @@ export function getTemplate(
         { type: "separator" },
         {
           label: "Create Remote Session",
+          click: (_, window) => actions.createRemote(window),
+        },
+        {
+          label: "Join Remote Session",
           click: (_, window) => actions.joinRemote(window),
         },
         { type: "separator" },
