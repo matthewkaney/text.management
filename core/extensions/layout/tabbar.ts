@@ -19,12 +19,10 @@ export class TabBar {
     this.dom.setAttribute("role", "tablist");
 
     this.dom.addEventListener("focusin", () => {
-      console.log("focusin");
       this.focused = this.parent.state.current;
     });
 
     this.dom.addEventListener("focusout", () => {
-      console.log("focusout");
       this.focused = null;
     });
 
@@ -48,17 +46,17 @@ export class TabBar {
           focusedIndex = (focusedIndex + order.length - 1) % order.length;
         }
 
-        let focusedButton = this.children.get(order[focusedIndex]);
+        let focused = order[focusedIndex];
+        let focusedButton = this.children.get(focused);
 
         if (focusedButton === undefined)
           throw Error("Tried to change focus to a non-existent tab");
 
-        focusedButton.dom.focus();
-        this.focused = this.focused = order[focusedIndex];
-      } else if (event.code === "Enter" || event.code === "Space") {
-      }
+        this.parent.dispatch({ current: focused });
 
-      console.log(event.code);
+        focusedButton.dom.focus();
+        this.focused = order[focusedIndex];
+      }
     });
   }
 
