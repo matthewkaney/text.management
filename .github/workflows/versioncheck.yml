@@ -26,10 +26,17 @@ jobs:
         with:
           script: |
             try {
-              const { data } = await github.rest.repos.getReleaseByTag(
-                { owner: "mindofmatthew", repo: "text.management", tag: process.env.version }
+              const { data } = await github.rest.repos.listReleases(
+                { owner: "mindofmatthew", repo: "text.management" }
               );
-              return data.draft;
+
+              for (let release of data) {
+                if (release.draft && release.tag_name === process.env.version) {
+                  return true;
+                }
+              }
+
+              return false;
             } catch (e) {
               if (e.status === 404) {
                 return false;
