@@ -93,6 +93,7 @@ class TabButton {
   private state: TabState<any>;
 
   private label: HTMLSpanElement;
+  private closeButton: HTMLAnchorElement;
 
   constructor(private parent: LayoutView, private view: TabView<any>) {
     this.state = this.view.state;
@@ -109,12 +110,13 @@ class TabButton {
     this.label.innerText = this.state.name;
     this.dom.appendChild(this.label);
 
-    let closeButton = this.dom.appendChild(document.createElement("a"));
-    closeButton.classList.add("close-button");
+    this.closeButton = this.dom.appendChild(document.createElement("a"));
+    this.closeButton.classList.add("close-button");
+    this.closeButton.setAttribute("aria-label", "Close");
     Array.from(icon({ prefix: "fas", iconName: "xmark" }).node).map((n) => {
-      closeButton.appendChild(n);
+      this.closeButton.appendChild(n);
     });
-    closeButton.addEventListener("click", (event) => {
+    this.closeButton.addEventListener("click", (event) => {
       if (this.view.beforeClose()) {
         this.parent.dispatch({ changes: [this.state.id] });
       }
@@ -129,6 +131,7 @@ class TabButton {
     this.dom.classList.toggle("current", selected);
     this.dom.setAttribute("aria-selected", selected.toString());
     this.dom.tabIndex = selected ? 0 : -1;
+    this.closeButton.tabIndex = selected ? 0 : -1;
     this.label.innerText = this.state.name;
   }
 }
