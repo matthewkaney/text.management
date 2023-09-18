@@ -16,8 +16,6 @@ import { oneDark } from "./theme";
 
 import { extensions as hydra } from "../../../packages/languages/hydra/dist/editor";
 
-console.log(hydra);
-
 const emptyLine = Decoration.line({
   attributes: { class: "cm-emptyLine" },
 });
