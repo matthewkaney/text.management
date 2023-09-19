@@ -21,6 +21,8 @@ export function firebaseConsole(data: DataSnapshot) {
   let lastMessageKey: string | undefined;
   for (let messageKey in consoleData) {
     lastMessageKey = messageKey;
+    if (consoleData[messageKey].level === "log")
+      consoleData[messageKey].level = "info";
     initialConsole.push(consoleData[messageKey]);
   }
 

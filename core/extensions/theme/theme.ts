@@ -75,6 +75,10 @@ export const layoutTheme = EditorView.theme({
     maxHeight: `${20 * size}px`,
   },
 
+  ".cm-console:last-child": {
+    marginBottom: `${size}px`,
+  },
+
   ".cm-console-message": {
     padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
     margin: "0",
