@@ -26,6 +26,6 @@ export function console(api: typeof ElectronAPI, initial: ConsoleMessage[]) {
     consoleState.init(() => [...initial]),
     consoleListener,
     rootConsole(),
-    keymap.of([{ key: "Escape", run: clearConsole }]),
+    keymap.of([{ key: "Mod-`", run: clearConsole }]),
   ];
 }

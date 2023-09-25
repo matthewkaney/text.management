@@ -5,7 +5,8 @@ import { ConsoleMessage, consoleState, consoleMessageEffect } from "./state";
 function consolePanelConstructor(view: EditorView): Panel {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
-  consoleNode.setAttribute("role", "tab");
+  consoleNode.setAttribute("role", "log");
+  consoleNode.tabIndex = 0;
 
   for (let message of view.state.field(consoleState, false) || []) {
     consoleNode.appendChild(messageConstructor(message));
