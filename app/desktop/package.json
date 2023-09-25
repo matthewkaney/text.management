@@ -16,6 +16,7 @@
   "scripts": {
     "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
     "build": "parcel build --target main --target preload --target renderer",
+    "start": "electron .",
     "pack": "electron-builder --config build.config.js",
     "dist": "electron-builder",
     "postversion": "git add package.json"
