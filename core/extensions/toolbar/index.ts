@@ -8,6 +8,7 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
     let toolbarNode = document.createElement("div");
     toolbarNode.classList.add("cm-toolbar");
     toolbarNode.setAttribute("role", "menubar");
+    toolbarNode.setAttribute("aria-label", "Editor Controls");
 
     // Status indicators for future use: ◯◉✕
     let tidalInfo = new ToolbarMenu(`Tidal (${version ?? "Disconnected"})`, [
@@ -17,7 +18,7 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
           api.restart();
         },
       },
-      { label: "Boot Files", action: () => {} },
+      // { label: "Boot Files", action: () => {} },
     ]);
     toolbarNode.appendChild(tidalInfo.dom);
 
