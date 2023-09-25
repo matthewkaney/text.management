@@ -9,8 +9,5 @@
     "web": {
       "source": "src/index.html"
     }
-  },
-  "devDependencies": {
-    "firebase-tools": "^11.30.0"
   }
 }
