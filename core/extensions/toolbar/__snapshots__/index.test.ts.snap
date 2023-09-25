@@ -3,15 +3,18 @@
 exports[`Toolbar Menu Snapshot test 1`] = `
 <div
   class="cm-menu"
-  style="position: relative;"
+  role="none"
 >
   <button
     class="cm-menu-trigger"
-    style="user-select: none;"
+    id="Test"
+    role="menuitem"
     tabindex="0"
   />
   <div
+    aria-labelledby="Test"
     class="cm-menu-item-list"
+    role="menu"
   >
     <div
       class="cm-menu-item-group"
