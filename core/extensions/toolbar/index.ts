@@ -18,7 +18,12 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
           api.restart();
         },
       },
-      // { label: "Boot Files", action: () => {} },
+      {
+        label: "Tidal Settings",
+        action: () => {
+          api.openTidalSettings();
+        },
+      },
     ]);
     toolbarNode.appendChild(tidalInfo.dom);
 

@@ -7,46 +7,68 @@ import { once } from "events";
 import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
+import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
+import defaultSettings from "./settings.json";
+
 //@ts-ignore
 import preBoot from "bundle-text:./PreBoot.hs";
 
-interface GHCIOptions {
-  defaultBoot: boolean;
-  customBootfiles: string[];
+interface GHCISettings {
+  environment: "ghci";
+  boot: {
+    useDefaultBootfile: boolean;
+    bootFiles: string[];
+    disableEditorIntegrations: boolean;
+  };
 }
-
-const defaultOpts: GHCIOptions = {
-  defaultBoot: true,
-  customBootfiles: [],
-};
 
 interface GHCIEvents {
   message: TerminalMessage;
   now: number;
+  openSettings: string;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
+  private _settings: Promise<GHCISettings>;
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: TerminalMessage[] = [];
 
-  constructor(private options: GHCIOptions = defaultOpts) {
+  constructor(private extensionFolder: string) {
     super();
 
+    this._settings = this.initSettings();
     this.socket = this.initSocket();
-    this.process = this.initProcess(options);
+    this.process = this.initProcess();
 
     this.onListener["message"] = (listener) => {
       for (let message of this.history) {
         listener(message);
       }
     };
+  }
+
+  private async initSettings() {
+    try {
+      const settings = JSON.parse(
+        await readFile(this.settingsPath, "utf-8")
+      ) as GHCISettings;
+
+      // TODO: Update/validate settings, etc
+      return settings;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw err;
+      }
+
+      return defaultSettings as GHCISettings;
+    }
   }
 
   private initSocket() {
@@ -68,7 +90,10 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
-  private async initProcess({ defaultBoot, customBootfiles }: GHCIOptions) {
+  private async initProcess() {
+    const {
+      boot: { useDefaultBootfile, bootFiles },
+    } = await this.settings;
     const port = (await this.socket).address().port.toString();
 
     const child = spawn("ghci", ["-XOverloadedStrings"], {
@@ -83,11 +108,11 @@ export class GHCI extends Engine<GHCIEvents> {
 
     child.stdin.write(preBoot);
 
-    if (defaultBoot) {
+    if (useDefaultBootfile) {
       await this.loadFile(await this.defaultBootfile(), child);
     }
 
-    for (let path of customBootfiles) {
+    for (let path of bootFiles) {
       await this.loadFile(path, child);
     }
 
@@ -213,6 +238,14 @@ export class GHCI extends Engine<GHCIEvents> {
     return this.version;
   }
 
+  get settings() {
+    return this._settings;
+  }
+
+  get settingsPath() {
+    return join(this.extensionFolder, "settings.json");
+  }
+
   async close() {
     let process = await this.process;
 
@@ -234,7 +267,7 @@ export class GHCI extends Engine<GHCIEvents> {
   async restart() {
     await this.close();
 
-    this.process = this.initProcess(this.options);
+    this.process = this.initProcess();
     await this.process;
     this.emit("started", undefined);
   }

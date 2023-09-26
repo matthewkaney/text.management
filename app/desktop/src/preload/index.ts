@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 import { ToMainChannels, ToRendererChannels, Handler } from "../ipc";
 
-import { TerminalMessage, DocumentUpdate } from "@core/api";
+import { DocumentUpdate } from "@core/api";
 
 function send<K extends keyof ToMainChannels>(
   channel: K,
@@ -70,6 +70,10 @@ const ElectronAPI = {
 
   restart: () => {
     send("restart", undefined);
+  },
+
+  openTidalSettings: () => {
+    send("openTidalSettings", undefined);
   },
 
   onConsoleMessage: listen("console"),

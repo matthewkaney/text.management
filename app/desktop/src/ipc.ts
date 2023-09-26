@@ -10,6 +10,7 @@ export interface ToMainChannels {
   requestClose: { id: string };
   evaluation: string;
   restart: undefined;
+  openTidalSettings: undefined;
 }
 
 export interface ToRendererChannels {

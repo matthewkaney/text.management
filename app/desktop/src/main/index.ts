@@ -14,6 +14,8 @@ import { getTemplate } from "./menu";
 
 const filesystem = new Filesystem();
 
+console.log(app.getPath("userData"));
+
 const createWindow = () => {
   const win = new BrowserWindow({
     show: false,
@@ -24,9 +26,8 @@ const createWindow = () => {
     },
   });
 
-  const tidal = new GHCI();
+  const tidal = new GHCI(resolve(app.getPath("userData"), "org.tidalcycles"));
 
-  // TODO: IMPLEMENT
   let listeners: (() => void)[] = [];
   let docsListeners: { [id: string]: typeof listeners } = {};
 
@@ -129,6 +130,15 @@ const createWindow = () => {
     listeners.push(
       listen("restart", () => {
         tidal.restart();
+      })
+    );
+
+    listeners.push(
+      listen("openTidalSettings", async () => {
+        let settingsDoc = filesystem.loadDoc(
+          tidal.settingsPath,
+          JSON.stringify(await tidal.settings, null, 2)
+        );
       })
     );
 
