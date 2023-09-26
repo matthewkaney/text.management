@@ -20,6 +20,7 @@ import { fileSync } from "../../desktop/src/renderer/file";
 let empty = () => {};
 let emptyHandler = () => empty;
 
+// @ts-ignore
 const emptyApi: typeof ElectronAPI = {
   setCurrent: empty,
   onOpen: emptyHandler,
