@@ -13,19 +13,10 @@ import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
-import defaultSettings from "./settings.json";
+import { TidalSettings, defaultSettings } from "./settings";
 
 //@ts-ignore
 import preBoot from "bundle-text:./PreBoot.hs";
-
-interface GHCISettings {
-  environment: "ghci";
-  boot: {
-    useDefaultBootfile: boolean;
-    bootFiles: string[];
-    disableEditorIntegrations: boolean;
-  };
-}
 
 interface GHCIEvents {
   message: TerminalMessage;
@@ -34,7 +25,7 @@ interface GHCIEvents {
 }
 
 export class GHCI extends Engine<GHCIEvents> {
-  private _settings: Promise<GHCISettings>;
+  private _settings: Promise<TidalSettings>;
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
@@ -56,9 +47,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private async loadSettings() {
     try {
-      const settings = JSON.parse(
-        await readFile(this.settingsPath, "utf-8")
-      ) as GHCISettings;
+      const settings = JSON.parse(await readFile(this.settingsPath, "utf-8"));
 
       // TODO: Update/validate settings, etc
       return settings;
@@ -67,7 +56,7 @@ export class GHCI extends Engine<GHCIEvents> {
         throw err;
       }
 
-      return defaultSettings as GHCISettings;
+      return defaultSettings;
     }
   }
 
@@ -92,7 +81,8 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private async initProcess() {
     const {
-      boot: { useDefaultBootfile, bootFiles },
+      "boot.useDefaultFile": useDefaultBootfile,
+      "boot.customFiles": bootFiles,
     } = await this.settings;
     const port = (await this.socket).address().port.toString();
 

@@ -1,8 +1,0 @@
-{
-  "environment": "ghci",
-  "boot": {
-    "useDefaultBootfile": true,
-    "bootFiles": [],
-    "disableEditorIntegrations": false
-  }
-}
