@@ -43,7 +43,7 @@ export class GHCI extends Engine<GHCIEvents> {
   constructor(private extensionFolder: string) {
     super();
 
-    this._settings = this.initSettings();
+    this._settings = this.loadSettings();
     this.socket = this.initSocket();
     this.process = this.initProcess();
 
@@ -54,7 +54,7 @@ export class GHCI extends Engine<GHCIEvents> {
     };
   }
 
-  private async initSettings() {
+  private async loadSettings() {
     try {
       const settings = JSON.parse(
         await readFile(this.settingsPath, "utf-8")
@@ -113,7 +113,19 @@ export class GHCI extends Engine<GHCIEvents> {
     }
 
     for (let path of bootFiles) {
-      await this.loadFile(path, child);
+      try {
+        await this.loadFile(path, child);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw err;
+        }
+
+        this.emit("message", {
+          level: "error",
+          text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
+          source: "Tidal",
+        });
+      }
     }
 
     let outBatch: string[] | null = null;
@@ -181,6 +193,17 @@ export class GHCI extends Engine<GHCIEvents> {
       'ghc -e "import Paths_tidal" -e "getDataDir>>=putStr"'
     );
     return join(stdout, "BootTidal.hs");
+  }
+
+  async reloadSettings() {
+    this._settings = this.loadSettings();
+
+    // TODO: Some sort of check that settings have actually changed?
+    this.emit("message", {
+      level: "info",
+      text: "Tidal's settings have changed. Reboot Tidal to apply new settings.",
+      source: "tidal",
+    });
   }
 
   async send(text: string) {

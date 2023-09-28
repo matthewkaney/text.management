@@ -14,8 +14,6 @@ import { getTemplate } from "./menu";
 
 const filesystem = new Filesystem();
 
-console.log(app.getPath("userData"));
-
 const createWindow = () => {
   const win = new BrowserWindow({
     show: false,
@@ -139,6 +137,12 @@ const createWindow = () => {
           tidal.settingsPath,
           JSON.stringify(await tidal.settings, null, 2)
         );
+
+        settingsDoc.on("status", ({ saved }) => {
+          if (saved) {
+            tidal.reloadSettings();
+          }
+        });
       })
     );
 
