@@ -17,6 +17,8 @@ function consolePanelConstructor(view: EditorView): Panel {
   if (!view.state.field(inaccessibleConsole, false)) {
     consoleNode.setAttribute("role", "log");
     consoleNode.tabIndex = 0;
+  } else {
+    consoleNode.setAttribute("aria-hidden", "true");
   }
 
   for (let message of view.state.field(consoleState, false) || []) {
