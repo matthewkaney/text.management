@@ -13,7 +13,7 @@ import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { TidalSettings, defaultSettings } from "./settings";
+import { TidalSettings, normalizeTidalSettings } from "./settings";
 
 //@ts-ignore
 import preBoot from "bundle-text:./PreBoot.hs";
@@ -50,13 +50,13 @@ export class GHCI extends Engine<GHCIEvents> {
       const settings = JSON.parse(await readFile(this.settingsPath, "utf-8"));
 
       // TODO: Update/validate settings, etc
-      return settings;
+      return normalizeTidalSettings(settings);
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
         throw err;
       }
 
-      return defaultSettings;
+      return normalizeTidalSettings({});
     }
   }
 

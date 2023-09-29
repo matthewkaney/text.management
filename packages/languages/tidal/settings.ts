@@ -12,7 +12,7 @@ export const TidalSettingsSchema = {
 
 export type TidalSettings = Required<FromSchema<typeof TidalSettingsSchema>>;
 
-export function normalizeSettings<S extends JSONSchema>(
+function normalizeSettings<S extends JSONSchema>(
   typedSchema: S,
   settings: unknown
 ) {
@@ -20,16 +20,26 @@ export function normalizeSettings<S extends JSONSchema>(
 
   let schema = typedSchema as any;
 
-  for (let [propName, propSchema] of Object.entries(schema.properties)) {
+  for (const [propName, propSchema] of Object.entries(schema.properties)) {
     // This shouldn't be necessary if schema has a specific type
     if (typeof propSchema !== "object" || propSchema === null) break;
 
+    if (typeof settings === "object" && settings && propName in settings) {
+      // TODO: Validate
+
+      completeSettings[propName] = (settings as { [key: string]: unknown })[
+        propName
+      ];
+
+      break;
+    }
+
     if ("const" in propSchema) {
-      defaultSettings[propName] = propSchema.const;
+      completeSettings[propName] = propSchema.const;
     } else if ("default" in propSchema) {
-      defaultSettings[propName] = propSchema.default;
+      completeSettings[propName] = propSchema.default;
     } else if ("type" in propSchema && propSchema.type === "array") {
-      defaultSettings[propName] = [];
+      completeSettings[propName] = [];
     } else {
       throw Error(
         `No way to generate a default value for settings property "${propName}"`
@@ -37,7 +47,9 @@ export function normalizeSettings<S extends JSONSchema>(
     }
   }
 
-  return defaultSettings as Required<FromSchema<S>>;
+  return completeSettings as Required<FromSchema<S>>;
 }
 
-export const defaultSettings = generateDefaultSettings(TidalSettingsSchema);
+export function normalizeTidalSettings(settings: unknown) {
+  return normalizeSettings(TidalSettingsSchema, settings);
+}
