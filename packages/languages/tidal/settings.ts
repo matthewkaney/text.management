@@ -31,7 +31,7 @@ function normalizeSettings<S extends JSONSchema>(
         propName
       ];
 
-      break;
+      continue;
     }
 
     if ("const" in propSchema) {

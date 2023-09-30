@@ -102,6 +102,8 @@ export class GHCI extends Engine<GHCIEvents> {
       await this.loadFile(await this.defaultBootfile(), child);
     }
 
+    console.log(bootFiles);
+
     for (let path of bootFiles) {
       try {
         await this.loadFile(path, child);
@@ -191,8 +193,8 @@ export class GHCI extends Engine<GHCIEvents> {
     // TODO: Some sort of check that settings have actually changed?
     this.emit("message", {
       level: "info",
+      source: "Tidal",
       text: "Tidal's settings have changed. Reboot Tidal to apply new settings.",
-      source: "tidal",
     });
   }
 
@@ -225,6 +227,8 @@ export class GHCI extends Engine<GHCIEvents> {
           }
         }
       }
+
+      yield remainder + "\n";
     }
 
     const fileStream = compose(
