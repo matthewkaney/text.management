@@ -139,7 +139,7 @@ const createWindow = () => {
         );
 
         settingsDoc.on("status", ({ saved }) => {
-          if (saved) {
+          if (saved === true) {
             tidal.reloadSettings();
           }
         });

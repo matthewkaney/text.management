@@ -102,8 +102,6 @@ export class GHCI extends Engine<GHCIEvents> {
       await this.loadFile(await this.defaultBootfile(), child);
     }
 
-    console.log(bootFiles);
-
     for (let path of bootFiles) {
       try {
         await this.loadFile(path, child);
