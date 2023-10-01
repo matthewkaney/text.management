@@ -6,6 +6,7 @@ export const TidalSettingsSchema = {
     environment: { const: "ghci" },
     "boot.useDefaultFile": { type: "boolean", default: true },
     "boot.customFiles": { type: "array", items: { type: "string" } },
+    "boot.disableEditorIntegration": { type: "boolean", default: false },
   },
   additionalProperties: false,
 } as const satisfies JSONSchema;

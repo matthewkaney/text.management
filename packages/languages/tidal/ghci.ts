@@ -15,8 +15,7 @@ import { Engine } from "../core/engine";
 
 import { TidalSettings, normalizeTidalSettings } from "./settings";
 
-//@ts-ignore
-import preBoot from "bundle-text:./PreBoot.hs";
+import { generateIntegrationCode } from "./editor-integration";
 
 interface GHCIEvents {
   message: TerminalMessage;
@@ -81,6 +80,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private async initProcess() {
     const {
+      "boot.disableEditorIntegration": disableEditorIntegration,
       "boot.useDefaultFile": useDefaultBootfile,
       "boot.customFiles": bootFiles,
     } = await this.settings;
@@ -93,10 +93,12 @@ export class GHCI extends Engine<GHCIEvents> {
       },
     });
 
-    const out = createInterface({ input: child.stdout });
-    const err = createInterface({ input: child.stderr });
+    this.initInterfaces(child);
 
-    child.stdin.write(preBoot);
+    if (!disableEditorIntegration) {
+      const integrationCode = generateIntegrationCode(await this.getVersion());
+      child.stdin.write(integrationCode);
+    }
 
     if (useDefaultBootfile) {
       await this.loadFile(await this.defaultBootfile(), child);
@@ -117,6 +119,17 @@ export class GHCI extends Engine<GHCIEvents> {
         });
       }
     }
+
+    child.on("close", (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
+
+    return child;
+  }
+
+  private initInterfaces(child: ChildProcessWithoutNullStreams) {
+    const out = createInterface({ input: child.stdout });
+    const err = createInterface({ input: child.stderr });
 
     let outBatch: string[] | null = null;
     let errBatch: string[] | null = null;
@@ -170,12 +183,6 @@ export class GHCI extends Engine<GHCIEvents> {
         }
       }
     });
-
-    child.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-
-    return child;
   }
 
   private async defaultBootfile() {
