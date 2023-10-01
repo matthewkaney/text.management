@@ -54,6 +54,11 @@ export class Editor {
     });
 
     api.onOpen(({ id, path }) => {
+      if (id in layout.state.tabs) {
+        layout.dispatch({ current: id });
+        return;
+      }
+
       let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
 
@@ -87,7 +92,6 @@ export class Editor {
     });
 
     api.onClose(({ id }) => {
-      console.log("Close ", id);
       layout.dispatch({ changes: [id] });
     });
 

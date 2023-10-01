@@ -39,7 +39,7 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
       : false;
   }
 
-  constructor(path: string | null = null) {
+  constructor(public readonly id: string, path: string | null = null) {
     super();
 
     const loadContent = async () => {
@@ -134,7 +134,7 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
 }
 
 interface FilesystemEvents {
-  open: { id: string; document: DesktopDocument };
+  open: DesktopDocument;
   current: DesktopDocument | null;
 }
 
@@ -145,12 +145,39 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     return this.docs.get(id) ?? null;
   }
 
+  getIDFromPath(path: string) {
+    for (let [id, doc] of this.docs) {
+      if (doc.path === path) {
+        return id;
+      }
+    }
+
+    return null;
+  }
+
+  getDocFromPath(path: string) {
+    let id = this.getIDFromPath(path);
+
+    if (id === null) return null;
+
+    return this.getDoc(id);
+  }
+
   loadDoc(path?: string) {
+    let existing: DesktopDocument | null;
+
+    if (path && (existing = this.getDocFromPath(path))) {
+      this.emit("open", existing);
+      return existing;
+    }
+
     let id = getID();
-    let document = new DesktopDocument(path);
+    let document = new DesktopDocument(id, path);
     this.docs.set(id, document);
 
-    this.emit("open", { id, document });
+    this.emit("open", document);
+
+    return document;
   }
 
   private _currentDocID: string | null = null;
