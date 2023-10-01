@@ -86,6 +86,16 @@ export class GHCI extends Engine<GHCIEvents> {
     } = await this.settings;
     const port = (await this.socket).address().port.toString();
 
+    // Add filters for prettier code
+    this.inputFilters.push(/^\s*:set\s+prompt.*/);
+
+    this.outputFilters.push(
+      /^Loaded package environment from \S+$/,
+      /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
+      /^ghc: signal: 15$/,
+      /^Leaving GHCi\.$/
+    );
+
     const child = spawn("ghci", ["-XOverloadedStrings"], {
       env: {
         ...process.env,
@@ -96,8 +106,14 @@ export class GHCI extends Engine<GHCIEvents> {
     this.initInterfaces(child);
 
     if (!disableEditorIntegration) {
+      this.outputFilters.push(
+        /package flags have changed, resetting and loading new packages\.\.\./
+      );
       const integrationCode = generateIntegrationCode(await this.getVersion());
       child.stdin.write(integrationCode);
+
+      // Disable reloading of Sound.Tidal.Context since it's already loaded
+      this.inputFilters.push(/^\s*import\s+Sound\.Tidal\.Context.*/);
     }
 
     if (useDefaultBootfile) {
@@ -127,6 +143,9 @@ export class GHCI extends Engine<GHCIEvents> {
     return child;
   }
 
+  private inputFilters: RegExp[] = [];
+  private outputFilters: RegExp[] = [];
+
   private initInterfaces(child: ChildProcessWithoutNullStreams) {
     const out = createInterface({ input: child.stdout });
     const err = createInterface({ input: child.stderr });
@@ -136,6 +155,8 @@ export class GHCI extends Engine<GHCIEvents> {
 
     out.on("line", (data) => {
       if (!data.endsWith("> ")) {
+        if (this.outputFilters.some((filter) => data.match(filter))) return;
+
         if (outBatch) {
           outBatch.push(data);
         } else {
@@ -206,13 +227,13 @@ export class GHCI extends Engine<GHCIEvents> {
   async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
-      .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
-      .filter((l) => !l.match(/^\s*import\s+Sound\.Tidal\.Context.*/))
+      .filter((line) => this.inputFilters.some((filter) => line.match(filter)))
       .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 
   async loadFile(path: string, child: ChildProcessWithoutNullStreams) {
+    let inputFilters = this.inputFilters;
     async function* process(source: AsyncIterable<string>) {
       let remainder = "";
 
@@ -220,10 +241,7 @@ export class GHCI extends Engine<GHCIEvents> {
         for (let line of chunk.split(/(?<=\r?\n)/)) {
           line = remainder + line;
           if (line.match(/.*?\r?\n$/)) {
-            if (
-              !line.match(/^\s*:set\s+prompt.*/) &&
-              !line.match(/^\s*import\s+Sound\.Tidal\.Context.*/)
-            ) {
+            if (!inputFilters.some((filter) => line.match(filter))) {
               yield line;
             }
             remainder = "";
@@ -288,6 +306,9 @@ export class GHCI extends Engine<GHCIEvents> {
 
   async restart() {
     await this.close();
+
+    this.inputFilters = [];
+    this.outputFilters = [];
 
     this.process = this.initProcess();
     await this.process;
