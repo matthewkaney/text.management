@@ -68,7 +68,7 @@ export const layoutTheme = EditorView.theme({
 
   ".cm-console": {
     margin: `${size}px ${1.5 * size}px 0 ${1.5 * size}px`,
-    maxHeight: `${20 * size}px`,
+    maxHeight: `30vh`,
   },
 
   ".cm-console:last-child": {

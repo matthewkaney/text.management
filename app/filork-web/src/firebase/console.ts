@@ -13,6 +13,7 @@ import {
   consoleState,
   sendToConsole,
   console,
+  inaccessibleConsole,
 } from "@management/cm-console";
 
 export function firebaseConsole(data: DataSnapshot) {
@@ -38,12 +39,19 @@ export function firebaseConsole(data: DataSnapshot) {
   }
 
   const consoleListener = ViewPlugin.define((view) => {
-    onChildAdded(consoleQuery, (message) => {
-      view.dispatch(sendToConsole(view.state, message.val()));
+    onChildAdded(consoleQuery, (messageSnapshot) => {
+      let message = messageSnapshot.val();
+      if (message.level === "log") message.level = "info";
+      view.dispatch(sendToConsole(view.state, message));
     });
 
     return { destroy: () => {} };
   });
 
-  return [consoleState.init(() => initialConsole), consoleListener, console()];
+  return [
+    inaccessibleConsole,
+    consoleState.init(() => initialConsole),
+    consoleListener,
+    console(),
+  ];
 }
