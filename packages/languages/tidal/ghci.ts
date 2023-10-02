@@ -7,46 +7,56 @@ import { once } from "events";
 import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
+import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
-//@ts-ignore
-import preBoot from "bundle-text:./PreBoot.hs";
+import { TidalSettings, normalizeTidalSettings } from "./settings";
 
-interface GHCIOptions {
-  defaultBoot: boolean;
-  customBootfiles: string[];
-}
-
-const defaultOpts: GHCIOptions = {
-  defaultBoot: true,
-  customBootfiles: [],
-};
+import { generateIntegrationCode } from "./editor-integration";
 
 interface GHCIEvents {
   message: TerminalMessage;
   now: number;
+  openSettings: string;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
+  private _settings: Promise<TidalSettings>;
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: TerminalMessage[] = [];
 
-  constructor(private options: GHCIOptions = defaultOpts) {
+  constructor(private extensionFolder: string) {
     super();
 
+    this._settings = this.loadSettings();
     this.socket = this.initSocket();
-    this.process = this.initProcess(options);
+    this.process = this.initProcess();
 
     this.onListener["message"] = (listener) => {
       for (let message of this.history) {
         listener(message);
       }
     };
+  }
+
+  private async loadSettings() {
+    try {
+      const settings = JSON.parse(await readFile(this.settingsPath, "utf-8"));
+
+      // TODO: Update/validate settings, etc
+      return normalizeTidalSettings(settings);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw err;
+      }
+
+      return normalizeTidalSettings({});
+    }
   }
 
   private initSocket() {
@@ -68,8 +78,23 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
-  private async initProcess({ defaultBoot, customBootfiles }: GHCIOptions) {
+  private async initProcess() {
+    const {
+      "boot.disableEditorIntegration": disableEditorIntegration,
+      "boot.useDefaultFile": useDefaultBootfile,
+      "boot.customFiles": bootFiles,
+    } = await this.settings;
     const port = (await this.socket).address().port.toString();
+
+    // Add filters for prettier code
+    this.inputFilters.push(/^\s*:set\s+prompt.*/);
+
+    this.outputFilters.push(
+      /^Loaded package environment from \S+$/,
+      /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
+      /^ghc: signal: 15$/,
+      /^Leaving GHCi\.$/
+    );
 
     const child = spawn("ghci", ["-XOverloadedStrings"], {
       env: {
@@ -78,24 +103,60 @@ export class GHCI extends Engine<GHCIEvents> {
       },
     });
 
-    const out = createInterface({ input: child.stdout });
-    const err = createInterface({ input: child.stderr });
+    this.initInterfaces(child);
 
-    child.stdin.write(preBoot);
+    if (!disableEditorIntegration) {
+      this.outputFilters.push(
+        /package flags have changed, resetting and loading new packages\.\.\./
+      );
+      const integrationCode = generateIntegrationCode(await this.getVersion());
+      child.stdin.write(integrationCode);
 
-    if (defaultBoot) {
+      // Disable reloading of Sound.Tidal.Context since it's already loaded
+      this.inputFilters.push(/^\s*import\s+Sound\.Tidal\.Context.*/);
+    }
+
+    if (useDefaultBootfile) {
       await this.loadFile(await this.defaultBootfile(), child);
     }
 
-    for (let path of customBootfiles) {
-      await this.loadFile(path, child);
+    for (let path of bootFiles) {
+      try {
+        await this.loadFile(path, child);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw err;
+        }
+
+        this.emit("message", {
+          level: "error",
+          text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
+          source: "Tidal",
+        });
+      }
     }
+
+    child.on("close", (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
+
+    return child;
+  }
+
+  private inputFilters: RegExp[] = [];
+  private outputFilters: RegExp[] = [];
+
+  private initInterfaces(child: ChildProcessWithoutNullStreams) {
+    const out = createInterface({ input: child.stdout });
+    const err = createInterface({ input: child.stderr });
 
     let outBatch: string[] | null = null;
     let errBatch: string[] | null = null;
 
     out.on("line", (data) => {
       if (!data.endsWith("> ")) {
+        if (this.outputFilters.some((filter) => data.match(filter))) return;
+
         if (outBatch) {
           outBatch.push(data);
         } else {
@@ -143,12 +204,6 @@ export class GHCI extends Engine<GHCIEvents> {
         }
       }
     });
-
-    child.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-
-    return child;
   }
 
   private async defaultBootfile() {
@@ -158,16 +213,27 @@ export class GHCI extends Engine<GHCIEvents> {
     return join(stdout, "BootTidal.hs");
   }
 
+  async reloadSettings() {
+    this._settings = this.loadSettings();
+
+    // TODO: Some sort of check that settings have actually changed?
+    this.emit("message", {
+      level: "info",
+      source: "Tidal",
+      text: "Tidal's settings have changed. Reboot Tidal to apply new settings.",
+    });
+  }
+
   async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
-      .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
-      .filter((l) => !l.match(/^\s*import\s+Sound\.Tidal\.Context.*/))
+      .filter((line) => this.inputFilters.some((filter) => line.match(filter)))
       .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 
   async loadFile(path: string, child: ChildProcessWithoutNullStreams) {
+    let inputFilters = this.inputFilters;
     async function* process(source: AsyncIterable<string>) {
       let remainder = "";
 
@@ -175,10 +241,7 @@ export class GHCI extends Engine<GHCIEvents> {
         for (let line of chunk.split(/(?<=\r?\n)/)) {
           line = remainder + line;
           if (line.match(/.*?\r?\n$/)) {
-            if (
-              !line.match(/^\s*:set\s+prompt.*/) &&
-              !line.match(/^\s*import\s+Sound\.Tidal\.Context.*/)
-            ) {
+            if (!inputFilters.some((filter) => line.match(filter))) {
               yield line;
             }
             remainder = "";
@@ -187,6 +250,8 @@ export class GHCI extends Engine<GHCIEvents> {
           }
         }
       }
+
+      yield remainder + "\n";
     }
 
     const fileStream = compose(
@@ -213,6 +278,14 @@ export class GHCI extends Engine<GHCIEvents> {
     return this.version;
   }
 
+  get settings() {
+    return this._settings;
+  }
+
+  get settingsPath() {
+    return join(this.extensionFolder, "settings.json");
+  }
+
   async close() {
     let process = await this.process;
 
@@ -234,7 +307,10 @@ export class GHCI extends Engine<GHCIEvents> {
   async restart() {
     await this.close();
 
-    this.process = this.initProcess(this.options);
+    this.inputFilters = [];
+    this.outputFilters = [];
+
+    this.process = this.initProcess();
     await this.process;
     this.emit("started", undefined);
   }

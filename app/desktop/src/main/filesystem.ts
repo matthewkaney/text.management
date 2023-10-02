@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "fs/promises";
+import { dirname } from "path";
+import { readFile, writeFile, mkdir } from "fs/promises";
 
 import { ChangeSet, Text } from "@codemirror/state";
 
@@ -39,11 +40,15 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
       : false;
   }
 
-  constructor(public readonly id: string, path: string | null = null) {
+  constructor(
+    public readonly id: string,
+    path: string | null = null,
+    defaultContent = ""
+  ) {
     super();
 
     const loadContent = async () => {
-      let doc = Text.empty;
+      let doc = Text.of(defaultContent.split(/\r?\n/));
       let version = 0;
       let saved = false;
 
@@ -64,6 +69,7 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
           }
         }
 
+        await mkdir(dirname(path), { recursive: true });
         this.content = { doc, version };
         let fileStatus = { path, version, saved };
         this.fileStatus = fileStatus;
@@ -164,7 +170,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     return this.getDoc(id);
   }
 
-  loadDoc(path?: string) {
+  loadDoc(path?: string, defaultContent?: string) {
     let existing: DesktopDocument | null;
 
     if (path && (existing = this.getDocFromPath(path))) {
@@ -173,7 +179,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     }
 
     let id = getID();
-    let document = new DesktopDocument(id, path);
+    let document = new DesktopDocument(id, path, defaultContent);
     this.docs.set(id, document);
 
     this.emit("open", document);
