@@ -62,6 +62,8 @@ const ElectronAPI = {
 
   onClose: listen("close"),
 
+  onSetCurrent: listen("setCurrent"),
+
   onShowAbout: listen("showAbout"),
 
   evaluate: (code: string) => {

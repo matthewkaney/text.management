@@ -66,7 +66,7 @@ const createWindow = () => {
 
         docListeners.push(
           document.on("status", (status) => {
-            win.webContents.send("status", { withID: id, content: status });
+            send("status", { withID: id, content: status });
           })
         );
 
@@ -77,6 +77,12 @@ const createWindow = () => {
             }
           })
         );
+      })
+    );
+
+    listeners.push(
+      filesystem.on("setCurrent", (id) => {
+        send("setCurrent", { id });
       })
     );
 

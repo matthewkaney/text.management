@@ -136,6 +136,7 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
 interface FilesystemEvents {
   open: DesktopDocument;
   current: DesktopDocument | null;
+  setCurrent: string;
 }
 
 export class Filesystem extends EventEmitter<FilesystemEvents> {
@@ -167,7 +168,7 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     let existing: DesktopDocument | null;
 
     if (path && (existing = this.getDocFromPath(path))) {
-      this.emit("open", existing);
+      this.emit("setCurrent", existing.id);
       return existing;
     }
 

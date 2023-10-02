@@ -19,6 +19,7 @@ export interface ToRendererChannels {
     content: { doc: string[]; version: number; saved: boolean | "saving" };
   };
   status: { withID: string; content: SavedStatus };
+  setCurrent: { id: string };
   close: { id: string };
   console: TerminalMessage;
   tidalVersion: string;
