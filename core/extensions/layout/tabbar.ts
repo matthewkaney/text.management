@@ -9,7 +9,7 @@ library.add(faXmark);
 export class TabBar {
   readonly dom: HTMLDivElement;
 
-  private focused: string | null = null;
+  // private focused: string | null = null;
 
   private children: Map<string, TabButton> = new Map();
 
@@ -18,44 +18,35 @@ export class TabBar {
     this.dom.classList.add("tab-region");
     this.dom.setAttribute("role", "tablist");
 
-    this.dom.addEventListener("focusin", () => {
-      this.focused = this.parent.state.current;
-    });
-
-    this.dom.addEventListener("focusout", () => {
-      this.focused = null;
-    });
-
     this.dom.addEventListener("keydown", (event) => {
       if (event.code === "ArrowRight" || event.code === "ArrowLeft") {
-        let order = this.parent.state.order;
+        let { current, order } = this.parent.state;
 
-        if (this.focused === null)
-          throw Error(
-            "Tab bar is focused but doesn't know what tab is focused"
-          );
+        if (current === null)
+          throw Error("Tab bar is focused but there's aren't any open tabs");
 
-        let focusedIndex = order.indexOf(this.focused);
+        let currentIndex = order.indexOf(current);
 
-        if (focusedIndex === -1)
-          throw Error("Focused tab isn't contained within state");
+        if (currentIndex === -1)
+          throw Error("Current tab isn't contained within state");
 
         if (event.code === "ArrowRight") {
-          focusedIndex = (focusedIndex + 1) % order.length;
+          currentIndex = (currentIndex + 1) % order.length;
         } else if (event.code === "ArrowLeft") {
-          focusedIndex = (focusedIndex + order.length - 1) % order.length;
+          currentIndex = (currentIndex + order.length - 1) % order.length;
         }
 
-        let focused = order[focusedIndex];
-        let focusedButton = this.children.get(focused);
+        // Set current
+        current = order[currentIndex];
+        this.parent.dispatch({ current });
 
-        if (focusedButton === undefined)
+        // But keep focus on tabs
+        let currentButton = this.children.get(current);
+
+        if (currentButton === undefined)
           throw Error("Tried to change focus to a non-existent tab");
 
-        this.parent.dispatch({ current: focused });
-
-        focusedButton.dom.focus();
-        this.focused = order[focusedIndex];
+        currentButton.dom.focus();
       }
     });
   }
