@@ -1,8 +1,6 @@
 import { ElectronAPI } from "../preload";
 
 import { Text } from "@codemirror/state";
-import { indentWithTab } from "@codemirror/commands";
-import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
@@ -64,7 +62,6 @@ export class Editor {
                 doc,
                 extensions: [
                   tidal(),
-                  keymap.of([indentWithTab]),
                   evaluation(api.evaluate),
                   basicSetup,
                   oneDark,

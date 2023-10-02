@@ -112,6 +112,10 @@ export const oneDarkTheme = EditorView.theme(
       marginLeft: "-1px",
     },
 
+    "&.cm-tab-focus": {
+      boxShadow: "inset 0 0 0 4px orange",
+    },
+
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
       backgroundColor: col("text-invert"),
     },
