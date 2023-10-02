@@ -11,6 +11,7 @@ export default {
   moduleNameMapper: {
     "^@core/(.*)$": "<rootDir>/core/$1",
     "^__mocks__/(.*)$": "<rootDir>/__mocks__/$1",
+    "\\.(css|less)$": "<rootDir>/__mocks__/styles.ts",
   },
 
   // A preset that is used as a base for Jest's configuration

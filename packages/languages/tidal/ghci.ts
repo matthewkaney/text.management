@@ -1,7 +1,6 @@
 import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
-// import { Duplex } from "stream";
 //@ts-ignore
 import { Duplex, compose } from "stream";
 import { once } from "events";
@@ -9,8 +8,12 @@ import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
 
+import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
+
+//@ts-ignore
+import preBoot from "bundle-text:./PreBoot.hs";
 
 interface GHCIOptions {
   defaultBoot: boolean;
@@ -24,6 +27,7 @@ const defaultOpts: GHCIOptions = {
 
 interface GHCIEvents {
   message: TerminalMessage;
+  now: number;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -32,14 +36,11 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private history: TerminalMessage[] = [];
 
-  private outBatch: string[] | null = null;
-  private errBatch: string[] | null = null;
-
-  constructor(opts: GHCIOptions = defaultOpts) {
+  constructor(private options: GHCIOptions = defaultOpts) {
     super();
 
     this.socket = this.initSocket();
-    this.process = this.initProcess(opts);
+    this.process = this.initProcess(options);
 
     this.onListener["message"] = (listener) => {
       for (let message of this.history) {
@@ -55,9 +56,15 @@ export class GHCI extends Engine<GHCIEvents> {
         resolve(socket);
       });
 
-      // socket.on("message", (data) => {
-      //   this.emit("message", data);
-      // });
+      socket.on("message", (data) => {
+        let message = parse(data);
+
+        if ("address" in message && message.address === "/now") {
+          if (typeof message.args[0] === "number") {
+            this.emit("now", message.args[0]);
+          }
+        }
+      });
     });
   }
 
@@ -74,6 +81,8 @@ export class GHCI extends Engine<GHCIEvents> {
     const out = createInterface({ input: child.stdout });
     const err = createInterface({ input: child.stderr });
 
+    child.stdin.write(preBoot);
+
     if (defaultBoot) {
       await this.loadFile(await this.defaultBootfile(), child);
     }
@@ -82,23 +91,25 @@ export class GHCI extends Engine<GHCIEvents> {
       await this.loadFile(path, child);
     }
 
+    let outBatch: string[] | null = null;
+    let errBatch: string[] | null = null;
+
     out.on("line", (data) => {
       if (!data.endsWith("> ")) {
-        if (this.outBatch) {
-          this.outBatch.push(data);
+        if (outBatch) {
+          outBatch.push(data);
         } else {
-          this.outBatch = [data];
+          outBatch = [data];
 
           setTimeout(() => {
-            if (this.outBatch) {
-              const outBatch = this.outBatch;
-              this.outBatch = null;
-
+            if (outBatch) {
               let m: TerminalMessage = {
                 level: "info",
                 source: "Tidal",
                 text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
               };
+
+              outBatch = null;
 
               this.history.push(m);
               this.emit("message", m);
@@ -110,21 +121,20 @@ export class GHCI extends Engine<GHCIEvents> {
 
     err.on("line", (data) => {
       if (data !== "") {
-        if (this.errBatch) {
-          this.errBatch.push(data);
+        if (errBatch) {
+          errBatch.push(data);
         } else {
-          this.errBatch = [data];
+          errBatch = [data];
 
           setTimeout(() => {
-            if (this.errBatch) {
-              const errBatch = this.errBatch;
-              this.errBatch = null;
-
+            if (errBatch) {
               let m: TerminalMessage = {
                 level: "error",
                 source: "Tidal",
                 text: errBatch.join("\n"),
               };
+
+              errBatch = null;
 
               this.history.push(m);
               this.emit("message", m);
@@ -152,6 +162,7 @@ export class GHCI extends Engine<GHCIEvents> {
     text = text
       .split(/(?<=\r?\n)/)
       .filter((l) => !l.match(/^\s*:set\s+prompt.*/))
+      .filter((l) => !l.match(/^\s*import\s+Sound\.Tidal\.Context.*/))
       .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
@@ -164,7 +175,10 @@ export class GHCI extends Engine<GHCIEvents> {
         for (let line of chunk.split(/(?<=\r?\n)/)) {
           line = remainder + line;
           if (line.match(/.*?\r?\n$/)) {
-            if (!line.match(/^\s*:set\s+prompt.*/)) {
+            if (
+              !line.match(/^\s*:set\s+prompt.*/) &&
+              !line.match(/^\s*import\s+Sound\.Tidal\.Context.*/)
+            ) {
               yield line;
             }
             remainder = "";
@@ -200,6 +214,28 @@ export class GHCI extends Engine<GHCIEvents> {
   }
 
   async close() {
-    (await this.process).kill();
+    let process = await this.process;
+
+    if (!process.killed) {
+      (await this.process).kill();
+    }
+
+    if (process.exitCode === null) {
+      await new Promise<void>((resolve) => {
+        process.once("close", () => {
+          resolve();
+        });
+      });
+
+      this.emit("stopped", undefined);
+    }
+  }
+
+  async restart() {
+    await this.close();
+
+    this.process = this.initProcess(this.options);
+    await this.process;
+    this.emit("started", undefined);
   }
 }

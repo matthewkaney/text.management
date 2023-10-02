@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "target": "filork",
+    "public": "dist",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

@@ -62,15 +62,23 @@ const ElectronAPI = {
 
   onClose: listen("close"),
 
+  onSetCurrent: listen("setCurrent"),
+
   onShowAbout: listen("showAbout"),
 
   evaluate: (code: string) => {
     send("evaluation", code);
   },
 
+  restart: () => {
+    send("restart", undefined);
+  },
+
   onConsoleMessage: listen("console"),
 
   onTidalVersion: listen("tidalVersion"),
+
+  onTidalNow: listen("tidalNow"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);

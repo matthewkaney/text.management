@@ -41,11 +41,11 @@ const createWindow = () => {
 
     // Attach file handlers
     listeners.push(
-      filesystem.on("open", ({ id, document }) => {
+      filesystem.on("open", (document) => {
+        let { id, path, content, saved } = document;
+
         let docListeners: typeof listeners = [];
         docsListeners[id] = docListeners;
-
-        let { path, content, saved } = document;
 
         send("open", { id, path });
 
@@ -66,7 +66,7 @@ const createWindow = () => {
 
         docListeners.push(
           document.on("status", (status) => {
-            window.webContents.send("status", { withID: id, content: status });
+            send("status", { withID: id, content: status });
           })
         );
 
@@ -81,8 +81,43 @@ const createWindow = () => {
     );
 
     listeners.push(
-      listen("requestClose", ({ id }) => {
-        close({ window, id });
+      filesystem.on("setCurrent", (id) => {
+        send("setCurrent", { id });
+      })
+    );
+
+    listeners.push(
+      listen("requestClose", async ({ id }) => {
+        let document = filesystem.getDoc(id);
+
+        if (!document) throw Error("Tried to close a non-existent document");
+
+        if (!document.saved) {
+          let { response } = await dialog.showMessageBox(win, {
+            type: "warning",
+            message: "Do you want to save your changes?",
+            buttons: ["Save", "Don't Save", "Cancel"],
+          });
+
+          // Cancelled
+          if (response === 2) return;
+
+          // Save
+          if (response === 0) {
+            if (document.path) {
+              document.save();
+            } else {
+              let { canceled, filePath } = await dialog.showSaveDialog(win);
+
+              if (!canceled && filePath) {
+                document.save(filePath);
+              }
+            }
+          }
+        }
+
+        // We're done here, so close the file
+        send("close", { id });
       })
     );
 
@@ -98,8 +133,20 @@ const createWindow = () => {
     );
 
     listeners.push(
+      listen("restart", () => {
+        tidal.restart();
+      })
+    );
+
+    listeners.push(
       tidal.on("message", (message) => {
         send("console", message);
+      })
+    );
+
+    listeners.push(
+      tidal.on("now", (now) => {
+        send("tidalNow", now);
       })
     );
 

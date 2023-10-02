@@ -21,7 +21,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     needs: [run-tests]
-    # if: ${{ needs.check-version.outputs.unreleased == 'true' }}
+    if: ${{ needs.check-version.outputs.unreleased == 'true' }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:

@@ -87,8 +87,11 @@ export class Editor {
     });
 
     api.onClose(({ id }) => {
-      console.log("Close ", id);
       layout.dispatch({ changes: [id] });
+    });
+
+    api.onSetCurrent(({ id }) => {
+      layout.dispatch({ current: id });
     });
 
     api.onShowAbout((appVersion) => {

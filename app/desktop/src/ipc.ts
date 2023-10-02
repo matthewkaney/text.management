@@ -9,6 +9,7 @@ export interface ToMainChannels {
   update: { withID: string; value: DocumentUpdate };
   requestClose: { id: string };
   evaluation: string;
+  restart: undefined;
 }
 
 export interface ToRendererChannels {
@@ -18,8 +19,10 @@ export interface ToRendererChannels {
     content: { doc: string[]; version: number; saved: boolean | "saving" };
   };
   status: { withID: string; content: SavedStatus };
+  setCurrent: { id: string };
   close: { id: string };
   console: TerminalMessage;
   tidalVersion: string;
+  tidalNow: number;
   showAbout: string;
 }

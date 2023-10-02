@@ -29,10 +29,6 @@ export const base = EditorView.theme({
   ".cm-line": {
     width: "fit-content",
   },
-
-  ".cm-toolbar": {
-    textAlign: "right",
-  },
 });
 
 export const layoutTheme = EditorView.theme({
@@ -72,7 +68,11 @@ export const layoutTheme = EditorView.theme({
 
   ".cm-console": {
     margin: `${size}px ${1.5 * size}px 0 ${1.5 * size}px`,
-    maxHeight: `${20 * size}px`,
+    maxHeight: `30vh`,
+  },
+
+  ".cm-console:last-child": {
+    marginBottom: `${size}px`,
   },
 
   ".cm-console-message": {
@@ -86,7 +86,6 @@ export const layoutTheme = EditorView.theme({
 
   ".cm-toolbar": {
     marginTop: `${1.5 * size}px`,
-    padding: `${0.25 * size}px ${2 * size}px`,
   },
 
   "*::-webkit-scrollbar": {
@@ -221,13 +220,6 @@ export const oneDarkTheme = EditorView.theme(
       borderTop: `solid 2px ${col("bg-shadow")}`,
     },
 
-    ".cm-toolbar div": {
-      clipPath: "inset(1px 0 0 0)",
-    },
-
-    "*::-webkit-scrollbar-track-piece": {
-      backgroundColor: col("bg-shadow"),
-    },
     "*::-webkit-scrollbar-thumb": {
       backgroundColor: col("bg-shadow"),
     },
