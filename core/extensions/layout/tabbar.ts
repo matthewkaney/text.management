@@ -1,21 +1,17 @@
 import { LayoutTransaction, TabState } from "./state";
 import { LayoutView, TabView } from "./view";
 
-import { library, icon } from "@fortawesome/fontawesome-svg-core";
+import { icon } from "@fortawesome/fontawesome-svg-core";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-
-library.add(faXmark);
 
 export class TabBar {
   readonly dom: HTMLDivElement;
-
-  // private focused: string | null = null;
 
   private children: Map<string, TabButton> = new Map();
 
   constructor(private parent: LayoutView) {
     this.dom = document.createElement("div");
-    this.dom.classList.add("tab-region");
+    this.dom.classList.add("tab-bar");
     this.dom.setAttribute("role", "tablist");
 
     this.dom.addEventListener("keydown", (event) => {
@@ -78,40 +74,39 @@ export class TabBar {
 }
 
 class TabButton {
-  // TODO: This should be a button probably
   readonly dom: HTMLDivElement;
 
   private state: TabState<any>;
 
-  private label: HTMLSpanElement;
-  private closeButton: HTMLAnchorElement;
+  private tabButton: HTMLButtonElement;
+  private closeButton: HTMLButtonElement;
 
   constructor(private parent: LayoutView, private view: TabView<any>) {
     this.state = this.view.state;
 
     this.dom = document.createElement("div");
-    this.dom.classList.add("tab");
-    this.dom.setAttribute("role", "tab");
-    this.dom.setAttribute("aria-controls", this.state.id);
-    this.dom.addEventListener("click", () => {
+    this.dom.classList.add("tab-container");
+
+    this.tabButton = this.dom.appendChild(document.createElement("button"));
+    this.tabButton.innerText = this.state.name;
+    this.tabButton.classList.add("tab");
+    this.tabButton.setAttribute("role", "tab");
+    this.tabButton.setAttribute("aria-controls", this.state.id);
+    this.tabButton.addEventListener("mousedown", () => {
       this.parent.dispatch({ current: this.state.id });
     });
 
-    this.label = document.createElement("span");
-    this.label.innerText = this.state.name;
-    this.dom.appendChild(this.label);
-
-    this.closeButton = this.dom.appendChild(document.createElement("a"));
+    this.closeButton = this.dom.appendChild(document.createElement("button"));
     this.closeButton.classList.add("close-button");
     this.closeButton.setAttribute("aria-label", "Close");
-    Array.from(icon({ prefix: "fas", iconName: "xmark" }).node).map((n) => {
-      this.closeButton.appendChild(n);
-    });
+    this.closeButton.setAttribute("aria-controls", this.state.id);
+    this.closeButton.append(
+      ...icon(faXmark, { attributes: { "aria-hidden": "true" } }).node
+    );
     this.closeButton.addEventListener("click", (event) => {
       if (this.view.beforeClose()) {
         this.parent.dispatch({ changes: [this.state.id] });
       }
-      event.stopPropagation();
     });
   }
 
@@ -120,9 +115,9 @@ class TabButton {
 
     let selected = tr.state.current === this.state.id;
     this.dom.classList.toggle("current", selected);
-    this.dom.setAttribute("aria-selected", selected.toString());
-    this.dom.tabIndex = selected ? 0 : -1;
+    this.tabButton.setAttribute("aria-selected", selected.toString());
+    this.tabButton.tabIndex = selected ? 0 : -1;
+    this.tabButton.innerText = this.state.name;
     this.closeButton.tabIndex = selected ? 0 : -1;
-    this.label.innerText = this.state.name;
   }
 }
