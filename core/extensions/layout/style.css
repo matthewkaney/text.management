@@ -77,6 +77,7 @@
   appearance: none;
   border: none;
   padding: none;
+  outline: none;
   position: absolute;
   top: calc(0.5 * 12px);
   right: calc(0.5 * 12px);
@@ -92,4 +93,9 @@
 
 .tab-container .close-button:hover {
   background: var(--col-bg-shadow);
+}
+
+.tab-container .close-button:focus-visible {
+  background: orange;
+  color: var(--col-background);
 }

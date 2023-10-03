@@ -1,4 +1,4 @@
-import { LayoutTransaction, TabState } from "./state";
+import { LayoutTransaction, TabState, focusCurrent } from "./state";
 import { LayoutView, TabView } from "./view";
 
 import { icon } from "@fortawesome/fontawesome-svg-core";
@@ -42,7 +42,7 @@ export class TabBar {
         if (currentButton === undefined)
           throw Error("Tried to change focus to a non-existent tab");
 
-        currentButton.dom.focus();
+        currentButton.focus();
       }
     });
   }
@@ -92,9 +92,17 @@ class TabButton {
     this.tabButton.classList.add("tab");
     this.tabButton.setAttribute("role", "tab");
     this.tabButton.setAttribute("aria-controls", this.state.id);
-    this.tabButton.addEventListener("mousedown", () => {
-      this.parent.dispatch({ current: this.state.id });
-    });
+
+    const tabActivation = (event: MouseEvent) => {
+      this.parent.dispatch({
+        current: this.state.id,
+        effects: [focusCurrent.of()],
+      });
+      event.preventDefault();
+    };
+
+    this.tabButton.addEventListener("mousedown", tabActivation);
+    this.tabButton.addEventListener("click", tabActivation);
 
     this.closeButton = this.dom.appendChild(document.createElement("button"));
     this.closeButton.classList.add("close-button");
@@ -119,5 +127,9 @@ class TabButton {
     this.tabButton.tabIndex = selected ? 0 : -1;
     this.tabButton.innerText = this.state.name;
     this.closeButton.tabIndex = selected ? 0 : -1;
+  }
+
+  focus() {
+    this.tabButton.focus();
   }
 }

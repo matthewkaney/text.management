@@ -92,7 +92,7 @@ const createWindow = () => {
         if (!document) throw Error("Tried to close a non-existent document");
 
         if (!document.saved) {
-          let { response } = await dialog.showMessageBox(win, {
+          let { response } = await dialog.showMessageBox(window, {
             type: "warning",
             message: "Do you want to save your changes?",
             buttons: ["Save", "Don't Save", "Cancel"],
@@ -106,7 +106,7 @@ const createWindow = () => {
             if (document.path) {
               document.save();
             } else {
-              let { canceled, filePath } = await dialog.showSaveDialog(win);
+              let { canceled, filePath } = await dialog.showSaveDialog(window);
 
               if (!canceled && filePath) {
                 document.save(filePath);
