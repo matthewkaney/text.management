@@ -13,6 +13,7 @@ import {
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { decorateEmptyLines } from "./emptyLines";
+import { tabFocus } from "./tabTrapping";
 
 export const basicSetup = [
   // lineNumbers(),
@@ -25,4 +26,5 @@ export const basicSetup = [
   history(),
   keymap.of([...defaultKeymap, ...closeBracketsKeymap, ...historyKeymap]),
   decorateEmptyLines(),
+  tabFocus,
 ];

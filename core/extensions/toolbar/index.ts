@@ -1,4 +1,4 @@
-import { EditorView, showPanel, Panel } from "@codemirror/view";
+import { showPanel, Panel } from "@codemirror/view";
 import { ElectronAPI } from "@core/api";
 
 import "./style.css";
@@ -18,7 +18,12 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
           api.restart();
         },
       },
-      // { label: "Boot Files", action: () => {} },
+      {
+        label: "Tidal Settings",
+        action: () => {
+          api.openTidalSettings();
+        },
+      },
     ]);
     toolbarNode.appendChild(tidalInfo.dom);
 
@@ -27,21 +32,21 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
     });
 
     // Tempo info
-    // let tempoInfo = new ToolbarMenu(`◯ 0`, []);
-    // toolbarNode.appendChild(tempoInfo.dom);
+    let tempoInfo = new ToolbarMenu(`◯ 0`, []);
+    toolbarNode.appendChild(tempoInfo.dom);
 
-    // let offTidalNow = api.onTidalNow((cycle) => {
-    //   cycle = Math.max(0, cycle);
-    //   let whole = Math.floor(cycle);
-    //   let part = "◐◓◑◒"[Math.floor(cycle * 4) % 4];
-    //   tempoInfo.label = `${part} ${whole}`;
-    // });
+    let offTidalNow = api.onTidalNow((cycle) => {
+      cycle = Math.max(0, cycle);
+      let whole = Math.floor(cycle);
+      let part = "◐◓◑◒"[Math.floor(cycle * 4) % 4];
+      tempoInfo.label = `${part} ${whole}`;
+    });
 
     return {
       dom: toolbarNode,
       destroy() {
         offTidalVersion();
-        // offTidalNow();
+        offTidalNow();
       },
     };
   }

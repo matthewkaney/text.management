@@ -1,16 +1,7 @@
-:set -package hosc
-
 import Control.Concurrent
-
-import Sound.Osc.Fd
 
 import Sound.Tidal.Context hiding (startStream, startTidal)
 import qualified Sound.Tidal.Stream as Stream
-
-import System.Environment (getEnv)
-
-editorPort <- read <$> getEnv "editor_port" :: IO Int
-editorSocket <- openUdp "127.0.0.1" editorPort
 
 :{
 startStream :: Config -> [(Target, [OSC])] -> IO Stream
