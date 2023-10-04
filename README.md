@@ -15,7 +15,7 @@ It's available as a desktop app for Mac/Windows/Linux. Builds (still in a pretty
 - Write and edit Tidal code, just like normal
 - **Shift-Enter**: Evaluate the current line
 - **Ctrl/Cmd-Enter**: Evaluate the current block of lines (basically, all lines separated by blank lines)
-- **Escape**: Clear terminal messages and dismiss the terminal
+- **Ctrl/Cmd-`**: Clear terminal messages and dismiss the terminal
 
 ## Limitations
 
