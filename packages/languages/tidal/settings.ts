@@ -3,10 +3,10 @@ import type { JSONSchema, FromSchema } from "json-schema-to-ts";
 export const TidalSettingsSchema = {
   type: "object",
   properties: {
-    environment: { const: "ghci" },
-    "boot.useDefaultFile": { type: "boolean", default: true },
-    "boot.customFiles": { type: "array", items: { type: "string" } },
-    "boot.disableEditorIntegration": { type: "boolean", default: false },
+    // environment: { const: "ghci" },
+    "tidal.boot.useDefaultFile": { type: "boolean", default: true },
+    "tidal.boot.customFiles": { type: "array", items: { type: "string" } },
+    "tidal.boot.disableEditorIntegration": { type: "boolean", default: false },
   },
   additionalProperties: false,
 } as const satisfies JSONSchema;

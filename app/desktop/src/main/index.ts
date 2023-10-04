@@ -24,7 +24,7 @@ const createWindow = () => {
     },
   });
 
-  const tidal = new GHCI(resolve(app.getPath("userData"), "org.tidalcycles"));
+  const tidal = new GHCI(resolve(app.getPath("userData")));
 
   let listeners: (() => void)[] = [];
   let docsListeners: { [id: string]: typeof listeners } = {};
@@ -139,10 +139,7 @@ const createWindow = () => {
 
     listeners.push(
       menu.on("settings", async () => {
-        let settingsDoc = filesystem.loadDoc(
-          tidal.settingsPath,
-          JSON.stringify(await tidal.settings, null, 2)
-        );
+        let settingsDoc = filesystem.loadDoc(tidal.settingsPath, "{}");
 
         settingsDoc.on("status", ({ saved }) => {
           if (saved === true) {

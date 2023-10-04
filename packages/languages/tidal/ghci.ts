@@ -80,9 +80,9 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private async initProcess() {
     const {
-      "boot.disableEditorIntegration": disableEditorIntegration,
-      "boot.useDefaultFile": useDefaultBootfile,
-      "boot.customFiles": bootFiles,
+      "tidal.boot.disableEditorIntegration": disableEditorIntegration,
+      "tidal.boot.useDefaultFile": useDefaultBootfile,
+      "tidal.boot.customFiles": bootFiles,
     } = await this.settings;
     const port = (await this.socket).address().port.toString();
 
