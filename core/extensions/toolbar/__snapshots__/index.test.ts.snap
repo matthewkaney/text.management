@@ -3,22 +3,10 @@
 exports[`Toolbar Menu Snapshot test 1`] = `
 <div
   class="cm-menu"
-  role="none"
 >
-  <button
+  <div
     class="cm-menu-trigger"
     id="Test"
-    role="menuitem"
-    tabindex="0"
   />
-  <div
-    aria-labelledby="Test"
-    class="cm-menu-item-list"
-    role="menu"
-  >
-    <div
-      class="cm-menu-item-group"
-    />
-  </div>
 </div>
 `;

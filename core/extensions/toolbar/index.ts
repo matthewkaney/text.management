@@ -85,14 +85,14 @@ export class ToolbarMenu {
     this.trigger.innerText = this._label;
   }
 
-  constructor(label: string, items: MenuItem[], role: string) {
+  constructor(label: string, items: MenuItem[], role?: string) {
     this.dom = document.createElement("div");
     this.dom.classList.add("cm-menu");
     // this.dom.setAttribute("role", "none");
 
     this.trigger = this.dom.appendChild(document.createElement("div"));
     this.trigger.classList.add("cm-menu-trigger");
-    this.trigger.setAttribute("role", role);
+    if (role) this.trigger.setAttribute("role", role);
     // this.trigger.ariaHasPopup = "true";
     // this.trigger.ariaExpanded = "false";
     this.trigger.id = label.replace(/\W+/g, "-");
