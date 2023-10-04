@@ -132,13 +132,13 @@ const createWindow = () => {
     );
 
     listeners.push(
-      listen("restart", () => {
+      menu.on("rebootTidal", () => {
         tidal.restart();
       })
     );
 
     listeners.push(
-      listen("openTidalSettings", async () => {
+      menu.on("settings", async () => {
         let settingsDoc = filesystem.loadDoc(
           tidal.settingsPath,
           JSON.stringify(await tidal.settings, null, 2)

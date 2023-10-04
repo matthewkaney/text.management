@@ -10,8 +10,11 @@ interface MenuEvents {
   openFile?: BrowserWindow;
   saveFile?: BrowserWindow;
   saveAsFile?: BrowserWindow;
+  settings?: BrowserWindow;
   close?: BrowserWindow;
   about?: BrowserWindow;
+  rebootTidal?: BrowserWindow;
+  aboutTidal?: BrowserWindow;
 }
 
 class ElectronMenu extends EventEmitter<MenuEvents> {
@@ -75,6 +78,15 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
       click: (_, window) => this.emit("saveAsFile", window),
     });
     fileMenu.submenu?.append(this.saveAsItem);
+
+    fileMenu.submenu?.append(new MenuItem({ type: "separator" }));
+
+    fileMenu.submenu?.append(
+      new MenuItem({
+        label: "Settings",
+        click: (_, window) => this.emit("settings", window),
+      })
+    );
 
     fileMenu.submenu?.append(new MenuItem({ type: "separator" }));
 
@@ -182,7 +194,21 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
     this.menu.append(new MenuItem({ role: "viewMenu" }));
 
     // Window Menu
-    // this.menu.append(new MenuItem({ role: "windowMenu" }));
+    this.menu.append(new MenuItem({ role: "windowMenu" }));
+
+    this.menu.append(
+      new MenuItem({
+        label: "Tidal",
+        submenu: [
+          {
+            label: "Reboot Tidal",
+            click: (_, window) => this.emit("rebootTidal", window),
+          },
+          // { type: "separator" },
+          // { label: "About", click: () => {} },
+        ],
+      })
+    );
 
     // Help Menu
     this.menu.append(
