@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tidal boot options (#59)
 - Tidal menu for rebooting (#54)
 - Indicator for current cycle
+- Auto-update mechanism
 
 ### Changed
 
