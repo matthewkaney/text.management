@@ -6,6 +6,10 @@ import fixPath from "fix-path";
 
 fixPath();
 
+import { autoUpdater } from "electron-updater";
+
+autoUpdater.checkForUpdatesAndNotify();
+
 import { GHCI } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
