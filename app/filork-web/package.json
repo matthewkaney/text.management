@@ -1,6 +1,6 @@
 {
   "name": "@management/text-management-filork-web",
-  "version": "0.9.0",
+  "version": "0.8.0",
   "private": "true",
   "scripts": {
     "start": "parcel src/index.html",
