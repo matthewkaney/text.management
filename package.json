@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "jest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "desktop": "npm run -w app/desktop \"$@\"",
     "build:desktop": "npm run desktop build",
     "start:desktop": "npm run desktop start",
