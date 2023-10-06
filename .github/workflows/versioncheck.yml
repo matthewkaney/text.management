@@ -33,6 +33,7 @@ jobs:
               for (let release of data) {
                 console.log(release.tag_name);
                 console.log(release.draft);
+                console.log(process.env.version);
                 if (release.draft && release.tag_name === process.env.version) {
                   return true;
                 }
