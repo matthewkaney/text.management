@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tidal boot options (#59)
 - Tidal menu for rebooting (#54)
 - Indicator for current cycle
-- Auto-update mechanism
+- Auto-update mechanismm
+- Added RPM build for Fedora/RedHat/etc
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Opening an already-open file doesn't open a second copy of it (#57)
+- Linux installations should have icons now (#52)
 
 ## [0.8.0] - 2023-07-11
 

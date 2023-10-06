@@ -227,7 +227,7 @@ export class GHCI extends Engine<GHCIEvents> {
   async send(text: string) {
     text = text
       .split(/(?<=\r?\n)/)
-      .filter((line) => this.inputFilters.some((filter) => line.match(filter)))
+      .filter((line) => !this.inputFilters.some((filter) => line.match(filter)))
       .join("");
     (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }

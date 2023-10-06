@@ -10,6 +10,7 @@ module.exports = {
   linux: {
     category: "Development",
     target: ["deb", "rpm", "AppImage"],
+    icon: "resources/icons",
   },
   mac: {
     category: "public.app-category.developer-tools",
@@ -25,7 +26,7 @@ module.exports = {
   win: {
     artifactName: "${name}-setup-${version}.${ext}",
   },
-  files: ["./build/**/*"],
+  files: ["./build/**/*", "./resources/**/*"],
   npmRebuild: false,
   extraMetadata: {
     name: "text.management",
