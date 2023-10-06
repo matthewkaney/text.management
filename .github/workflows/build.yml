@@ -25,7 +25,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - run: echo ${{ needs.check-version.outputs.unreleased }}
       - uses: actions/checkout@v3
       - if: matrix.os == 'macos-latest'
         name: Install the Apple certificate
