@@ -43,5 +43,6 @@ jobs:
               }
               throw e;
             }
+      - run: echo ${{ steps.release-info.outputs.result }}
       - if: ${{ ! steps.release-info.outputs.result }}
         run: echo "No draft release exists, skipping build step"
