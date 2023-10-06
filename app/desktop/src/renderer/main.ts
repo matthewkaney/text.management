@@ -16,6 +16,8 @@ import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 import { ConsoleMessage } from "packages/codemirror/console/src";
 
+import { injectHighlights } from "./injectHighlights";
+
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
@@ -62,7 +64,10 @@ export class Editor {
                 doc,
                 extensions: [
                   tidal(),
-                  evaluation(api.evaluate),
+                  evaluation((code) => {
+                    injectHighlights(code);
+                    api.evaluate(code);
+                  }),
                   basicSetup,
                   oneDark,
                   fileSync(
