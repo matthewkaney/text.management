@@ -1,4 +1,4 @@
-export function __resolveWrite(path: string) {}
+export function mkdir(path: string, options?: any) {}
 
 const readResolutions: Map<string, (content: string) => void> = new Map();
 
@@ -18,3 +18,5 @@ export function __resolveRead(path: string, content: string) {
 }
 
 export function writeFile(path: string, content: string) {}
+
+export function __resolveWrite(path: string) {}

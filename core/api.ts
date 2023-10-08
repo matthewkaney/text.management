@@ -2,8 +2,6 @@ import { BehaviorSubject, Observable } from "rxjs";
 
 import { Text } from "@codemirror/state";
 
-import { EventEmitter } from "./events";
-
 export interface DocumentUpdate {
   version: number;
   clientID: string;

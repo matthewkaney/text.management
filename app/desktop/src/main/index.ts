@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow } from "electron";
 
 import { resolve } from "path";
 
@@ -6,16 +6,20 @@ import fixPath from "fix-path";
 
 fixPath();
 
+import { autoUpdater } from "electron-updater";
+
+autoUpdater.checkForUpdatesAndNotify();
+
 import { GHCI } from "@management/lang-tidal";
-import { Filesystem, DesktopDocument } from "./filesystem";
+import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
-import { getTemplate } from "./menu";
+import { menu } from "./menu";
 
 const filesystem = new Filesystem();
 
 const createWindow = () => {
-  const win = new BrowserWindow({
+  const window = new BrowserWindow({
     show: false,
     width: 800,
     height: 600,
@@ -24,14 +28,13 @@ const createWindow = () => {
     },
   });
 
-  const tidal = new GHCI();
+  const tidal = new GHCI(resolve(app.getPath("userData")));
 
-  // TODO: IMPLEMENT
   let listeners: (() => void)[] = [];
   let docsListeners: { [id: string]: typeof listeners } = {};
 
-  win.on("ready-to-show", () => {
-    const [send, listen] = wrapIPC(win.webContents);
+  window.on("ready-to-show", () => {
+    const [send, listen] = wrapIPC(window.webContents);
 
     listeners.push(
       listen("current", ({ id }) => {
@@ -41,11 +44,11 @@ const createWindow = () => {
 
     // Attach file handlers
     listeners.push(
-      filesystem.on("open", ({ id, document }) => {
+      filesystem.on("open", (document) => {
+        let { id, path, content, saved } = document;
+
         let docListeners: typeof listeners = [];
         docsListeners[id] = docListeners;
-
-        let { path, content, saved } = document;
 
         send("open", { id, path });
 
@@ -66,7 +69,7 @@ const createWindow = () => {
 
         docListeners.push(
           document.on("status", (status) => {
-            win.webContents.send("status", { withID: id, content: status });
+            send("status", { withID: id, content: status });
           })
         );
 
@@ -81,13 +84,19 @@ const createWindow = () => {
     );
 
     listeners.push(
+      filesystem.on("setCurrent", (id) => {
+        send("setCurrent", { id });
+      })
+    );
+
+    listeners.push(
       listen("requestClose", async ({ id }) => {
         let document = filesystem.getDoc(id);
 
         if (!document) throw Error("Tried to close a non-existent document");
 
         if (!document.saved) {
-          let { response } = await dialog.showMessageBox(win, {
+          let { response } = await dialog.showMessageBox(window, {
             type: "warning",
             message: "Do you want to save your changes?",
             buttons: ["Save", "Don't Save", "Cancel"],
@@ -101,7 +110,7 @@ const createWindow = () => {
             if (document.path) {
               document.save();
             } else {
-              let { canceled, filePath } = await dialog.showSaveDialog(win);
+              let { canceled, filePath } = await dialog.showSaveDialog(window);
 
               if (!canceled && filePath) {
                 document.save(filePath);
@@ -127,8 +136,32 @@ const createWindow = () => {
     );
 
     listeners.push(
+      menu.on("rebootTidal", () => {
+        tidal.restart();
+      })
+    );
+
+    listeners.push(
+      menu.on("settings", async () => {
+        let settingsDoc = filesystem.loadDoc(tidal.settingsPath, "{}");
+
+        settingsDoc.on("status", ({ saved }) => {
+          if (saved === true) {
+            tidal.reloadSettings();
+          }
+        });
+      })
+    );
+
+    listeners.push(
       tidal.on("message", (message) => {
         send("console", message);
+      })
+    );
+
+    listeners.push(
+      tidal.on("now", (now) => {
+        send("tidalNow", now);
       })
     );
 
@@ -136,12 +169,12 @@ const createWindow = () => {
     filesystem.loadDoc();
 
     // Show the window
-    win.show();
+    window.show();
   });
 
-  win.loadFile("./build/renderer/index.html");
+  window.loadFile("./build/renderer/index.html");
 
-  win.on("closed", () => {
+  window.on("closed", () => {
     for (let listener of listeners) {
       listener();
     }
@@ -167,15 +200,17 @@ app.whenReady().then(() => {
 });
 
 // app.on("window-all-closed", () => {
-//   if (process.platform !== "darwin") app.quit();
+//   if (process.platform !== "darwindow") app.quit();
 // });
 
 import { dialog } from "electron";
 
+menu.on("newFile", newFile);
 async function newFile() {
   filesystem.loadDoc();
 }
 
+menu.on("openFile", openFile);
 async function openFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showOpenDialog(window, {
@@ -190,6 +225,7 @@ async function openFile(window?: BrowserWindow) {
   }
 }
 
+menu.on("saveFile", saveFile);
 async function saveFile(window?: BrowserWindow) {
   if (window) {
     if (filesystem.currentDoc) {
@@ -202,6 +238,7 @@ async function saveFile(window?: BrowserWindow) {
   }
 }
 
+menu.on("saveAsFile", saveAsFile);
 async function saveAsFile(window?: BrowserWindow) {
   if (window) {
     let result = await dialog.showSaveDialog(window);
@@ -214,6 +251,52 @@ async function saveAsFile(window?: BrowserWindow) {
   }
 }
 
+menu.on("close", (window?: BrowserWindow) => {
+  close({ window });
+});
+interface CloseOptions {
+  window?: BrowserWindow;
+  id?: string | null;
+}
+async function close({ window, id }: CloseOptions) {
+  if (!window) return;
+
+  let [send] = wrapIPC(window.webContents);
+
+  id = id ?? filesystem.currentDocID;
+  let document = id ? filesystem.getDoc(id) : filesystem.currentDoc;
+
+  if (!id || !document) throw Error("Tried to close a non-existent document");
+
+  if (!document.saved) {
+    let { response } = await dialog.showMessageBox(window, {
+      type: "warning",
+      message: "Do you want to save your changes?",
+      buttons: ["Save", "Don't Save", "Cancel"],
+    });
+
+    // Cancelled
+    if (response === 2) return;
+
+    // Save
+    if (response === 0) {
+      if (document.path) {
+        document.save();
+      } else {
+        let { canceled, filePath } = await dialog.showSaveDialog(window);
+
+        if (!canceled && filePath) {
+          document.save(filePath);
+        }
+      }
+    }
+  }
+
+  // We're done here, so close the file
+  send("close", { id });
+}
+
+menu.on("about", showAbout);
 function showAbout(window?: BrowserWindow) {
   if (window) {
     let [send] = wrapIPC(window.webContents);
@@ -221,64 +304,7 @@ function showAbout(window?: BrowserWindow) {
   }
 }
 
-let menuTemplate = getTemplate({
-  newFile,
-  openFile,
-  saveFile,
-  saveAsFile,
-  showAbout,
+menu.currentDoc = filesystem.currentDoc;
+filesystem.on("current", (doc) => {
+  menu.currentDoc = doc;
 });
-let mainMenu = Menu.buildFromTemplate(menuTemplate);
-
-Menu.setApplicationMenu(mainMenu);
-
-// TODO: Get a better reference to these menu items so it doesn't require the typecast
-let saveItem = mainMenu.getMenuItemById("save") as Electron.MenuItem;
-let saveAsItem = mainMenu.getMenuItemById("saveAs") as Electron.MenuItem;
-
-let untrackDocument: (() => void) | null = null;
-
-function updateSaveMenu(document: DesktopDocument | null) {
-  if (untrackDocument) {
-    untrackDocument();
-    untrackDocument = null;
-  }
-
-  if (document) {
-    const trackSaveState = () => {
-      saveItem.enabled = document.saved !== true;
-      saveAsItem.enabled = true;
-
-      let unStatus = document.on("status", () => {
-        saveItem.enabled = document.saved !== true;
-      });
-      let unUpdate = document.on("update", () => {
-        saveItem.enabled = document.saved !== true;
-      });
-
-      if (untrackDocument) untrackDocument();
-
-      untrackDocument = () => {
-        unStatus();
-        unUpdate();
-      };
-    };
-
-    if (document.content) {
-      trackSaveState();
-    } else {
-      saveItem.enabled = false;
-      saveAsItem.enabled = false;
-
-      untrackDocument = document.once("loaded", () => {
-        trackSaveState();
-      });
-    }
-  } else {
-    saveItem.enabled = false;
-    saveAsItem.enabled = false;
-  }
-}
-
-updateSaveMenu(filesystem.currentDoc);
-filesystem.on("current", updateSaveMenu);

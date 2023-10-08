@@ -26,15 +26,23 @@ jobs:
         with:
           script: |
             try {
-              const { data } = await github.rest.repos.getReleaseByTag(
-                { owner: "mindofmatthew", repo: "text.management", tag: process.env.version }
+              const { data } = await github.rest.repos.listReleases(
+                { owner: "mindofmatthew", repo: "text.management" }
               );
-              return data.draft;
+
+              for (let release of data) {
+                console.log(release.tag_name);
+                console.log(release.draft);
+                console.log(process.env.version);
+                if (release.draft && release.tag_name === ("v" + process.env.version)) {
+                  return true;
+                }
+              }
+
+              return false;
             } catch (e) {
               if (e.status === 404) {
                 return false;
               }
               throw e;
             }
-      - if: ${{ ! steps.release-info.outputs.result }}
-        run: echo "No draft release exists, skipping build step"
