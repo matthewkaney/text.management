@@ -69,9 +69,13 @@ export class GHCI extends Engine<GHCIEvents> {
       socket.on("message", (data) => {
         let message = parse(data);
 
-        if ("address" in message && message.address === "/now") {
-          if (typeof message.args[0] === "number") {
-            this.emit("now", message.args[0]);
+        if ("address" in message) {
+          if (message.address === "/now") {
+            if (typeof message.args[0] === "number") {
+              this.emit("now", message.args[0]);
+            }
+          } else if (message.address === "/highlight") {
+            console.log(`Highlight: ${message.args}`);
           }
         }
       });
