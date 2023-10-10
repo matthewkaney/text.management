@@ -16,6 +16,7 @@ import { Engine } from "../core/engine";
 import { TidalSettings, normalizeTidalSettings } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
+import { EventEmitter } from "@core/events";
 
 interface GHCIEvents {
   message: TerminalMessage;
@@ -78,23 +79,32 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
+  private wrapper: ProcessWrapper | null = null;
+
   private async initProcess() {
-    const {
+    let {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
     } = await this.settings;
     const port = (await this.socket).address().port.toString();
 
+    // TEMPORARY:
+    disableEditorIntegration = true;
+    useDefaultBootfile = false;
+    bootFiles = [];
+
     // Add filters for prettier code
     this.inputFilters.push(/^\s*:set\s+prompt.*/);
 
-    this.outputFilters.push(
-      /^Loaded package environment from \S+$/,
-      /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
-      /^ghc: signal: 15$/,
-      /^Leaving GHCi\.$/
-    );
+    // this.outputFilters.push(
+    //   /^Loaded package environment from \S+$/,
+    //   /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
+    //   /^ghc: signal: 15$/,
+    //   /^Leaving GHCi\.$/
+    // );
+
+    // let stdout = new ReadableStream();
 
     const child = spawn("ghci", ["-XOverloadedStrings"], {
       env: {
@@ -103,7 +113,9 @@ export class GHCI extends Engine<GHCIEvents> {
       },
     });
 
-    this.initInterfaces(child);
+    this.wrapper = new ProcessWrapper(child);
+
+    // this.initInterfaces(child);
 
     if (!disableEditorIntegration) {
       this.outputFilters.push(
@@ -136,9 +148,9 @@ export class GHCI extends Engine<GHCIEvents> {
       }
     }
 
-    child.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
+    // child.on("close", (code) => {
+    //   console.log(`child process exited with code ${code}`);
+    // });
 
     return child;
   }
@@ -147,63 +159,73 @@ export class GHCI extends Engine<GHCIEvents> {
   private outputFilters: RegExp[] = [];
 
   private initInterfaces(child: ChildProcessWithoutNullStreams) {
-    const out = createInterface({ input: child.stdout });
-    const err = createInterface({ input: child.stderr });
+    // const out = createInterface({ input: child.stdout });
+    // const err = createInterface({ input: child.stderr });
 
     let outBatch: string[] | null = null;
     let errBatch: string[] | null = null;
 
-    out.on("line", (data) => {
-      if (!data.endsWith("> ")) {
-        if (this.outputFilters.some((filter) => data.match(filter))) return;
+    child.stdout.setEncoding("utf-8");
 
-        if (outBatch) {
-          outBatch.push(data);
-        } else {
-          outBatch = [data];
-
-          setTimeout(() => {
-            if (outBatch) {
-              let m: TerminalMessage = {
-                level: "info",
-                source: "Tidal",
-                text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
-              };
-
-              outBatch = null;
-
-              this.history.push(m);
-              this.emit("message", m);
-            }
-          }, 20);
-        }
+    const listen = async () => {
+      for await (let chunk of child.stdout) {
+        this.emit("message", { level: "info", source: "Tidal", text: chunk });
       }
-    });
+    };
 
-    err.on("line", (data) => {
-      if (data !== "") {
-        if (errBatch) {
-          errBatch.push(data);
-        } else {
-          errBatch = [data];
+    listen();
 
-          setTimeout(() => {
-            if (errBatch) {
-              let m: TerminalMessage = {
-                level: "error",
-                source: "Tidal",
-                text: errBatch.join("\n"),
-              };
+    // out.on("line", (data) => {
+    //   if (!data.endsWith("> ")) {
+    //     if (this.outputFilters.some((filter) => data.match(filter))) return;
 
-              errBatch = null;
+    //     if (outBatch) {
+    //       outBatch.push(data);
+    //     } else {
+    //       outBatch = [data];
 
-              this.history.push(m);
-              this.emit("message", m);
-            }
-          }, 20);
-        }
-      }
-    });
+    //       setTimeout(() => {
+    //         if (outBatch) {
+    //           let m: TerminalMessage = {
+    //             level: "info",
+    //             source: "Tidal",
+    //             text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
+    //           };
+
+    //           outBatch = null;
+
+    //           this.history.push(m);
+    //           this.emit("message", m);
+    //         }
+    //       }, 20);
+    //     }
+    //   }
+    // });
+
+    // err.on("line", (data) => {
+    //   if (data !== "") {
+    //     if (errBatch) {
+    //       errBatch.push(data);
+    //     } else {
+    //       errBatch = [data];
+
+    //       setTimeout(() => {
+    //         if (errBatch) {
+    //           let m: TerminalMessage = {
+    //             level: "error",
+    //             source: "Tidal",
+    //             text: errBatch.join("\n"),
+    //           };
+
+    //           errBatch = null;
+
+    //           this.history.push(m);
+    //           this.emit("message", m);
+    //         }
+    //       }, 20);
+    //     }
+    //   }
+    // });
   }
 
   private async defaultBootfile() {
@@ -224,12 +246,21 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
-  async send(text: string) {
-    text = text
-      .split(/(?<=\r?\n)/)
-      .filter((line) => !this.inputFilters.some((filter) => line.match(filter)))
-      .join("");
-    (await this.process).stdin.write(`:{\n${text}\n:}\n`);
+  async send(code: string) {
+    if (!this.wrapper)
+      throw Error("Can't evaluate code before process is started");
+
+    let text = (await this.wrapper.send(code)) ?? "<No output>";
+
+    let message: TerminalMessage = { text, level: "info", source: "Tidal" };
+    this.emit("message", message);
+    this.history.push(message);
+
+    // text = text
+    //   .split(/(?<=\r?\n)/)
+    //   .filter((line) => !this.inputFilters.some((filter) => line.match(filter)))
+    //   .join("");
+    // (await this.process).stdin.write(`:{\n${text}\n:}\n`);
   }
 
   async loadFile(path: string, child: ChildProcessWithoutNullStreams) {
@@ -313,5 +344,138 @@ export class GHCI extends Engine<GHCIEvents> {
     this.process = this.initProcess();
     await this.process;
     this.emit("started", undefined);
+  }
+}
+
+import { EOL } from "os";
+
+interface ProcessWrapperEvents {
+  prologue: string;
+  prompt: string;
+  epilogue: string;
+}
+
+class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
+  private processQueue: Promise<string | null>;
+
+  protected prompt: RegExp = /^ghci> $/;
+
+  constructor(private child: ChildProcessWithoutNullStreams) {
+    super();
+
+    child.stdout.setEncoding("utf-8");
+    child.stderr.setEncoding("utf-8");
+
+    this.processQueue = this.init();
+
+    this.consumeStdout();
+    this.consumeStderr();
+  }
+
+  private out: string[] = [];
+  private error: string[] = [];
+
+  private async init() {
+    // Get prologue
+    await this.next("prompt");
+
+    console.log(`===PROLOGUE===\n${this.out.join("\n")}\n==============`);
+    this.out = [];
+
+    this.prompt = /^\uE000|\uE001$/;
+    await this.evaluate(':set prompt "\uE000"');
+    await this.evaluate(':set prompt-cont "\uE001"');
+
+    return null;
+  }
+
+  private async evaluate(code: string) {
+    let nextPrompt = this.next("prompt");
+
+    this.child.stdin.write(code + EOL);
+
+    let prompt = await nextPrompt;
+
+    let result: string | null = null;
+
+    if (this.out.length > 0) {
+      result = this.out.join(EOL);
+      this.out = [];
+    }
+
+    if (this.error.length > 1) {
+      result = this.error.slice(1).join(EOL);
+      this.error = [];
+    }
+
+    return result;
+  }
+
+  private async consumeStdout() {
+    let runningLine: string = "";
+    let chunk: string;
+
+    for await (chunk of this.child.stdout) {
+      console.log(`CHUNK: ${chunk}`);
+      let splits = chunk.split(EOL);
+      let lines = splits.slice(0, -1);
+      let [remainder] = splits.slice(-1);
+
+      // Figure out where runningLine should be prepended
+      if (lines.length > 0) {
+        lines[0] = runningLine + lines[0];
+      } else {
+        remainder = runningLine + remainder;
+      }
+
+      runningLine = "";
+
+      // Push any full lines onto the output
+      this.out.push(...lines);
+
+      // Check if remainder is a prompt
+      if (typeof remainder === "string") {
+        console.log(`REMAINDER: ${remainder}`);
+        if (this.prompt.test(remainder)) {
+          this.emit("prompt", remainder);
+        } else {
+          // We have some non-line, non-prompt characters. Save them for later.
+          runningLine = remainder;
+        }
+      }
+    }
+  }
+
+  private async consumeStderr() {
+    let runningLine: string = "";
+    let chunk: string;
+
+    for await (chunk of this.child.stderr) {
+      console.log(`ERROR CHUNK: ${chunk}`);
+      let splits = chunk.split(EOL);
+      let lines = splits.slice(0, -1);
+      let [remainder] = splits.slice(-1);
+
+      // Figure out where runningLine should be prepended
+      if (lines.length > 0) {
+        lines[0] = runningLine + lines[0];
+      } else {
+        remainder = runningLine + remainder;
+      }
+
+      runningLine = "";
+
+      // Push any full lines onto the output
+      this.error.push(...lines);
+
+      // We have some non-line characters. Save them for later.
+      runningLine = remainder;
+    }
+  }
+
+  public send(code: string) {
+    console.log(`SEND: ${code}`);
+    this.processQueue = this.processQueue.then(() => this.evaluate(code));
+    return this.processQueue;
   }
 }
