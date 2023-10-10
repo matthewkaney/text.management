@@ -90,6 +90,12 @@ const createWindow = () => {
     );
 
     listeners.push(
+      listen("newTab", () => {
+        filesystem.loadDoc();
+      })
+    )
+
+    listeners.push(
       listen("requestClose", async ({ id }) => {
         let document = filesystem.getDoc(id);
 
