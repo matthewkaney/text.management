@@ -2,10 +2,11 @@ import { LayoutTransaction, TabState, focusCurrent } from "./state";
 import { LayoutView, TabView } from "./view";
 
 import { icon } from "@fortawesome/fontawesome-svg-core";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 export class TabBar {
   readonly dom: HTMLDivElement;
+  readonly newTabButton: NewTabButton;
 
   private children: Map<string, TabButton> = new Map();
 
@@ -45,6 +46,8 @@ export class TabBar {
         currentButton.focus();
       }
     });
+
+    this.newTabButton = new NewTabButton(this.parent) 
   }
 
   update(tr: LayoutTransaction) {
@@ -66,10 +69,27 @@ export class TabBar {
       }
     }
 
+    this.dom.appendChild(this.newTabButton.dom);
+
     // Update tab buttons
     for (let [_, child] of this.children) {
       child.update(tr);
     }
+  }
+}
+
+class NewTabButton {
+  readonly dom: HTMLButtonElement;
+
+  constructor(private parent: LayoutView) {
+    this.dom = document.createElement("button");
+    this.dom.classList.add("new-tab-button");
+    this.dom.append(
+      ...icon(faPlus, { attributes: { "aria-hidden": "true" } }).node
+    );
+    this.dom.addEventListener("click", () => {
+      this.parent.newTab();
+    })
   }
 }
 

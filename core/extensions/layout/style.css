@@ -101,3 +101,7 @@ outline: none;
   background: orange;
   color: var(--col-background);
 }
+
+.new-tab-button {
+  background: orange;
+}
