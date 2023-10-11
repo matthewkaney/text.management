@@ -110,10 +110,12 @@ export class GHCI extends Engine<GHCIEvents> {
       //   /package flags have changed, resetting and loading new packages\.\.\./
       // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
-      this.sendFile(integrationCode);
+      await this.sendFile(integrationCode);
 
       // Disable reloading of Sound.Tidal.Context since it's already loaded
-      // this.inputFilters.push(/^\s*import\s+Sound\.Tidal\.Context.*/);
+      this.wrapper.addInputFilter(
+        `^${space}*import${space}+Sound\\.Tidal\\.Context.*(?:${EOL})?`
+      );
     }
 
     if (useDefaultBootfile) {
@@ -273,18 +275,14 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     await this.evaluate(':set prompt "\uE000"');
     await this.evaluate(':set prompt-cont ""');
 
-    this.inputFilters.push(/^\s*:set\s+prompt.*/);
+    this.addInputFilter(`^${space}*:set${space}+prompt.*(?:${EOL})?`);
 
     return null;
   }
 
   private async evaluate(code: string) {
-    if (this.inputFilters.some((filter) => filter.test(code))) {
-      return {
-        level: "info",
-        text: "<No Output>",
-        source: "Tidal",
-      } as TerminalMessage;
+    for (let filter of this.inputFilters) {
+      code = code.replaceAll(filter, "");
     }
 
     let nextPrompt = this.next("prompt");
@@ -418,6 +416,10 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let process = this.processQueue.then(() => this.evaluate(code));
     this.processQueue = process;
     return process;
+  }
+
+  public addInputFilter(filter: string | RegExp) {
+    this.inputFilters.push(new RegExp(filter, "g"));
   }
 }
 
