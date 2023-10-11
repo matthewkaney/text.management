@@ -87,9 +87,6 @@ export class GHCI extends Engine<GHCIEvents> {
     // TEMPORARY:
     bootFiles = [];
 
-    // Add filters for prettier code
-    this.inputFilters.push(/^\s*:set\s+prompt.*/);
-
     // this.outputFilters.push(
     //   /^Loaded package environment from \S+$/,
     //   /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
@@ -146,7 +143,6 @@ export class GHCI extends Engine<GHCIEvents> {
     return child;
   }
 
-  private inputFilters: RegExp[] = [];
   private outputFilters: RegExp[] = [];
 
   private async defaultBootfile() {
@@ -171,7 +167,10 @@ export class GHCI extends Engine<GHCIEvents> {
     if (!this.wrapper)
       throw Error("Can't evaluate code before process is started");
 
-    await this.wrapper.sendFile(code);
+    await this.wrapper.sendFile(code, (message) => {
+      this.emit("message", message);
+      this.history.push(message);
+    });
   }
 
   async send(code: string) {
@@ -225,9 +224,6 @@ export class GHCI extends Engine<GHCIEvents> {
   async restart() {
     await this.close();
 
-    this.inputFilters = [];
-    this.outputFilters = [];
-
     this.process = this.initProcess();
     await this.process;
     this.emit("started", undefined);
@@ -262,6 +258,8 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
   private out: string[] = [];
   private error: string[] = [];
 
+  private inputFilters: RegExp[] = [];
+
   private async init() {
     // Get prologue
     await this.next("prompt");
@@ -275,11 +273,23 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     await this.evaluate(':set prompt "\uE000"');
     await this.evaluate(':set prompt-cont ""');
 
+    this.inputFilters.push(/^\s*:set\s+prompt.*/);
+
     return null;
   }
 
   private async evaluate(code: string) {
+    if (this.inputFilters.some((filter) => filter.test(code))) {
+      return {
+        level: "info",
+        text: "<No Output>",
+        source: "Tidal",
+      } as TerminalMessage;
+    }
+
     let nextPrompt = this.next("prompt");
+
+    console.log(`EVALUATE: "${code}"`);
 
     this.child.stdin.write(code + EOL);
 
@@ -301,6 +311,8 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
       this.error = [];
     }
 
+    console.log(`${result.level.toUpperCase()}: ${result.text}`);
+
     return result;
   }
 
@@ -309,6 +321,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stdout) {
+      console.log(`CHUNK: "${chunk}"`);
       let splits = chunk.split(EOL);
       let lines = splits.slice(0, -1);
       let [remainder] = splits.slice(-1);
@@ -349,6 +362,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stderr) {
+      console.log(`ERROR CHUNK: "${chunk}"`);
       let splits = chunk.split(EOL);
       let lines = splits.slice(0, -1);
       let [remainder] = splits.slice(-1);
@@ -370,7 +384,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     }
   }
 
-  public sendFile(code: string) {
+  public sendFile(code: string, callback: (message: TerminalMessage) => void) {
     let promises: Promise<TerminalMessage>[] = [];
 
     while (code.length > 0) {
@@ -383,7 +397,12 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
       let [{ length }, matchCode] = match;
 
-      promises.push(this.send(matchCode));
+      promises.push(
+        this.send(matchCode).then((message) => {
+          callback(message);
+          return message;
+        })
+      );
 
       code = code.slice(length);
     }
@@ -392,7 +411,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
   }
 
   public send(code: string) {
-    if (code.split(EOL).length > 0 && !multilineRegExp.test(code)) {
+    if (code.split(EOL).length > 1 && !multilineRegExp.test(code)) {
       code = `:{${EOL}${code}${EOL}:}`;
     }
 
