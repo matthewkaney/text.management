@@ -1,12 +1,7 @@
 import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
-//@ts-ignore
-import { Duplex, compose } from "stream";
-import { once } from "events";
-import { createInterface } from "readline";
 import { join } from "path";
-import { createReadStream } from "fs";
 import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
@@ -90,8 +85,6 @@ export class GHCI extends Engine<GHCIEvents> {
     const port = (await this.socket).address().port.toString();
 
     // TEMPORARY:
-    disableEditorIntegration = true;
-    useDefaultBootfile = false;
     bootFiles = [];
 
     // Add filters for prettier code
@@ -115,26 +108,24 @@ export class GHCI extends Engine<GHCIEvents> {
 
     this.wrapper = new ProcessWrapper(child);
 
-    // this.initInterfaces(child);
-
     if (!disableEditorIntegration) {
-      this.outputFilters.push(
-        /package flags have changed, resetting and loading new packages\.\.\./
-      );
+      // this.outputFilters.push(
+      //   /package flags have changed, resetting and loading new packages\.\.\./
+      // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
-      child.stdin.write(integrationCode);
+      this.sendFile(integrationCode);
 
       // Disable reloading of Sound.Tidal.Context since it's already loaded
-      this.inputFilters.push(/^\s*import\s+Sound\.Tidal\.Context.*/);
+      // this.inputFilters.push(/^\s*import\s+Sound\.Tidal\.Context.*/);
     }
 
     if (useDefaultBootfile) {
-      await this.loadFile(await this.defaultBootfile(), child);
+      this.sendFile(await readFile(await this.defaultBootfile(), "utf-8"));
     }
 
     for (let path of bootFiles) {
       try {
-        await this.loadFile(path, child);
+        this.sendFile(await readFile(path, "utf-8"));
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;
@@ -158,76 +149,6 @@ export class GHCI extends Engine<GHCIEvents> {
   private inputFilters: RegExp[] = [];
   private outputFilters: RegExp[] = [];
 
-  private initInterfaces(child: ChildProcessWithoutNullStreams) {
-    // const out = createInterface({ input: child.stdout });
-    // const err = createInterface({ input: child.stderr });
-
-    let outBatch: string[] | null = null;
-    let errBatch: string[] | null = null;
-
-    child.stdout.setEncoding("utf-8");
-
-    const listen = async () => {
-      for await (let chunk of child.stdout) {
-        this.emit("message", { level: "info", source: "Tidal", text: chunk });
-      }
-    };
-
-    listen();
-
-    // out.on("line", (data) => {
-    //   if (!data.endsWith("> ")) {
-    //     if (this.outputFilters.some((filter) => data.match(filter))) return;
-
-    //     if (outBatch) {
-    //       outBatch.push(data);
-    //     } else {
-    //       outBatch = [data];
-
-    //       setTimeout(() => {
-    //         if (outBatch) {
-    //           let m: TerminalMessage = {
-    //             level: "info",
-    //             source: "Tidal",
-    //             text: outBatch.join("\n").replace(/^(?:ghci[|>] )*/, ""),
-    //           };
-
-    //           outBatch = null;
-
-    //           this.history.push(m);
-    //           this.emit("message", m);
-    //         }
-    //       }, 20);
-    //     }
-    //   }
-    // });
-
-    // err.on("line", (data) => {
-    //   if (data !== "") {
-    //     if (errBatch) {
-    //       errBatch.push(data);
-    //     } else {
-    //       errBatch = [data];
-
-    //       setTimeout(() => {
-    //         if (errBatch) {
-    //           let m: TerminalMessage = {
-    //             level: "error",
-    //             source: "Tidal",
-    //             text: errBatch.join("\n"),
-    //           };
-
-    //           errBatch = null;
-
-    //           this.history.push(m);
-    //           this.emit("message", m);
-    //         }
-    //       }, 20);
-    //     }
-    //   }
-    // });
-  }
-
   private async defaultBootfile() {
     const { stdout } = await promisify(exec)(
       'ghc -e "import Paths_tidal" -e "getDataDir>>=putStr"'
@@ -246,55 +167,21 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
+  async sendFile(code: string) {
+    if (!this.wrapper)
+      throw Error("Can't evaluate code before process is started");
+
+    await this.wrapper.sendFile(code);
+  }
+
   async send(code: string) {
     if (!this.wrapper)
       throw Error("Can't evaluate code before process is started");
 
-    let text = (await this.wrapper.send(code)) ?? "<No output>";
+    let message = await this.wrapper.send(code);
 
-    let message: TerminalMessage = { text, level: "info", source: "Tidal" };
     this.emit("message", message);
     this.history.push(message);
-
-    // text = text
-    //   .split(/(?<=\r?\n)/)
-    //   .filter((line) => !this.inputFilters.some((filter) => line.match(filter)))
-    //   .join("");
-    // (await this.process).stdin.write(`:{\n${text}\n:}\n`);
-  }
-
-  async loadFile(path: string, child: ChildProcessWithoutNullStreams) {
-    let inputFilters = this.inputFilters;
-    async function* process(source: AsyncIterable<string>) {
-      let remainder = "";
-
-      for await (let chunk of source) {
-        for (let line of chunk.split(/(?<=\r?\n)/)) {
-          line = remainder + line;
-          if (line.match(/.*?\r?\n$/)) {
-            if (!inputFilters.some((filter) => line.match(filter))) {
-              yield line;
-            }
-            remainder = "";
-          } else {
-            remainder = line;
-          }
-        }
-      }
-
-      yield remainder + "\n";
-    }
-
-    const fileStream = compose(
-      createReadStream(path).setEncoding("utf8"),
-      process
-    ) as Duplex;
-
-    let completion = once(fileStream, "close");
-
-    fileStream.pipe(child.stdin, { end: false });
-
-    await completion;
   }
 
   private version: Promise<string> | undefined;
@@ -356,9 +243,9 @@ interface ProcessWrapperEvents {
 }
 
 class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
-  private processQueue: Promise<string | null>;
+  private processQueue: Promise<TerminalMessage | null>;
 
-  protected prompt: RegExp = /^ghci> $/;
+  protected prompt = "ghci> ";
 
   constructor(private child: ChildProcessWithoutNullStreams) {
     super();
@@ -379,12 +266,14 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     // Get prologue
     await this.next("prompt");
 
-    console.log(`===PROLOGUE===\n${this.out.join("\n")}\n==============`);
-    this.out = [];
+    if (this.out.length > 0) {
+      this.emit("prologue", this.out.join(EOL));
+      this.out = [];
+    }
 
-    this.prompt = /^\uE000|\uE001$/;
+    this.prompt = "\uE000";
     await this.evaluate(':set prompt "\uE000"');
-    await this.evaluate(':set prompt-cont "\uE001"');
+    await this.evaluate(':set prompt-cont ""');
 
     return null;
   }
@@ -394,17 +283,21 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
     this.child.stdin.write(code + EOL);
 
-    let prompt = await nextPrompt;
+    await nextPrompt;
 
-    let result: string | null = null;
+    let result: TerminalMessage = {
+      level: "info",
+      text: "<No Output>",
+      source: "Tidal",
+    };
 
     if (this.out.length > 0) {
-      result = this.out.join(EOL);
+      result = { level: "info", text: this.out.join(EOL), source: "Tidal" };
       this.out = [];
     }
 
     if (this.error.length > 1) {
-      result = this.error.slice(1).join(EOL);
+      result = { level: "error", text: this.out.join(EOL), source: "Tidal" };
       this.error = [];
     }
 
@@ -416,7 +309,6 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stdout) {
-      console.log(`CHUNK: ${chunk}`);
       let splits = chunk.split(EOL);
       let lines = splits.slice(0, -1);
       let [remainder] = splits.slice(-1);
@@ -435,8 +327,14 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
       // Check if remainder is a prompt
       if (typeof remainder === "string") {
-        console.log(`REMAINDER: ${remainder}`);
-        if (this.prompt.test(remainder)) {
+        if (remainder.startsWith(this.prompt)) {
+          if (remainder !== this.prompt) {
+            // If remainder has any characters after prompt, throw error
+            throw Error(
+              `Process printed unexpected characters after input prompt: "${remainder}"`
+            );
+          }
+
           this.emit("prompt", remainder);
         } else {
           // We have some non-line, non-prompt characters. Save them for later.
@@ -451,7 +349,6 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stderr) {
-      console.log(`ERROR CHUNK: ${chunk}`);
       let splits = chunk.split(EOL);
       let lines = splits.slice(0, -1);
       let [remainder] = splits.slice(-1);
@@ -473,9 +370,50 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     }
   }
 
+  public sendFile(code: string) {
+    let promises: Promise<TerminalMessage>[] = [];
+
+    while (code.length > 0) {
+      let match = code.match(codeRegExp);
+
+      if (!match) throw Error(`Couldn't parse code:\n${code}`);
+
+      if (match.index !== 0)
+        throw Error(`Couldn't parse code:\n${code.slice(0, match.index)}`);
+
+      let [{ length }, matchCode] = match;
+
+      promises.push(this.send(matchCode));
+
+      code = code.slice(length);
+    }
+
+    return Promise.all(promises);
+  }
+
   public send(code: string) {
-    console.log(`SEND: ${code}`);
-    this.processQueue = this.processQueue.then(() => this.evaluate(code));
-    return this.processQueue;
+    if (code.split(EOL).length > 0 && !multilineRegExp.test(code)) {
+      code = `:{${EOL}${code}${EOL}:}`;
+    }
+
+    let process = this.processQueue.then(() => this.evaluate(code));
+    this.processQueue = process;
+    return process;
   }
 }
+
+const space = "[ \\t]";
+const bracketLine = (bracket: string) => `^${space}*:${bracket}${space}*$`;
+const nonBracketLine = (bracket: string) =>
+  `^${space}*(?:[^:\\s].*|:[^${bracket}${EOL}].*|:${bracket}.*\\S.*|:)?$`;
+const multiLineCode =
+  bracketLine("{") +
+  EOL +
+  `(?:${nonBracketLine("}")}${EOL})*` +
+  bracketLine("}");
+const singleLineCode = nonBracketLine("{");
+const codeRegExp = new RegExp(
+  `((?:${multiLineCode})|(?:${singleLineCode}))(?:${EOL})?`,
+  "m"
+);
+const multilineRegExp = new RegExp(multiLineCode, "m");
