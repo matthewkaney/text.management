@@ -1,8 +1,10 @@
 .cm-toolbar {
+  color: var(--col-text);
+  font-family: Fira Code, monospace;
   display: flex;
   justify-content: flex-end;
   padding: 0 18px;
-  border-top: solid 2px var(--col-bg-shadow-soft);
+  border-top: solid 2px var(--col-bg-shadow);
   line-height: 30px;
   font-size: 15.2724px;
   margin-top: -1px;

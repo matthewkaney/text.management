@@ -219,10 +219,6 @@ export const oneDarkTheme = EditorView.theme(
       {
         color: coral,
       },
-    ".cm-toolbar": {
-      background: col("bg-shadow-soft"),
-      borderTop: `solid 2px ${col("bg-shadow")}`,
-    },
 
     "*::-webkit-scrollbar-thumb": {
       backgroundColor: col("bg-shadow"),
