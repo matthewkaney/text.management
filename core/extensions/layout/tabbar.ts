@@ -84,6 +84,7 @@ class NewTabButton {
   constructor(private parent: LayoutView) {
     this.dom = document.createElement("button");
     this.dom.classList.add("new-tab-button");
+    this.dom.setAttribute("aria-label", "New Document");
     this.dom.append(
       ...icon(faPlus, { attributes: { "aria-hidden": "true" } }).node
     );
