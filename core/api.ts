@@ -26,6 +26,12 @@ export interface Tab {
   content: Promise<Document>;
 }
 
+export interface Evaluation {
+  input: string;
+  success: boolean;
+  result?: string;
+}
+
 export interface TerminalMessage {
   level: "info" | "error";
   source: string;

@@ -5,7 +5,7 @@ import { join } from "path";
 import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
-import { TerminalMessage } from "@core/api";
+import { Evaluation, TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
 import { TidalSettings, normalizeTidalSettings } from "./settings";
@@ -14,7 +14,7 @@ import { generateIntegrationCode } from "./editor-integration";
 import { EventEmitter } from "@core/events";
 
 interface GHCIEvents {
-  message: TerminalMessage;
+  message: TerminalMessage | Evaluation;
   now: number;
   openSettings: string;
 }
@@ -24,7 +24,7 @@ export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
-  private history: TerminalMessage[] = [];
+  private history: (TerminalMessage | Evaluation)[] = [];
 
   constructor(private extensionFolder: string) {
     super();
@@ -32,6 +32,10 @@ export class GHCI extends Engine<GHCIEvents> {
     this._settings = this.loadSettings();
     this.socket = this.initSocket();
     this.process = this.initProcess();
+
+    this.on("message", (message) => {
+      this.history.push(message);
+    });
 
     this.onListener["message"] = (listener) => {
       for (let message of this.history) {
@@ -110,21 +114,21 @@ export class GHCI extends Engine<GHCIEvents> {
       //   /package flags have changed, resetting and loading new packages\.\.\./
       // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
-      await this.sendFile(integrationCode);
+      await this.send(integrationCode);
 
       // Disable reloading of Sound.Tidal.Context since it's already loaded
       this.wrapper.addInputFilter(
-        `^${space}*import${space}+Sound\\.Tidal\\.Context.*(?:${EOL})?`
+        /^[ \t]*import[ \t]+Sound\.Tidal\.Context.*$/m
       );
     }
 
     if (useDefaultBootfile) {
-      this.sendFile(await readFile(await this.defaultBootfile(), "utf-8"));
+      this.sendFile(await this.defaultBootfile());
     }
 
     for (let path of bootFiles) {
       try {
-        this.sendFile(await readFile(path, "utf-8"));
+        this.sendFile(path);
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;
@@ -165,24 +169,19 @@ export class GHCI extends Engine<GHCIEvents> {
     });
   }
 
-  async sendFile(code: string) {
-    if (!this.wrapper)
-      throw Error("Can't evaluate code before process is started");
+  async sendFile(path: string) {
+    let code = await readFile(path, "utf-8");
 
-    await this.wrapper.sendFile(code, (message) => {
-      this.emit("message", message);
-      this.history.push(message);
-    });
+    await this.send(code);
   }
 
   async send(code: string) {
     if (!this.wrapper)
       throw Error("Can't evaluate code before process is started");
 
-    let message = await this.wrapper.send(code);
-
-    this.emit("message", message);
-    this.history.push(message);
+    for await (let evaluation of this.wrapper.send(code)) {
+      this.emit("message", evaluation);
+    }
   }
 
   private version: Promise<string> | undefined;
@@ -232,6 +231,7 @@ export class GHCI extends Engine<GHCIEvents> {
   }
 }
 
+import { extractStatements } from "./parse";
 import { EOL } from "os";
 
 interface ProcessWrapperEvents {
@@ -241,7 +241,7 @@ interface ProcessWrapperEvents {
 }
 
 class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
-  private processQueue: Promise<TerminalMessage | null>;
+  private runningProcess: Promise<void> | null = null;
 
   protected prompt = "ghci> ";
 
@@ -251,7 +251,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     child.stdout.setEncoding("utf-8");
     child.stderr.setEncoding("utf-8");
 
-    this.processQueue = this.init();
+    this.runningProcess = this.init();
 
     this.consumeStdout();
     this.consumeStderr();
@@ -275,16 +275,10 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     await this.evaluate(':set prompt "\uE000"');
     await this.evaluate(':set prompt-cont ""');
 
-    this.addInputFilter(`^${space}*:set${space}+prompt.*(?:${EOL})?`);
-
-    return null;
+    this.addInputFilter(/^[ \t]*:set[ \t]+prompt.*$/m);
   }
 
-  private async evaluate(code: string) {
-    for (let filter of this.inputFilters) {
-      code = code.replaceAll(filter, "");
-    }
-
+  private async evaluate(code: string): Promise<Evaluation> {
     let nextPrompt = this.next("prompt");
 
     console.log(`EVALUATE: "${code}"`);
@@ -293,25 +287,26 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
     await nextPrompt;
 
-    let result: TerminalMessage = {
-      level: "info",
-      text: "<No Output>",
-      source: "Tidal",
-    };
-
-    if (this.out.length > 0) {
-      result = { level: "info", text: this.out.join(EOL), source: "Tidal" };
-      this.out = [];
-    }
+    let input = code,
+      success = true,
+      result: string | undefined = undefined;
 
     if (this.error.length > 1) {
-      result = { level: "error", text: this.out.join(EOL), source: "Tidal" };
+      success = false;
+      result = this.error.join(EOL);
       this.error = [];
     }
 
-    console.log(`${result.level.toUpperCase()}: ${result.text}`);
+    if (this.out.length > 0) {
+      if (success) {
+        result = this.out.join(EOL);
+      } else {
+        throw Error(`Unexpected text on stdout: "${this.out.join(EOL)}"`);
+      }
+      this.out = [];
+    }
 
-    return result;
+    return { input, success, result };
   }
 
   private async consumeStdout() {
@@ -382,59 +377,41 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     }
   }
 
-  public sendFile(code: string, callback: (message: TerminalMessage) => void) {
-    let promises: Promise<TerminalMessage>[] = [];
+  public async *send(code: string) {
+    let resolve = () => {};
 
-    while (code.length > 0) {
-      let match = code.match(codeRegExp);
-
-      if (!match) throw Error(`Couldn't parse code:\n${code}`);
-
-      if (match.index !== 0)
-        throw Error(`Couldn't parse code:\n${code.slice(0, match.index)}`);
-
-      let [{ length }, matchCode] = match;
-
-      promises.push(
-        this.send(matchCode).then((message) => {
-          callback(message);
-          return message;
-        })
-      );
-
-      code = code.slice(length);
+    if (this.runningProcess !== null) {
+      await this.runningProcess;
     }
 
-    return Promise.all(promises);
-  }
+    this.runningProcess = new Promise<void>((res) => {
+      resolve = res;
+    }).then(() => {
+      this.runningProcess = null;
+    });
 
-  public send(code: string) {
-    if (code.split(EOL).length > 1 && !multilineRegExp.test(code)) {
-      code = `:{${EOL}${code}${EOL}:}`;
+    for (let statement of extractStatements(code)) {
+      for (let filter of this.inputFilters) {
+        statement = statement.replaceAll(filter, "");
+      }
+
+      // Check for empty statements post-filter
+      if (/^\s*$/.test(statement)) {
+        console.log("BREAK");
+        continue;
+      }
+
+      if (statement.split(EOL).length > 1) {
+        statement = `:{${EOL}${statement}${EOL}:}`;
+      }
+
+      yield this.evaluate(statement);
     }
 
-    let process = this.processQueue.then(() => this.evaluate(code));
-    this.processQueue = process;
-    return process;
+    resolve();
   }
 
-  public addInputFilter(filter: string | RegExp) {
-    this.inputFilters.push(new RegExp(filter, "g"));
+  public addInputFilter(filter: RegExp) {
+    this.inputFilters.push(new RegExp(filter, filter.flags + "g"));
   }
 }
-
-const space = "[ \\t]";
-const bracketLine = (bracket: string) => `^${space}*:${bracket}${space}*$`;
-const nonBracketLine = (bracket: string) =>
-  `^${space}*(?:[^:\\s].*|:[^${bracket}${EOL}].*|:${bracket}.*\\S.*|:)?$`;
-const multiLineCode =
-  bracketLine("{") +
-  EOL +
-  `(?:${nonBracketLine("}")}${EOL})*` +
-  bracketLine("}");
-const singleLineCode = nonBracketLine("{");
-const codeRegExp = new RegExp(
-  `((?:${multiLineCode})|(?:${singleLineCode}))(?:${EOL})?`,
-  "m"
-);
-const multilineRegExp = new RegExp(multiLineCode, "m");

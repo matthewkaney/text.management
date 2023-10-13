@@ -1,4 +1,4 @@
-import type { DocumentUpdate, TerminalMessage } from "@core/api";
+import type { DocumentUpdate, Evaluation, TerminalMessage } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
 
@@ -22,7 +22,7 @@ export interface ToRendererChannels {
   status: { withID: string; content: SavedStatus };
   setCurrent: { id: string };
   close: { id: string };
-  console: TerminalMessage;
+  console: TerminalMessage | Evaluation;
   tidalVersion: string;
   tidalNow: number;
   showAbout: string;

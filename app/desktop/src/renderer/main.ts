@@ -14,7 +14,7 @@ import { toolbar } from "@core/extensions/toolbar";
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
-import { ConsoleMessage } from "packages/codemirror/console/src";
+import { TerminalMessage, Evaluation } from "@core/api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -41,7 +41,7 @@ export class Editor {
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;
-    let tidalConsole: ConsoleMessage[] = [];
+    let tidalConsole: (TerminalMessage | Evaluation)[] = [];
 
     api.onTidalVersion((version) => {
       tidalVersion = version;

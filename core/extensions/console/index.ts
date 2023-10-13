@@ -1,18 +1,21 @@
 import { keymap, ViewPlugin } from "@codemirror/view";
 import {
-  ConsoleMessage,
   consoleState,
   sendToConsole,
   clearConsole,
   console as rootConsole,
+  ConsoleMessage,
 } from "@management/cm-console";
 
-import { ElectronAPI } from "@core/api";
+import { ElectronAPI, TerminalMessage, Evaluation } from "@core/api";
 
-export function console(api: typeof ElectronAPI, initial: ConsoleMessage[]) {
+export function console(
+  api: typeof ElectronAPI,
+  initial: (TerminalMessage | Evaluation)[]
+) {
   const consoleListener = ViewPlugin.define((view) => {
     const unlisten = api.onConsoleMessage((message) => {
-      view.dispatch(sendToConsole(view.state, message));
+      view.dispatch(sendToConsole(view.state, format(message)));
     });
 
     return {
@@ -23,9 +26,22 @@ export function console(api: typeof ElectronAPI, initial: ConsoleMessage[]) {
   });
 
   return [
-    consoleState.init(() => [...initial]),
+    consoleState.init(() => initial.map((m) => format(m))),
     consoleListener,
     rootConsole(),
     keymap.of([{ key: "Mod-`", run: clearConsole }]),
   ];
+}
+
+function format(message: TerminalMessage | Evaluation): ConsoleMessage {
+  if ("level" in message) {
+    return message;
+  } else {
+    let { input, success, result } = message;
+    return {
+      level: success ? "info" : "error",
+      source: "Tidal",
+      text: `> ${input}${typeof result === "string" ? `\n\n${result}` : ""}`,
+    };
+  }
 }
