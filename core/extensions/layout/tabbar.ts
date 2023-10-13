@@ -6,7 +6,7 @@ import { faPlus, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 export class TabBar {
   readonly dom: HTMLDivElement;
-  readonly newTabButton: NewTabButton;
+  newTabButton: NewTabButton;
 
   private children: Map<string, TabButton> = new Map();
 
@@ -48,6 +48,7 @@ export class TabBar {
     });
 
     this.newTabButton = new NewTabButton(this.parent) 
+    this.dom.appendChild(this.newTabButton.dom);
   }
 
   update(tr: LayoutTransaction) {
@@ -65,11 +66,11 @@ export class TabBar {
         let tab = new TabButton(this.parent, change.view);
         this.children.set(state.id, tab);
         // TODO: This assumes that all added tabs are added to the end
-        this.dom.appendChild(tab.dom);
+        // but before the new tab button
+        this.dom.insertBefore(tab.dom, this.newTabButton.dom)
       }
     }
 
-    this.dom.appendChild(this.newTabButton.dom);
 
     // Update tab buttons
     for (let [_, child] of this.children) {
@@ -87,9 +88,10 @@ class NewTabButton {
     this.dom.append(
       ...icon(faPlus, { attributes: { "aria-hidden": "true" } }).node
     );
+
     this.dom.addEventListener("click", () => {
       this.parent.newTab();
-    })
+    });
   }
 }
 
