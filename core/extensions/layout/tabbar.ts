@@ -71,7 +71,6 @@ export class TabBar {
       }
     }
 
-
     // Update tab buttons
     for (let [_, child] of this.children) {
       child.update(tr);

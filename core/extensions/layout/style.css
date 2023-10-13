@@ -78,7 +78,7 @@ outline: none;
 }
 
 .tab-container .close-button {
-  padding: none;
+  padding: 0;
   position: absolute;
   top: calc(0.5 * 12px);
   right: calc(0.5 * 12px);
@@ -103,5 +103,14 @@ outline: none;
 }
 
 .new-tab-button {
-  background: orange;
+  background: var(--col-bg-shadow-soft);
+  border: none;
+  color: inherit;
+  height: 30px;
+  width: 30px;
+  line-height: 30px;
+}
+
+.new-tab-button:hover {
+  background: var(--col-bg-shadow);
 }
