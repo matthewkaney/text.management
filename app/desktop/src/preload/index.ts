@@ -60,6 +60,8 @@ const ElectronAPI = {
 
   requestClose: (id: string) => send("requestClose", { id }),
 
+  newTab: () => send("newTab", undefined),
+
   onClose: listen("close"),
 
   onSetCurrent: listen("setCurrent"),

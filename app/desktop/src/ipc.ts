@@ -11,6 +11,7 @@ export interface ToMainChannels {
   evaluation: string;
   restart: undefined;
   openTidalSettings: undefined;
+  newTab: undefined;
 }
 
 export interface ToRendererChannels {
