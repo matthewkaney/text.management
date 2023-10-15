@@ -35,7 +35,10 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
         new MenuItem({
           label: app.name,
           submenu: [
-            { role: "about" },
+            {
+              label: "About",
+              click: (_, window) => this.emit("about", window),
+            },
             { type: "separator" },
             { role: "hide" },
             { role: "unhide" },
@@ -191,10 +194,18 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
     );
 
     // View Menu
-    this.menu.append(new MenuItem({ role: "viewMenu" }));
-
-    // Window Menu
-    this.menu.append(new MenuItem({ role: "windowMenu" }));
+    this.menu.append(
+      new MenuItem({
+        label: "View",
+        submenu: [
+          { role: "resetZoom" },
+          { role: "zoomIn", accelerator: "CommandOrControl+=" },
+          { role: "zoomOut" },
+          { type: "separator" },
+          { role: "togglefullscreen" },
+        ],
+      })
+    );
 
     this.menu.append(
       new MenuItem({
@@ -202,6 +213,7 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
         submenu: [
           {
             label: "Reboot Tidal",
+            accelerator: "CommandOrControl+R",
             click: (_, window) => this.emit("rebootTidal", window),
           },
           // { type: "separator" },
@@ -211,14 +223,22 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
     );
 
     // Help Menu
-    this.menu.append(
-      new MenuItem({
-        role: "help",
-        submenu: [
-          { label: "About", click: (_, window) => this.emit("about", window) },
-        ],
-      })
-    );
+    const helpMenu = new MenuItem({
+      role: "help",
+      submenu: [{ role: "toggleDevTools" }],
+    });
+
+    if (!isMac) {
+      helpMenu.submenu?.append(new MenuItem({ type: "separator" }));
+      helpMenu.submenu?.append(
+        new MenuItem({
+          label: "About",
+          click: (_, window) => this.emit("about", window),
+        })
+      );
+    }
+
+    this.menu.append(helpMenu);
 
     // Set application menu
     Menu.setApplicationMenu(this.menu);
