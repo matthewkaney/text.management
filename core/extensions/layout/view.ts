@@ -20,7 +20,8 @@ export class LayoutView {
 
   constructor(
     parent: HTMLElement,
-    private updateCurrent: (current: string | null) => void
+    private updateCurrent: (current: string | null) => void,
+    public newTab: () => void
   ) {
     this.dom = document.createElement("div");
     this.dom.classList.add("editor-layout");

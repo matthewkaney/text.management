@@ -43,7 +43,7 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, () => {});
+    let layout = new LayoutView(parent, () => {}, () => {});
     layout.dispatch({
       changes: [
         {

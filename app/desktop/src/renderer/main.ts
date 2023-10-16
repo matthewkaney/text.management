@@ -31,7 +31,7 @@ const background: string | null = null;
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, api.setCurrent);
+    let layout = new LayoutView(parent, api.setCurrent, api.newTab);
 
     if (background) {
       let canvas = parent.appendChild(document.createElement("iframe"));

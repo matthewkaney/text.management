@@ -35,6 +35,16 @@
   );
 }
 
+.tab-container button {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  appearance: none;
+border: none;
+outline: none;
+}
+
 .tab-container:not(.current) {
   --in-top: 2px;
   --in-bottom: 3px;
@@ -49,14 +59,8 @@
 }
 
 .tab {
-  appearance: none;
-  border: none;
   padding: 0 calc(2.5 * 12px) 0 calc(0.5 * 12px);
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
   background: var(--col-bg-shadow-soft);
-  outline: none;
 }
 
 .tab-container.current .tab,
@@ -75,10 +79,7 @@
 }
 
 .tab-container .close-button {
-  appearance: none;
-  border: none;
-  padding: none;
-  outline: none;
+  padding: 0;
   position: absolute;
   top: calc(0.5 * 12px);
   right: calc(0.5 * 12px);
@@ -86,6 +87,7 @@
   height: calc(1.5 * 12px);
   line-height: calc(1.5 * 12px);
   text-align: center;
+  background: var(--col-bg-shadow-soft);
 }
 
 .tab-container:not(.current):not(:hover) .close-button {
@@ -99,4 +101,17 @@
 .tab-container .close-button:focus-visible {
   background: orange;
   color: var(--col-background);
+}
+
+.new-tab-button {
+  background: var(--col-bg-shadow-soft);
+  border: none;
+  color: inherit;
+  height: 30px;
+  width: 30px;
+  line-height: 30px;
+}
+
+.new-tab-button:hover {
+  background: var(--col-bg-shadow);
 }
