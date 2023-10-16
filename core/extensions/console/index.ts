@@ -2,6 +2,8 @@ import { ConsoleMessage } from "@management/cm-console";
 
 import { TerminalMessage } from "@core/api";
 
+import "./style.css";
+
 export function console(history: TerminalMessage[] = []) {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
