@@ -1,0 +1,11 @@
+{
+  "name": "@management/text-management-filork-web",
+  "version": "0.9.0",
+  "private": "true",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "postversion": "git add package.json",
+    "preview": "npm run build && firebase hosting:channel:deploy filork --only filork"
+  }
+}

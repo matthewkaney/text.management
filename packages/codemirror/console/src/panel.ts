@@ -2,9 +2,24 @@ import { EditorView, showPanel, Panel } from "@codemirror/view";
 
 import { ConsoleMessage, consoleState, consoleMessageEffect } from "./state";
 
+// Shim for hiding from screen reader for now...
+import { StateField } from "@codemirror/state";
+
+export const inaccessibleConsole = StateField.define({
+  create: () => true,
+  update: (v) => v,
+});
+
 function consolePanelConstructor(view: EditorView): Panel {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
+
+  if (!view.state.field(inaccessibleConsole, false)) {
+    consoleNode.setAttribute("role", "log");
+    consoleNode.tabIndex = 0;
+  } else {
+    consoleNode.setAttribute("aria-hidden", "true");
+  }
 
   for (let message of view.state.field(consoleState, false) || []) {
     consoleNode.appendChild(messageConstructor(message));

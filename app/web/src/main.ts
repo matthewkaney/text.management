@@ -20,6 +20,7 @@ import { fileSync } from "../../desktop/src/renderer/file";
 let empty = () => {};
 let emptyHandler = () => empty;
 
+// @ts-ignore
 const emptyApi: typeof ElectronAPI = {
   setCurrent: empty,
   onOpen: emptyHandler,
@@ -42,7 +43,7 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, () => {});
+    let layout = new LayoutView(parent, () => {}, () => {});
     layout.dispatch({
       changes: [
         {

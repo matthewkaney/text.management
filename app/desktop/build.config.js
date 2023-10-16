@@ -1,4 +1,4 @@
-const config = require( "../../node_modules/electron/package.json");
+const config = require("../../node_modules/electron/package.json");
 
 module.exports = {
   appId: "management.text",
@@ -9,7 +9,8 @@ module.exports = {
   },
   linux: {
     category: "Development",
-    target: ["AppImage", "deb"],
+    target: ["deb", "rpm", "AppImage"],
+    icon: "resources/icons",
   },
   mac: {
     category: "public.app-category.developer-tools",
@@ -17,15 +18,18 @@ module.exports = {
     entitlements: "resources/entitlements.mac.plist",
     entitlementsInherit: "resources/entitlements.mac.plist",
     gatekeeperAssess: false,
+    notarize: {
+      teamId: "FWL6RL9HUZ",
+    },
     target: {
       target: "default",
       arch: ["x64", "arm64"],
     },
   },
   win: {
-    artifactName: "${name}-setup-${version}.${ext}"
+    artifactName: "${name}-setup-${version}.${ext}",
   },
-  files: ["./build/**/*"],
+  files: ["./build/**/*", "./resources/**/*"],
   npmRebuild: false,
   extraMetadata: {
     name: "text.management",

@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 import { ToMainChannels, ToRendererChannels, Handler } from "../ipc";
 
-import { TerminalMessage, DocumentUpdate } from "@core/api";
+import { DocumentUpdate } from "@core/api";
 
 function send<K extends keyof ToMainChannels>(
   channel: K,
@@ -60,7 +60,11 @@ const ElectronAPI = {
 
   requestClose: (id: string) => send("requestClose", { id }),
 
+  newTab: () => send("newTab", undefined),
+
   onClose: listen("close"),
+
+  onSetCurrent: listen("setCurrent"),
 
   onShowAbout: listen("showAbout"),
 
@@ -70,9 +74,19 @@ const ElectronAPI = {
     send("evaluation", code);
   },
 
+  restart: () => {
+    send("restart", undefined);
+  },
+
+  openTidalSettings: () => {
+    send("openTidalSettings", undefined);
+  },
+
   onConsoleMessage: listen("console"),
 
   onTidalVersion: listen("tidalVersion"),
+
+  onTidalNow: listen("tidalNow"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);

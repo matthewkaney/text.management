@@ -146,6 +146,8 @@ export class LayoutTransaction {
   }
 }
 
+export const focusCurrent = StateEffect.define<void>();
+
 export const applyTransaction = StateEffect.define<{
   id: string;
   transaction: any;

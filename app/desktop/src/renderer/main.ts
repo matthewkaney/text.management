@@ -1,8 +1,6 @@
 import { ElectronAPI } from "../preload";
 
 import { EditorState, Text, StateEffect } from "@codemirror/state";
-import { indentWithTab } from "@codemirror/commands";
-import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
@@ -36,7 +34,7 @@ const background: string | null = null;
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, api.setCurrent);
+    let layout = new LayoutView(parent, api.setCurrent, api.newTab);
 
     if (background) {
       let canvas = parent.appendChild(document.createElement("iframe"));
@@ -67,7 +65,6 @@ export class Editor {
                 doc,
                 extensions: [
                   tidal(),
-                  keymap.of([indentWithTab]),
                   evaluation(api.evaluate),
                   basicSetup,
                   oneDark,
@@ -90,6 +87,10 @@ export class Editor {
 
     api.onClose(({ id }) => {
       layout.dispatch({ changes: [id] });
+    });
+
+    api.onSetCurrent(({ id }) => {
+      layout.dispatch({ current: id });
     });
 
     api.onShowAbout((appVersion) => {

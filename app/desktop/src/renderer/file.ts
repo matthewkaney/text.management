@@ -93,7 +93,7 @@ export function getFileName(state: EditorState) {
   const { path } = state.field(saveState);
   const saved = getSaveStatus(state);
 
-  return (saved === true ? "" : "•") + (path ? basename(path) : "untitled");
+  return (saved === true ? "" : "● ") + (path ? basename(path) : "untitled");
 }
 
 export function getFileID(state: EditorState) {
