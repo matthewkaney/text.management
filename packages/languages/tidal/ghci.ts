@@ -13,7 +13,8 @@ import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { TidalSettings, normalizeTidalSettings } from "./settings";
+import { getSettings } from "@core/extensions/settings/schema";
+import { TidalSettingsSchema, TidalSettings } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
 
@@ -49,13 +50,19 @@ export class GHCI extends Engine<GHCIEvents> {
       const settings = JSON.parse(await readFile(this.settingsPath, "utf-8"));
 
       // TODO: Update/validate settings, etc
-      return normalizeTidalSettings(settings);
+      return getSettings(TidalSettingsSchema, settings);
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
-        throw err;
-      }
+      // if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      //   throw err;
+      // }
 
-      return normalizeTidalSettings({});
+      this.emit("message", {
+        level: "error",
+        source: "Tidal",
+        text: "Couldn't load settings file.",
+      });
+
+      return getSettings(TidalSettingsSchema, {});
     }
   }
 
@@ -79,6 +86,7 @@ export class GHCI extends Engine<GHCIEvents> {
   }
 
   private async initProcess() {
+    console.log(JSON.stringify(await this.settings, null, 2));
     const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
