@@ -15,7 +15,7 @@
   },
   "scripts": {
     "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
-    "build": "parcel build --target main --target preload --target renderer",
+    "build": "rm -rf .parcel-cache && parcel build --target main --target preload --target renderer --no-cache",
     "start": "electron .",
     "pack": "electron-builder --config build.config.js",
     "dist": "electron-builder",
