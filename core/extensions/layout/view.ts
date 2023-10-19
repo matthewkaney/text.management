@@ -27,6 +27,7 @@ export class LayoutView {
     this.dom.appendChild(this.tabBar.dom);
 
     parent.appendChild(this.dom);
+    console.log('# test');
   }
 
   dispatch({ changes, current, effects }: LayoutTransactionSpec) {

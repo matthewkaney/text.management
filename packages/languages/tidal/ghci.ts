@@ -16,11 +16,13 @@ import { Engine } from "../core/engine";
 import { TidalSettings, normalizeTidalSettings } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
+import { OSCArgumentValueList } from "@core/osc/types";
 
 interface GHCIEvents {
   message: TerminalMessage;
   now: number;
   openSettings: string;
+  highlight: OSCArgumentValueList;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -76,6 +78,7 @@ export class GHCI extends Engine<GHCIEvents> {
             }
           } else if (message.address === "/highlight") {
             console.log(`Highlight: ${message.args}`);
+            this.emit("highlight", message.args)
           }
         }
       });

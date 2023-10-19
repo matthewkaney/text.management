@@ -1,6 +1,7 @@
 import type { DocumentUpdate, TerminalMessage } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
+import { OSCArgumentValueList } from "@core/osc/types";
 
 export type Handler<T> = (event: T) => void;
 
@@ -26,4 +27,5 @@ export interface ToRendererChannels {
   tidalVersion: string;
   tidalNow: number;
   showAbout: string;
+  tidalHighlight: OSCArgumentValueList;
 }

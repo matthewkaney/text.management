@@ -50,6 +50,10 @@ export function toolbar(api: typeof ElectronAPI, version?: string) {
       tempoInfo.label = `${part} ${whole} ${modString}`;
     });
 
+    api.onTidalHighlight((highlight) => {
+      console.log('## highlight', highlight);
+    })
+
     return {
       dom: toolbarNode,
       destroy() {

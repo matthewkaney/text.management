@@ -8,6 +8,9 @@ fixPath();
 
 import { autoUpdater } from "electron-updater";
 
+import { dialog } from "electron";
+import { OSCArgumentValueList } from "@core/osc/types";
+
 autoUpdater.checkForUpdatesAndNotify();
 
 import { GHCI } from "@management/lang-tidal";
@@ -165,6 +168,12 @@ const createWindow = () => {
       })
     );
 
+    listeners.push(
+      tidal.on("highlight", (highlightList: OSCArgumentValueList) => {
+        send("tidalHighlight", highlightList);
+      })
+    )
+
     // For now, load a blank document on startup
     filesystem.loadDoc();
 
@@ -202,8 +211,6 @@ app.whenReady().then(() => {
 // app.on("window-all-closed", () => {
 //   if (process.platform !== "darwindow") app.quit();
 // });
-
-import { dialog } from "electron";
 
 menu.on("newFile", newFile);
 async function newFile() {
