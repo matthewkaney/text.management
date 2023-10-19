@@ -16,6 +16,7 @@ import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 import { ConsoleMessage } from "packages/codemirror/console/src";
 
+import { blinkExtension } from "@core/extensions/highlights";
 import { injectHighlights } from "./injectHighlights";
 
 window.addEventListener("load", () => {
@@ -68,6 +69,7 @@ export class Editor {
                     injectHighlights(code);
                     api.evaluate(code);
                   }),
+                  blinkExtension,
                   basicSetup,
                   oneDark,
                   fileSync(
