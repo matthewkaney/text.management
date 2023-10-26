@@ -14,7 +14,7 @@ import { ElectronAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
 import { SettingsPage } from "@core/extensions/settings";
-import { toolbar } from "@core/extensions/toolbar";
+// import { toolbar } from "@core/extensions/toolbar";
 import { fileSync } from "../../desktop/src/renderer/file";
 
 let empty = () => {};
@@ -43,7 +43,11 @@ window.addEventListener("load", () => {
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, () => {}, () => {});
+    let layout = new LayoutView(
+      parent,
+      () => {},
+      () => {}
+    );
     layout.dispatch({
       changes: [
         {
@@ -63,7 +67,7 @@ export class Editor {
               // electronConsole(api),
               // peer(api, 0),
               // @ts-ignore
-              toolbar(emptyApi, "1.9.4"),
+              // toolbar(emptyApi, "1.9.4"),
             ],
           }),
         },
