@@ -9,12 +9,11 @@ import { tidal } from "@management/lang-tidal/editor";
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 // import { peer } from "@core/extensions/peer";
-import { toolbar } from "@core/extensions/toolbar";
+import { toolbarConstructor } from "@core/extensions/toolbar";
 
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
-import { TerminalMessage, Evaluation } from "@core/api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -31,7 +30,7 @@ const background: string | null = null;
 
 export class Editor {
   constructor(parent: HTMLElement) {
-    let layout = new LayoutView(parent, api.setCurrent);
+    let layout = new LayoutView(parent, api.setCurrent, api.newTab);
 
     if (background) {
       let canvas = parent.appendChild(document.createElement("iframe"));
@@ -41,14 +40,24 @@ export class Editor {
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;
-    let tidalConsole: (TerminalMessage | Evaluation)[] = [];
+
+    // Append Tidal UI Panels
+    let tidalConsole = electronConsole();
+    layout.panelArea.appendChild(tidalConsole.dom);
+
+    let toolbar = toolbarConstructor(api, tidalVersion);
+    layout.panelArea.appendChild(toolbar.dom);
 
     api.onTidalVersion((version) => {
       tidalVersion = version;
     });
 
+    api.onToggleConsole(() => {
+      tidalConsole.toggleVisibility();
+    });
+
     api.onConsoleMessage((message) => {
-      tidalConsole.push(message);
+      tidalConsole.update(message);
     });
 
     api.onOpen(({ id, path }) => {
@@ -70,8 +79,6 @@ export class Editor {
                     { path, saved, version, thisVersion: version },
                     api
                   ),
-                  electronConsole(api, tidalConsole),
-                  toolbar(api, tidalVersion),
                   // peer(version),
                 ],
               }),

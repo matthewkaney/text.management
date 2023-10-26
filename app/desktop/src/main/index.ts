@@ -90,6 +90,12 @@ const createWindow = () => {
     );
 
     listeners.push(
+      listen("newTab", () => {
+        filesystem.loadDoc();
+      })
+    );
+
+    listeners.push(
       listen("requestClose", async ({ id }) => {
         let document = filesystem.getDoc(id);
 
@@ -138,6 +144,12 @@ const createWindow = () => {
     listeners.push(
       menu.on("rebootTidal", () => {
         tidal.restart();
+      })
+    );
+
+    listeners.push(
+      menu.on("toggleConsole", () => {
+        send("toggleConsole", undefined);
       })
     );
 

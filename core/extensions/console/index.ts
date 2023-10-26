@@ -1,39 +1,65 @@
-import { keymap, ViewPlugin } from "@codemirror/view";
-import {
-  consoleState,
-  sendToConsole,
-  clearConsole,
-  console as rootConsole,
-  ConsoleMessage,
-} from "@management/cm-console";
+import { TerminalMessage, Evaluation } from "@core/api";
 
-import { ElectronAPI, TerminalMessage, Evaluation } from "@core/api";
+import "./style.css";
 
-export function console(
-  api: typeof ElectronAPI,
-  initial: (TerminalMessage | Evaluation)[]
-) {
-  const consoleListener = ViewPlugin.define((view) => {
-    const unlisten = api.onConsoleMessage((message) => {
-      view.dispatch(sendToConsole(view.state, format(message)));
-    });
+export function console(history: (TerminalMessage | Evaluation)[] = []) {
+  let consoleNode = document.createElement("div");
+  consoleNode.classList.add("cm-console");
 
-    return {
-      destroy: () => {
-        unlisten();
-      },
-    };
-  });
+  consoleNode.setAttribute("role", "log");
+  consoleNode.tabIndex = 0;
 
-  return [
-    consoleState.init(() => initial.map((m) => format(m))),
-    consoleListener,
-    rootConsole(),
-    keymap.of([{ key: "Mod-`", run: clearConsole }]),
-  ];
+  for (let message of history) {
+    consoleNode.appendChild(messageConstructor(format(message)));
+  }
+
+  let visible = true;
+
+  const toggleVisibility = (value?: boolean) => {
+    visible = value ?? !visible;
+
+    consoleNode.style.display = visible ? "inherit" : "none";
+  };
+
+  return {
+    dom: consoleNode,
+    update(message: TerminalMessage | Evaluation) {
+      let lastElement = consoleNode.appendChild(
+        messageConstructor(format(message))
+      );
+
+      toggleVisibility(true);
+      lastElement.scrollIntoView({ behavior: "smooth" });
+    },
+    toggleVisibility,
+    destroy() {},
+  };
 }
 
-function format(message: TerminalMessage | Evaluation): ConsoleMessage {
+function messageConstructor(message: TerminalMessage) {
+  const messageNode = document.createElement("div");
+  messageNode.classList.add("cm-console-message");
+  messageNode.classList.add(`cm-console-message-${message.level}`);
+  messageNode.appendChild(messageSourceConstructor(message));
+  messageNode.appendChild(messageContentConstructor(message));
+  return messageNode;
+}
+
+function messageSourceConstructor(message: TerminalMessage) {
+  const messageSource = document.createElement("div");
+  messageSource.classList.add("cm-console-message-source");
+  messageSource.innerText = message.source;
+  return messageSource;
+}
+
+function messageContentConstructor(message: TerminalMessage) {
+  const messageContent = document.createElement("div");
+  messageContent.classList.add("cm-console-message-content");
+  messageContent.innerText = message.text;
+  return messageContent;
+}
+
+function format(message: TerminalMessage | Evaluation): TerminalMessage {
   if ("level" in message) {
     return message;
   } else {

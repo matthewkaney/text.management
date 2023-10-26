@@ -31,7 +31,10 @@ jobs:
               );
 
               for (let release of data) {
-                if (release.draft && release.tag_name === process.env.version) {
+                console.log(release.tag_name);
+                console.log(release.draft);
+                console.log(process.env.version);
+                if (release.draft && release.tag_name === ("v" + process.env.version)) {
                   return true;
                 }
               }
@@ -43,5 +46,3 @@ jobs:
               }
               throw e;
             }
-      - if: ${{ ! steps.release-info.outputs.result }}
-        run: echo "No draft release exists, skipping build step"

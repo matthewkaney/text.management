@@ -11,6 +11,7 @@ export interface ToMainChannels {
   evaluation: string;
   restart: undefined;
   openTidalSettings: undefined;
+  newTab: undefined;
 }
 
 export interface ToRendererChannels {
@@ -25,5 +26,6 @@ export interface ToRendererChannels {
   console: TerminalMessage | Evaluation;
   tidalVersion: string;
   tidalNow: number;
+  toggleConsole: undefined;
   showAbout: string;
 }

@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - "**.md"
+  workflow_dispatch:
 
 jobs:
   run-tests:
@@ -20,8 +21,8 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
-    needs: [run-tests]
-    if: ${{ needs.check-version.outputs.unreleased == true }}
+    needs: [run-tests, check-version]
+    if: ${{ needs.check-version.outputs.unreleased == 'true' }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -59,9 +60,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Build Desktop App
-        run: npm run build:desktop
+        run: npm run desktop build
       - name: Package Desktop App
-        run: npm run pack -w app/desktop
+        run: npm run desktop pack
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
