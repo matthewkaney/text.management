@@ -8,6 +8,6 @@ export const TidalSettingsSchema = {
     "tidal.boot.customFiles": { type: "array", items: { type: "string" } },
     "tidal.boot.disableEditorIntegration": { type: "boolean", default: false },
   },
-} satisfies JSONSchema7;
+} as const satisfies JSONSchema7;
 
-export type TidalSettings = FromSchema<typeof TidalSettingsSchema>;
+export type TidalSettings = Required<FromSchema<typeof TidalSettingsSchema>>;
