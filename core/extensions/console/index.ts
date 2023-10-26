@@ -15,13 +15,23 @@ export function console(history: TerminalMessage[] = []) {
     consoleNode.appendChild(messageConstructor(message));
   }
 
+  let visible = true;
+
+  const toggleVisibility = (value?: boolean) => {
+    visible = value ?? !visible;
+
+    consoleNode.style.display = visible ? "inherit" : "none";
+  };
+
   return {
     dom: consoleNode,
     update(message: TerminalMessage) {
       let lastElement = consoleNode.appendChild(messageConstructor(message));
 
+      toggleVisibility(true);
       lastElement.scrollIntoView({ behavior: "smooth" });
     },
+    toggleVisibility,
     destroy() {},
   };
 }

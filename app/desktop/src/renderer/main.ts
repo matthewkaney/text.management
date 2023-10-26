@@ -14,7 +14,6 @@ import { toolbarConstructor } from "@core/extensions/toolbar";
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
-import { TerminalMessage } from "@core/api";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -51,6 +50,10 @@ export class Editor {
 
     api.onTidalVersion((version) => {
       tidalVersion = version;
+    });
+
+    api.onToggleConsole(() => {
+      tidalConsole.toggleVisibility();
     });
 
     api.onConsoleMessage((message) => {

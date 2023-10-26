@@ -26,5 +26,6 @@ export interface ToRendererChannels {
   console: TerminalMessage;
   tidalVersion: string;
   tidalNow: number;
+  toggleConsole: undefined;
   showAbout: string;
 }
