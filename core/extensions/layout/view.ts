@@ -5,26 +5,31 @@ import {
   TabState,
 } from "./state";
 
+import { TabBar } from "./tabbar";
+
 import "./style.css";
 
 export class LayoutView {
   readonly dom: HTMLDivElement;
-  private tabRegion: HTMLDivElement;
+  private tabBar = new TabBar(this);
+  readonly panelArea: HTMLDivElement;
 
   state: LayoutState = LayoutState.create();
 
-  // TODO: The relevant info here should be moved to state
   private children: Map<string, TabView<any>> = new Map();
 
   constructor(
     parent: HTMLElement,
-    private updateCurrent: (current: string | null) => void
+    private updateCurrent: (current: string | null) => void,
+    public newTab: () => void
   ) {
     this.dom = document.createElement("div");
     this.dom.classList.add("editor-layout");
 
-    this.tabRegion = this.dom.appendChild(document.createElement("div"));
-    this.tabRegion.classList.add("tab-region");
+    this.dom.appendChild(this.tabBar.dom);
+
+    this.panelArea = this.dom.appendChild(document.createElement("div"));
+    this.panelArea.classList.add("editor-panels");
 
     parent.appendChild(this.dom);
   }
@@ -64,7 +69,6 @@ export class LayoutView {
         let deletedTab = this.children.get(change);
         if (deletedTab) {
           deletedTab.destroy();
-          this.tabRegion.removeChild(deletedTab.tab);
           this.children.delete(change);
         }
       } else if (Array.isArray(change)) {
@@ -72,8 +76,6 @@ export class LayoutView {
       } else {
         let tab = change.view;
         this.children.set(tab.state.id, tab);
-        // TODO: This assumes that all added tabs are added to the end
-        this.tabRegion.appendChild(tab.tab);
       }
     }
 
@@ -83,8 +85,11 @@ export class LayoutView {
 
       if (!currentTab) throw Error("View doesn't have old new tab");
 
-      this.dom.appendChild(currentTab.dom);
+      this.dom.insertBefore(currentTab.dom, this.panelArea);
     }
+
+    // Update tab bar
+    this.tabBar.update(tr);
 
     // Update children
     for (let [_, tab] of this.children) {
@@ -96,46 +101,16 @@ export class LayoutView {
   }
 }
 
-import { library, icon } from "@fortawesome/fontawesome-svg-core";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
-
-library.add(faXmark);
-
 export abstract class TabView<T> {
   readonly dom = document.createElement("div");
-  readonly tab = document.createElement("div");
-
-  private label = document.createElement("span");
 
   constructor(readonly layout: LayoutView, public state: TabState<T>) {
     this.dom.classList.add("tab-content");
-
-    this.tab.classList.add("tab");
-    this.tab.addEventListener("click", () => {
-      this.layout.dispatch({ current: this.state.id });
-    });
-
-    this.label.innerText = state.name;
-    this.tab.appendChild(this.label);
-
-    let closeButton = this.tab.appendChild(document.createElement("a"));
-    closeButton.classList.add("close-button");
-    Array.from(icon({ prefix: "fas", iconName: "xmark" }).node).map((n) => {
-      closeButton.appendChild(n);
-    });
-    closeButton.addEventListener("click", (event) => {
-      if (this.beforeClose()) {
-        this.layout.dispatch({ changes: [this.state.id] });
-      }
-      event.stopPropagation();
-    });
+    this.dom.setAttribute("role", "tabpanel");
   }
 
   update(tr: LayoutTransaction) {
     this.state = tr.state.tabs[this.state.id];
-
-    this.tab.classList.toggle("current", tr.state.current === this.state.id);
-    this.label.innerText = this.state.name;
   }
 
   beforeClose() {

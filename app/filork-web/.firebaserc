@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "text-management": "text-management-fc3da"
+  },
+  "targets": {
+    "text-management-fc3da": {
+      "hosting": {
+        "filork": [
+          "filork"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -146,6 +146,8 @@ export class LayoutTransaction {
   }
 }
 
+export const focusCurrent = StateEffect.define<void>();
+
 export const swapContents = StateEffect.define<{
   id: string;
   contents: any;

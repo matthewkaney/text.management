@@ -61,29 +61,6 @@ export const layoutTheme = EditorView.theme({
     padding: `0 ${0.5 * size}px`,
   },
 
-  ".cm-panels": {
-    fontSize: `${1.2727 * size}px`,
-    lineHeight: `${2 * size}px`,
-  },
-
-  ".cm-console": {
-    margin: `${size}px ${1.5 * size}px 0 ${1.5 * size}px`,
-    maxHeight: `${20 * size}px`,
-  },
-
-  ".cm-console-message": {
-    padding: `calc(${0.5 * size}px - 2px) ${0.5 * size}px`,
-    margin: "0",
-  },
-
-  ".cm-console-message-source": {
-    marginLeft: `${size}px`,
-  },
-
-  ".cm-toolbar": {
-    marginTop: `${1.5 * size}px`,
-  },
-
   "*::-webkit-scrollbar": {
     width: `${size}px`,
   },
@@ -106,6 +83,10 @@ export const oneDarkTheme = EditorView.theme(
       borderLeftColor: col("text"),
       borderLeftWidth: "2px",
       marginLeft: "-1px",
+    },
+
+    "&.cm-tab-focus": {
+      boxShadow: "inset 0 0 0 4px orange",
     },
 
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
@@ -166,54 +147,6 @@ export const oneDarkTheme = EditorView.theme(
         backgroundColor: highlightBackground,
         color: ivory,
       },
-    },
-
-    ".cm-panels": {
-      color: col("text"),
-      backgroundColor: "transparent",
-    },
-
-    ".cm-console": {
-      overflowY: "auto",
-    },
-
-    ".cm-console-message": {
-      display: "flex",
-      flexDirection: "row-reverse",
-    },
-    ".cm-console-message:not(:first-child)": {
-      clipPath: "inset(1px 0 0 0)",
-    },
-    ".cm-console-message:not(:last-child)": {
-      clipPath: "inset(0 0 1px 0)",
-    },
-    ".cm-console-message:not(:first-child):not(:last-child)": {
-      clipPath: "inset(1px 0)",
-    },
-
-    ".cm-console-message-content": {
-      flex: 1,
-      overflowWrap: "anywhere",
-    },
-
-    ".cm-console-message-info": {
-      backgroundColor: col("bg-shadow"),
-    },
-    ".cm-console-message-info .cm-console-message-source": {
-      color: col("text-soft"),
-    },
-
-    ".cm-console-message-warn, .cm-console-message-error": {
-      backgroundImage:
-        "repeating-linear-gradient(135deg, #6c000050 0px 10px, #a6020250 10px 20px)",
-    },
-    ".cm-console-message-warn .cm-console-message-source, .cm-console-message-error .cm-console-message-source":
-      {
-        color: coral,
-      },
-    ".cm-toolbar": {
-      background: col("bg-shadow-soft"),
-      borderTop: `solid 2px ${col("bg-shadow")}`,
     },
 
     "*::-webkit-scrollbar-thumb": {

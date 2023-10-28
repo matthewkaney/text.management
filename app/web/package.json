@@ -1,6 +1,6 @@
 {
   "name": "@management/text-management-web",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": "true",
   "scripts": {
     "postversion": "git add package.json"
@@ -9,8 +9,5 @@
     "web": {
       "source": "src/index.html"
     }
-  },
-  "devDependencies": {
-    "firebase-tools": "^11.30.0"
   }
 }
