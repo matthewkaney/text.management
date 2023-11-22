@@ -84,6 +84,8 @@ const ElectronAPI = {
 
   onConsoleMessage: listen("console"),
 
+  onToggleConsole: listen("toggleConsole"),
+
   onTidalVersion: listen("tidalVersion"),
 
   onTidalNow: listen("tidalNow"),

@@ -17,6 +17,7 @@ interface MenuEvents {
   about?: BrowserWindow;
   rebootTidal?: BrowserWindow;
   aboutTidal?: BrowserWindow;
+  toggleConsole?: BrowserWindow;
 }
 
 class ElectronMenu extends EventEmitter<MenuEvents> {
@@ -216,6 +217,12 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
       new MenuItem({
         label: "View",
         submenu: [
+          {
+            label: "Toggle Console",
+            accelerator: "CommandOrControl+`",
+            click: (_, window) => this.emit("toggleConsole", window),
+          },
+          { type: "separator" },
           { role: "resetZoom" },
           { role: "zoomIn", accelerator: "CommandOrControl+=" },
           { role: "zoomOut" },

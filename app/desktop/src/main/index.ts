@@ -148,6 +148,12 @@ const createWindow = () => {
     );
 
     listeners.push(
+      menu.on("toggleConsole", () => {
+        send("toggleConsole", undefined);
+      })
+    );
+
+    listeners.push(
       menu.on("settings", async () => {
         let settingsDoc = filesystem.loadDoc(tidal.settingsPath, "{}");
 
