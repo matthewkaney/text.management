@@ -2,7 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline';
+               script-src 'self' https://cdn.firebase.com https://*.firebaseio.com;
+               connect-src 'self' wss://*.firebaseio.com; frame-src 'self' https://*.firebaseio.com"
+    />
     <title>text.management</title>
     <link rel="stylesheet" href="/core/extensions/theme/base.css" />
     <script src="main.ts" type="module"></script>

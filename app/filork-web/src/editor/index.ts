@@ -6,24 +6,26 @@ import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "./basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 
-import { get } from "firebase/database";
-import { stateFromDatabase } from "../firebase/editorState";
-import { Session } from "../firebase/session";
+import { DatabaseReference, child, onChildAdded } from "firebase/database";
+import { stateFromDatabase } from "@core/extensions/firebase/editorState";
 
 export class Editor {
-  constructor(session: Promise<Session>, parent: HTMLElement) {
-    session
-      .then((s) => get(s.ref))
-      .then((s) => {
-        const state = stateFromDatabase(s, [
+  constructor(session: DatabaseReference, parent: HTMLElement) {
+    onChildAdded(
+      child(session, "documents"),
+      (document) => {
+        const state = stateFromDatabase(document, [
           keymap.of([indentWithTab]),
           evaluation(),
           basicSetup,
           oneDark,
           StreamLanguage.define(haskell),
         ]);
-
         new EditorView({ state, parent });
-      });
+      },
+      {
+        onlyOnce: true,
+      }
+    );
   }
 }

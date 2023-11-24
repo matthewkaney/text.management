@@ -1,32 +1,26 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
-import { get, DatabaseReference } from "firebase/database";
+import { DataSnapshot } from "firebase/database";
 
 import { peer } from "./peer";
-// import { console as firebaseConsole } from "@core/extensions/console";
-import { firebaseConsole } from "./console";
 
-import { getAPI } from "./api";
-
-export async function stateFromDatabase(
-  reference: DatabaseReference,
+export function stateFromDatabase(
+  snapshot: DataSnapshot,
   extensions: Extension[] = []
 ) {
-  let dataSnapshot = await get(reference);
-  let data = dataSnapshot.val();
-  let dbExtensions: Extension[] = [];
+  let data = snapshot.val();
 
   // Get document information/versioning from database
-  let { initial, versions = [] } = data;
-  let doc = Text.of(initial.split("\n"));
-  let startVersion = 0;
-  for (let { changes } of versions) {
+  let {
+    start: { text, version },
+    updates = [],
+  } = data;
+  let doc = Text.of(text);
+  for (let { changes } of updates.slice(version)) {
     doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
-    startVersion += 1;
   }
-  dbExtensions.push(peer(reference));
 
   return EditorState.create({
     doc,
-    extensions: [extensions, dbExtensions, firebaseConsole(dataSnapshot)],
+    extensions: [extensions, peer(snapshot)],
   });
 }
