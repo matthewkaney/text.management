@@ -1,7 +1,7 @@
 {
   "hosting": {
     "target": "filork",
-    "public": "dist",
+    "public": "dist/web",
     "rewrites": [
       {
         "source": "**",

@@ -8,6 +8,7 @@ import { oneDark } from "@core/extensions/theme/theme";
 
 import { DatabaseReference, child, onChildAdded } from "firebase/database";
 import { stateFromDatabase } from "@core/extensions/firebase/editorState";
+import { remoteConsole } from "../firebase/console";
 
 export class Editor {
   constructor(session: DatabaseReference, parent: HTMLElement) {
@@ -20,6 +21,7 @@ export class Editor {
           basicSetup,
           oneDark,
           StreamLanguage.define(haskell),
+          remoteConsole(session),
         ]);
         new EditorView({ state, parent });
       },

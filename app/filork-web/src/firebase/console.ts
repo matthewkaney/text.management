@@ -1,57 +1,55 @@
 import { ViewPlugin } from "@codemirror/view";
 import {
-  DataSnapshot,
+  DatabaseReference,
   child,
-  query,
   onChildAdded,
-  startAfter,
-  orderByKey,
-  Query,
+  onChildRemoved,
 } from "firebase/database";
+
 import {
-  ConsoleMessage,
-  consoleState,
-  sendToConsole,
   console,
-  inaccessibleConsole,
-} from "@management/cm-console";
+  consoleState,
+  consoleMessageEffect,
+} from "@core/extensions/console/codemirror";
 
-export function firebaseConsole(data: DataSnapshot) {
-  let { console: consoleData = {} } = data.val();
-  let initialConsole: ConsoleMessage[] = [];
-  let lastMessageKey: string | undefined;
-  for (let messageKey in consoleData) {
-    lastMessageKey = messageKey;
-    if (consoleData[messageKey].level === "log")
-      consoleData[messageKey].level = "info";
-    initialConsole.push(consoleData[messageKey]);
-  }
+export function remoteConsole(session: DatabaseReference) {
+  const consolePlugin = ViewPlugin.define((view) => {
+    let consoleListeners: { [userKey: string]: () => void } = {};
 
-  let consoleQuery: Query;
-  if (lastMessageKey) {
-    consoleQuery = query(
-      child(data.ref, "console"),
-      orderByKey(),
-      startAfter(lastMessageKey)
-    );
-  } else {
-    consoleQuery = child(data.ref, "console");
-  }
+    let addUserListener = onChildAdded(child(session.ref, "users"), (user) => {
+      if (user.key === null)
+        throw Error("User added callback returned root node");
 
-  const consoleListener = ViewPlugin.define((view) => {
-    onChildAdded(consoleQuery, (messageSnapshot) => {
-      let message = messageSnapshot.val();
-      if (message.level === "log") message.level = "info";
-      view.dispatch(sendToConsole(view.state, message));
+      consoleListeners[user.key] = onChildAdded(
+        child(user.ref, "console"),
+        (message) => {
+          view.dispatch({ effects: consoleMessageEffect.of(message.val()) });
+        }
+      );
     });
 
-    return { destroy: () => {} };
+    let removeUserListener = onChildRemoved(
+      child(session.ref, "users"),
+      (user) => {
+        if (user.key === null)
+          throw Error("User removed callback returned root node");
+
+        consoleListeners[user.key]();
+        delete consoleListeners[user.key];
+      }
+    );
+
+    return {
+      destroy: () => {
+        addUserListener();
+        removeUserListener();
+
+        for (let unlisten of Object.values(consoleListeners)) {
+          unlisten();
+        }
+      },
+    };
   });
 
-  return [
-    inaccessibleConsole,
-    consoleState.init(() => initialConsole),
-    consoleListener,
-    console(),
-  ];
+  return [consolePlugin, consoleState, console()];
 }

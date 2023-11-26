@@ -52,7 +52,7 @@ export class Editor {
       changes: [
         {
           view: new EditorTabView(layout, "editor", emptyApi, {
-            doc: Text.of([""]),
+            doc: Text.empty,
             extensions: [
               tidal(),
               keymap.of([indentWithTab]),
