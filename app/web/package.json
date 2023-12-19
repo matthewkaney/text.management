@@ -1,0 +1,13 @@
+{
+  "name": "@management/text-management-web",
+  "version": "0.9.0",
+  "private": "true",
+  "scripts": {
+    "postversion": "git add package.json"
+  },
+  "targets": {
+    "web": {
+      "source": "src/index.html"
+    }
+  }
+}

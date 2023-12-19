@@ -1,0 +1,30 @@
+{
+  "name": "@management/lang-tidal",
+  "version": "1.0.0",
+  "description": "",
+  "source": "ghci.ts",
+  "main": "dist/ghci.js",
+  "browser": "dist/editor.js",
+  "targets": {
+    "main": {
+      "source": "./ghci.ts"
+    },
+    "browser": {
+      "source": "./editor.ts"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/legacy-modes": "^6.0.0",
+    "json-schema-to-ts": "^2.9.2",
+    "semver": "^7.5.4"
+  },
+  "devDependencies": {
+    "@types/semver": "^7.5.3"
+  }
+}

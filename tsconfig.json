@@ -2,8 +2,20 @@
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "jsx": "react-jsx",
-    "allowSyntheticDefaultImports": true
-  }
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "paths": {
+      "@core/*": ["core/*"],
+      "@management/lang-tidal": ["packages/languages/tidal/ghci.ts"],
+      "@management/*": ["node_modules/@management/*/src"]
+    },
+    "resolveJsonModule": true
+  },
+  "exclude": [
+    "core/extensions/firebase/*",
+    "packages/languages/supercollider/*"
+  ]
 }

@@ -1,0 +1,64 @@
+{
+  "name": "@management/text-management-desktop",
+  "author": {
+    "name": "Matthew Kaney",
+    "email": "matthew.s.kaney@gmail.com"
+  },
+  "version": "0.9.0",
+  "private": "true",
+  "description": "Live code editor",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://text.management",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mindofmatthew/text.management.git"
+  },
+  "scripts": {
+    "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
+    "build": "parcel build --target main --target preload --target renderer",
+    "start": "electron .",
+    "pack": "electron-builder --config build.config.js",
+    "dist": "electron-builder",
+    "postversion": "git add package.json"
+  },
+  "main": "build/main.js",
+  "targets": {
+    "renderer": {
+      "source": "src/renderer/index.html",
+      "distDir": "build",
+      "context": "browser",
+      "publicUrl": "./..",
+      "includeNodeModules": true
+    },
+    "preload": {
+      "source": "src/preload/index.ts",
+      "distDir": "build",
+      "context": "electron-main",
+      "sourceMap": {
+        "inline": true
+      },
+      "includeNodeModules": {
+        "electron": false
+      }
+    },
+    "main": {
+      "source": "src/main/index.ts",
+      "distDir": "build",
+      "context": "electron-main",
+      "includeNodeModules": {
+        "electron": false,
+        "events": false,
+        "path": false,
+        "util": false
+      }
+    }
+  },
+  "devDependencies": {
+    "electron": "^26.2.2",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.4",
+    "fix-path": "^4.0.0"
+  }
+}

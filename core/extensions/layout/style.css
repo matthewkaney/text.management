@@ -1,0 +1,120 @@
+.editor-layout {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tab-bar {
+  padding: 0 calc(1.5 * 12px);
+  color: var(--col-text);
+  font-size: calc(1.2727 * 12px);
+  line-height: calc(2.5 * 12px);
+  border-bottom: solid 2px var(--col-bg-shadow);
+  margin-bottom: -1px;
+  display: flex;
+}
+
+.tab-bar:empty {
+  display: none;
+}
+
+.tab-container {
+  position: relative;
+  margin-bottom: -1px;
+  clip-path: inset(
+    var(--in-top, 0) var(--in-right, 0) var(--in-bottom, 1px) var(--in-left, 0)
+  );
+}
+
+.tab-container button {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  appearance: none;
+  border: none;
+  outline: none;
+}
+
+.tab-container:not(.current) {
+  --in-top: 2px;
+  --in-bottom: 3px;
+}
+
+.tab-container:not(:first-child) {
+  --in-left: 1px;
+}
+
+.tab-container:not(:last-child) {
+  --in-right: 1px;
+}
+
+.tab {
+  padding: 0 calc(2.5 * 12px) 0 calc(0.5 * 12px);
+  background: var(--col-bg-shadow-soft);
+}
+
+.tab-container.current .tab,
+.tab:hover {
+  background: var(--col-bg-shadow);
+}
+
+.tab:focus-visible {
+  box-shadow: inset 0 0 0 4px orange;
+}
+
+.tab-container.current .tab:focus-visible {
+  padding-bottom: 1px;
+  margin-bottom: -2px;
+  --in-bottom: 0;
+}
+
+.tab-container .close-button {
+  padding: 0;
+  position: absolute;
+  top: calc(0.5 * 12px);
+  right: calc(0.5 * 12px);
+  width: calc(1.5 * 12px);
+  height: calc(1.5 * 12px);
+  line-height: calc(1.5 * 12px);
+  text-align: center;
+  background: var(--col-bg-shadow-soft);
+}
+
+.tab-container:not(.current):not(:hover) .close-button {
+  display: none;
+}
+
+.tab-container .close-button:hover {
+  background: var(--col-bg-shadow);
+}
+
+.tab-container .close-button:focus-visible {
+  background: orange;
+  color: var(--col-background);
+}
+
+.new-tab-button {
+  background: var(--col-bg-shadow-soft);
+  border: none;
+  color: inherit;
+  height: 30px;
+  width: 30px;
+  line-height: 30px;
+}
+
+.new-tab-button:hover {
+  background: var(--col-bg-shadow);
+}
+
+.editor-panels {
+  font-size: 15.2724px;
+}

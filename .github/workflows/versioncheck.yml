@@ -1,0 +1,48 @@
+name: Check if Version is Released
+
+on:
+  workflow_call:
+    outputs:
+      unreleased:
+        value: ${{ jobs.check-version.outputs.unreleased }}
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      unreleased: ${{ steps.release-info.outputs.result }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get current package version
+        id: version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        with:
+          path: app/desktop
+      - name: Get release information
+        id: release-info
+        env:
+          version: ${{ steps.version.outputs.current-version }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              const { data } = await github.rest.repos.listReleases(
+                { owner: "mindofmatthew", repo: "text.management" }
+              );
+
+              for (let release of data) {
+                console.log(release.tag_name);
+                console.log(release.draft);
+                console.log(process.env.version);
+                if (release.draft && release.tag_name === ("v" + process.env.version)) {
+                  return true;
+                }
+              }
+
+              return false;
+            } catch (e) {
+              if (e.status === 404) {
+                return false;
+              }
+              throw e;
+            }
