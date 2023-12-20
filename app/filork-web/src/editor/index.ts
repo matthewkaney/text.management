@@ -11,11 +11,15 @@ import { stateFromDatabase } from "@core/extensions/firebase/editorState";
 import { remoteConsole } from "../firebase/console";
 
 export class Editor {
-  constructor(session: DatabaseReference, parent: HTMLElement) {
+  constructor(
+    session: DatabaseReference,
+    user: DatabaseReference,
+    parent: HTMLElement
+  ) {
     onChildAdded(
       child(session, "documents"),
       (document) => {
-        const state = stateFromDatabase(document, [
+        const state = stateFromDatabase(document, user, [
           keymap.of([indentWithTab]),
           evaluation(),
           basicSetup,

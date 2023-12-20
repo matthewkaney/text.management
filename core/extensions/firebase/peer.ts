@@ -11,6 +11,8 @@ import {
 import { commandEffect, evalEffect } from "@management/cm-evaluate";
 import { DocumentUpdate } from "@core/api";
 
+import { remoteCursors } from "../cursors/remoteCursors";
+
 import {
   DatabaseReference,
   DataSnapshot,
@@ -22,7 +24,7 @@ import {
   onChildChanged,
 } from "firebase/database";
 
-export function peer(doc: DataSnapshot) {
+export function peer(doc: DataSnapshot, user: DatabaseReference) {
   const { updates } = doc.val();
   const startVersion = Array.isArray(updates) ? updates.length : 0;
 
@@ -106,7 +108,13 @@ export function peer(doc: DataSnapshot) {
     };
   });
 
-  return [collab({ startVersion, sharedEffects: evals }), plugin];
+  let clientID = user.key ?? undefined;
+
+  return [
+    collab({ startVersion, clientID, sharedEffects: evals }),
+    plugin,
+    remoteCursors(user),
+  ];
 }
 
 function evals(tr: Transaction) {

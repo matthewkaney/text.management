@@ -1,10 +1,11 @@
 import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
-import { DataSnapshot } from "firebase/database";
+import { DatabaseReference, DataSnapshot } from "firebase/database";
 
 import { peer } from "./peer";
 
 export function stateFromDatabase(
   snapshot: DataSnapshot,
+  user: DatabaseReference,
   extensions: Extension[] = []
 ) {
   let data = snapshot.val();
@@ -21,6 +22,6 @@ export function stateFromDatabase(
 
   return EditorState.create({
     doc,
-    extensions: [extensions, peer(snapshot)],
+    extensions: [extensions, peer(snapshot, user)],
   });
 }

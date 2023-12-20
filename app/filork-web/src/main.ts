@@ -2,6 +2,7 @@ import { DatabaseReference, child, push } from "firebase/database";
 import { getSession, createSession } from "@core/extensions/firebase/session";
 
 import { Editor } from "./editor";
+import { getUserProfile } from "@core/extensions/firebase/user";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -18,5 +19,7 @@ window.addEventListener("load", () => {
     history.replaceState(null, "", session.key);
   }
 
-  new Editor(session, parent);
+  let user = getUserProfile(session);
+
+  new Editor(session, user, parent);
 });
