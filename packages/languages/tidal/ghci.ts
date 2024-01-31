@@ -5,7 +5,7 @@ import { join } from "path";
 import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
-import { Evaluation, TerminalMessage } from "@core/api";
+import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
 
 import { TidalSettings, normalizeTidalSettings } from "./settings";
@@ -14,7 +14,7 @@ import { generateIntegrationCode } from "./editor-integration";
 import { EventEmitter } from "@core/events";
 
 interface GHCIEvents {
-  message: TerminalMessage | Evaluation;
+  message: Evaluation | Log;
   now: number;
   openSettings: string;
 }
@@ -24,7 +24,7 @@ export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
-  private history: (TerminalMessage | Evaluation)[] = [];
+  private history: (Evaluation | Log)[] = [];
 
   constructor(private extensionFolder: string) {
     super();
@@ -109,6 +109,10 @@ export class GHCI extends Engine<GHCIEvents> {
 
     this.wrapper = new ProcessWrapper(child);
 
+    this.wrapper.on("log", (message) => {
+      this.emit("message", message);
+    });
+
     if (!disableEditorIntegration) {
       // this.outputFilters.push(
       //   /package flags have changed, resetting and loading new packages\.\.\./
@@ -137,7 +141,6 @@ export class GHCI extends Engine<GHCIEvents> {
         this.emit("message", {
           level: "error",
           text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
-          source: "Tidal",
         });
       }
     }
@@ -164,7 +167,6 @@ export class GHCI extends Engine<GHCIEvents> {
     // TODO: Some sort of check that settings have actually changed?
     this.emit("message", {
       level: "info",
-      source: "Tidal",
       text: "Tidal's settings have changed. Reboot Tidal to apply new settings.",
     });
   }
@@ -180,7 +182,10 @@ export class GHCI extends Engine<GHCIEvents> {
       throw Error("Can't evaluate code before process is started");
 
     for await (let evaluation of this.wrapper.send(code)) {
-      this.emit("message", evaluation);
+      // TODO: Make this a setting?
+      if (evaluation.text) {
+        this.emit("message", evaluation);
+      }
     }
   }
 
@@ -236,6 +241,7 @@ import { EOL } from "os";
 
 interface ProcessWrapperEvents {
   prologue: string;
+  log: Log;
   prompt: string;
   epilogue: string;
 }
@@ -289,24 +295,24 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
     let input = code,
       success = true,
-      result: string | undefined = undefined;
+      text: string | undefined = undefined;
 
     if (this.error.length > 1) {
       success = false;
-      result = this.error.join(EOL);
+      text = this.error.join(EOL);
       this.error = [];
     }
 
     if (this.out.length > 0) {
       if (success) {
-        result = this.out.join(EOL);
+        text = this.out.join(EOL);
       } else {
         throw Error(`Unexpected text on stdout: "${this.out.join(EOL)}"`);
       }
       this.out = [];
     }
 
-    return { input, success, result };
+    return { input, success, text };
   }
 
   private async consumeStdout() {
@@ -315,37 +321,44 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
     for await (chunk of this.child.stdout) {
       console.log(`CHUNK: "${chunk}"`);
-      let splits = chunk.split(EOL);
-      let lines = splits.slice(0, -1);
-      let [remainder] = splits.slice(-1);
 
-      // Figure out where runningLine should be prepended
-      if (lines.length > 0) {
-        lines[0] = runningLine + lines[0];
-      } else {
-        remainder = runningLine + remainder;
+      if (!this.runningProcess) {
+        // TODO: Use a timeout to batch outputs
+        this.emit("log", { level: "info", text: chunk.trim() });
+        continue;
       }
 
-      runningLine = "";
+      let hasPrompt = false;
+      let splits = chunk.split(EOL);
 
-      // Push any full lines onto the output
-      this.out.push(...lines);
+      for (let i = 0; i < splits.length; ++i) {
+        let split = splits[i];
 
-      // Check if remainder is a prompt
-      if (typeof remainder === "string") {
-        if (remainder.startsWith(this.prompt)) {
-          if (remainder !== this.prompt) {
-            // If remainder has any characters after prompt, throw error
-            throw Error(
-              `Process printed unexpected characters after input prompt: "${remainder}"`
-            );
-          }
-
-          this.emit("prompt", remainder);
-        } else {
-          // We have some non-line, non-prompt characters. Save them for later.
-          runningLine = remainder;
+        if (i === 0) {
+          split = runningLine + split;
+          runningLine = "";
         }
+
+        if (split.includes(this.prompt)) {
+          hasPrompt = true;
+          split = split.replace(this.prompt, "");
+        }
+
+        if (i < splits.length - 1) {
+          this.out.push(split);
+        } else {
+          runningLine = runningLine + split;
+        }
+      }
+
+      if (hasPrompt) {
+        if (runningLine) {
+          this.out.push(runningLine);
+          runningLine = "";
+        }
+
+        // TODO: The value of this event is never used. It can probably be unused.
+        this.emit("prompt", this.prompt);
       }
     }
   }
@@ -356,6 +369,13 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
     for await (chunk of this.child.stderr) {
       console.log(`ERROR CHUNK: "${chunk}"`);
+
+      if (!this.runningProcess) {
+        // TODO: Use a timeout to batch outputs
+        this.emit("log", { level: "error", text: chunk.trim() });
+        continue;
+      }
+
       let splits = chunk.split(EOL);
       let lines = splits.slice(0, -1);
       let [remainder] = splits.slice(-1);

@@ -29,12 +29,11 @@ export interface Tab {
 export interface Evaluation {
   input: string;
   success: boolean;
-  result?: string;
+  text?: string;
 }
 
-export interface TerminalMessage {
+export interface Log {
   level: "info" | "error";
-  source: string;
   text: string;
 }
 

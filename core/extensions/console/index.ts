@@ -1,8 +1,19 @@
-import { TerminalMessage, Evaluation } from "@core/api";
+import { Evaluation, Log } from "@core/api";
 
 import "./style.css";
 
-export function console(history: (TerminalMessage | Evaluation)[] = []) {
+type TerminalMessage = {
+  source: string;
+  level: "info" | "error";
+} & (
+  | {
+      input: string;
+      output?: string;
+    }
+  | { output: string }
+);
+
+export function console(history: (Evaluation | Log)[] = []) {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
 
@@ -23,7 +34,7 @@ export function console(history: (TerminalMessage | Evaluation)[] = []) {
 
   return {
     dom: consoleNode,
-    update(message: TerminalMessage | Evaluation) {
+    update(message: Evaluation | Log) {
       let lastElement = consoleNode.appendChild(
         messageConstructor(format(message))
       );
@@ -40,34 +51,41 @@ function messageConstructor(message: TerminalMessage) {
   const messageNode = document.createElement("div");
   messageNode.classList.add("cm-console-message");
   messageNode.classList.add(`cm-console-message-${message.level}`);
-  messageNode.appendChild(messageSourceConstructor(message));
-  messageNode.appendChild(messageContentConstructor(message));
+  messageNode.appendChild(consoleDiv(message.source, "source"));
+
+  const messageContent = messageNode.appendChild(document.createElement("div"));
+  messageContent.classList.add("cm-console-message-content");
+  if ("input" in message) {
+    messageContent.appendChild(consoleDiv(message.input, "input"));
+  }
+  if (message.output) {
+    messageContent.appendChild(consoleDiv(message.output, "output"));
+  }
   return messageNode;
 }
 
-function messageSourceConstructor(message: TerminalMessage) {
+function consoleDiv(message: string, type: string) {
   const messageSource = document.createElement("div");
-  messageSource.classList.add("cm-console-message-source");
-  messageSource.innerText = message.source;
+  messageSource.classList.add(`cm-console-message-${type}`);
+  messageSource.innerText = message;
   return messageSource;
 }
 
-function messageContentConstructor(message: TerminalMessage) {
-  const messageContent = document.createElement("div");
-  messageContent.classList.add("cm-console-message-content");
-  messageContent.innerText = message.text;
-  return messageContent;
-}
-
-function format(message: TerminalMessage | Evaluation): TerminalMessage {
-  if ("level" in message) {
-    return message;
-  } else {
-    let { input, success, result } = message;
+function format(message: Evaluation | Log): TerminalMessage {
+  if ("input" in message) {
+    let { input, success, text } = message;
     return {
-      level: success ? "info" : "error",
       source: "Tidal",
-      text: `> ${input}${typeof result === "string" ? `\n\n${result}` : ""}`,
+      level: success ? "info" : "error",
+      input,
+      output: text,
+    };
+  } else {
+    let { level, text } = message;
+    return {
+      source: "Tidal",
+      level,
+      output: text,
     };
   }
 }
