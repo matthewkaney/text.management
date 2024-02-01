@@ -1,10 +1,19 @@
-import { ConsoleMessage } from "@management/cm-console";
-
-import { TerminalMessage } from "@core/api";
+import { Evaluation, Log } from "@core/api";
 
 import "./style.css";
 
-export function console(history: TerminalMessage[] = []) {
+type TerminalMessage = {
+  source: string;
+  level: "info" | "error";
+} & (
+  | {
+      input: string;
+      output?: string;
+    }
+  | { output: string }
+);
+
+export function console(history: (Evaluation | Log)[] = []) {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
 
@@ -12,7 +21,7 @@ export function console(history: TerminalMessage[] = []) {
   consoleNode.tabIndex = 0;
 
   for (let message of history) {
-    consoleNode.appendChild(messageConstructor(message));
+    consoleNode.appendChild(messageConstructor(format(message)));
   }
 
   let visible = true;
@@ -25,8 +34,10 @@ export function console(history: TerminalMessage[] = []) {
 
   return {
     dom: consoleNode,
-    update(message: TerminalMessage) {
-      let lastElement = consoleNode.appendChild(messageConstructor(message));
+    update(message: Evaluation | Log) {
+      let lastElement = consoleNode.appendChild(
+        messageConstructor(format(message))
+      );
 
       toggleVisibility(true);
       lastElement.scrollIntoView({ behavior: "smooth" });
@@ -36,25 +47,45 @@ export function console(history: TerminalMessage[] = []) {
   };
 }
 
-function messageConstructor(message: ConsoleMessage) {
+function messageConstructor(message: TerminalMessage) {
   const messageNode = document.createElement("div");
   messageNode.classList.add("cm-console-message");
   messageNode.classList.add(`cm-console-message-${message.level}`);
-  messageNode.appendChild(messageSourceConstructor(message));
-  messageNode.appendChild(messageContentConstructor(message));
+  messageNode.appendChild(consoleDiv(message.source, "source"));
+
+  const messageContent = messageNode.appendChild(document.createElement("div"));
+  messageContent.classList.add("cm-console-message-content");
+  if ("input" in message) {
+    messageContent.appendChild(consoleDiv(message.input, "input"));
+  }
+  if (message.output) {
+    messageContent.appendChild(consoleDiv(message.output, "output"));
+  }
   return messageNode;
 }
 
-function messageSourceConstructor(message: ConsoleMessage) {
+function consoleDiv(message: string, type: string) {
   const messageSource = document.createElement("div");
-  messageSource.classList.add("cm-console-message-source");
-  messageSource.innerText = message.source;
+  messageSource.classList.add(`cm-console-message-${type}`);
+  messageSource.innerText = message;
   return messageSource;
 }
 
-function messageContentConstructor(message: ConsoleMessage) {
-  const messageContent = document.createElement("div");
-  messageContent.classList.add("cm-console-message-content");
-  messageContent.innerText = message.text;
-  return messageContent;
+function format(message: Evaluation | Log): TerminalMessage {
+  if ("input" in message) {
+    let { input, success, text } = message;
+    return {
+      source: "Tidal",
+      level: success ? "info" : "error",
+      input,
+      output: text,
+    };
+  } else {
+    let { level, text } = message;
+    return {
+      source: "Tidal",
+      level,
+      output: text,
+    };
+  }
 }
