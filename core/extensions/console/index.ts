@@ -1,19 +1,9 @@
-import { Evaluation, Log } from "@core/api";
-
 import "./style.css";
 
-type TerminalMessage = {
-  source: string;
-  level: "info" | "error";
-} & (
-  | {
-      input: string;
-      output?: string;
-    }
-  | { output: string }
-);
+export * from "./types";
+import { TerminalMessage } from "./types";
 
-export function console(history: (Evaluation | Log)[] = []) {
+export function console(history: TerminalMessage[] = []) {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
 
@@ -21,7 +11,7 @@ export function console(history: (Evaluation | Log)[] = []) {
   consoleNode.tabIndex = 0;
 
   for (let message of history) {
-    consoleNode.appendChild(messageConstructor(format(message)));
+    consoleNode.appendChild(messageConstructor(message));
   }
 
   let visible = true;
@@ -34,10 +24,8 @@ export function console(history: (Evaluation | Log)[] = []) {
 
   return {
     dom: consoleNode,
-    update(message: Evaluation | Log) {
-      let lastElement = consoleNode.appendChild(
-        messageConstructor(format(message))
-      );
+    update(message: TerminalMessage) {
+      let lastElement = consoleNode.appendChild(messageConstructor(message));
 
       toggleVisibility(true);
       lastElement.scrollIntoView({ behavior: "smooth" });
@@ -69,23 +57,4 @@ function consoleDiv(message: string, type: string) {
   messageSource.classList.add(`cm-console-message-${type}`);
   messageSource.innerText = message;
   return messageSource;
-}
-
-function format(message: Evaluation | Log): TerminalMessage {
-  if ("input" in message) {
-    let { input, success, text } = message;
-    return {
-      source: "Tidal",
-      level: success ? "info" : "error",
-      input,
-      output: text,
-    };
-  } else {
-    let { level, text } = message;
-    return {
-      source: "Tidal",
-      level,
-      output: text,
-    };
-  }
 }

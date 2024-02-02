@@ -7,7 +7,10 @@ import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
 import { applyTransaction, LayoutView } from "@core/extensions/layout";
-import { console as electronConsole } from "@core/extensions/console";
+import {
+  console as electronConsole,
+  toTerminalMessage,
+} from "@core/extensions/console";
 import { peer } from "@core/extensions/firebase/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
 
@@ -60,7 +63,7 @@ export class Editor {
     });
 
     api.onConsoleMessage((message) => {
-      tidalConsole.update(message);
+      tidalConsole.update(toTerminalMessage(message, "Tidal"));
     });
 
     api.onOpen(({ id, path }) => {

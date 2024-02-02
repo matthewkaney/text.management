@@ -29,12 +29,12 @@ export interface Tab {
 export interface Evaluation {
   input: string;
   success: boolean;
-  text?: string;
+  output?: string;
 }
 
 export interface Log {
   level: "info" | "error";
-  text: string;
+  output: string;
 }
 
 export { ElectronAPI } from "../app/desktop/src/preload";

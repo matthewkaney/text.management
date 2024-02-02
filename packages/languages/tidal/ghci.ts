@@ -113,12 +113,20 @@ export class GHCI extends Engine<GHCIEvents> {
       this.emit("message", message);
     });
 
+    const reportEvaluations = async (
+      evaluations: AsyncGenerator<Evaluation>
+    ) => {
+      for await (let evaluation of evaluations) {
+        this.emit("message", evaluation);
+      }
+    };
+
     if (!disableEditorIntegration) {
       // this.outputFilters.push(
       //   /package flags have changed, resetting and loading new packages\.\.\./
       // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
-      await this.send(integrationCode);
+      await reportEvaluations(this.send(integrationCode));
 
       // Disable reloading of Sound.Tidal.Context since it's already loaded
       this.wrapper.addInputFilter(
@@ -127,12 +135,12 @@ export class GHCI extends Engine<GHCIEvents> {
     }
 
     if (useDefaultBootfile) {
-      this.sendFile(await this.defaultBootfile());
+      reportEvaluations(this.sendFile(await this.defaultBootfile()));
     }
 
     for (let path of bootFiles) {
       try {
-        this.sendFile(path);
+        reportEvaluations(this.sendFile(path));
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;
@@ -140,7 +148,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
         this.emit("message", {
           level: "error",
-          text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
+          output: `The boot file "${path}" can't be found, so it wasn't loaded.`,
         });
       }
     }
@@ -167,24 +175,25 @@ export class GHCI extends Engine<GHCIEvents> {
     // TODO: Some sort of check that settings have actually changed?
     this.emit("message", {
       level: "info",
-      text: "Tidal's settings have changed. Reboot Tidal to apply new settings.",
+      output:
+        "Tidal's settings have changed. Reboot Tidal to apply new settings.",
     });
   }
 
-  async sendFile(path: string) {
+  async *sendFile(path: string) {
     let code = await readFile(path, "utf-8");
 
-    await this.send(code);
+    for await (let evaluation of this.send(code)) yield evaluation;
   }
 
-  async send(code: string) {
+  async *send(code: string) {
     if (!this.wrapper)
       throw Error("Can't evaluate code before process is started");
 
     for await (let evaluation of this.wrapper.send(code)) {
       // TODO: Make this a setting?
-      if (evaluation.text) {
-        this.emit("message", evaluation);
+      if (evaluation.output) {
+        yield evaluation;
       }
     }
   }
@@ -287,32 +296,30 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
   private async evaluate(code: string): Promise<Evaluation> {
     let nextPrompt = this.next("prompt");
 
-    console.log(`EVALUATE: "${code}"`);
-
     this.child.stdin.write(code + EOL);
 
     await nextPrompt;
 
     let input = code,
       success = true,
-      text: string | undefined = undefined;
+      output: string | undefined = undefined;
 
     if (this.error.length > 1) {
       success = false;
-      text = this.error.join(EOL);
+      output = this.error.join(EOL);
       this.error = [];
     }
 
     if (this.out.length > 0) {
       if (success) {
-        text = this.out.join(EOL);
+        output = this.out.join(EOL);
       } else {
         throw Error(`Unexpected text on stdout: "${this.out.join(EOL)}"`);
       }
       this.out = [];
     }
 
-    return { input, success, text };
+    return { input, success, output };
   }
 
   private async consumeStdout() {
@@ -320,11 +327,9 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stdout) {
-      console.log(`CHUNK: "${chunk}"`);
-
       if (!this.runningProcess) {
         // TODO: Use a timeout to batch outputs
-        this.emit("log", { level: "info", text: chunk.trim() });
+        this.emit("log", { level: "info", output: chunk.trim() });
         continue;
       }
 
@@ -368,11 +373,9 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stderr) {
-      console.log(`ERROR CHUNK: "${chunk}"`);
-
       if (!this.runningProcess) {
         // TODO: Use a timeout to batch outputs
-        this.emit("log", { level: "error", text: chunk.trim() });
+        this.emit("log", { level: "error", output: chunk.trim() });
         continue;
       }
 
@@ -417,7 +420,6 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
       // Check for empty statements post-filter
       if (/^\s*$/.test(statement)) {
-        console.log("BREAK");
         continue;
       }
 

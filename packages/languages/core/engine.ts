@@ -1,3 +1,4 @@
+import { Evaluation } from "@core/api";
 import { EventEmitter, EventMap } from "@core/events";
 
 interface EngineEvents {
@@ -12,7 +13,7 @@ export abstract class Engine<T extends EventMap> extends EventEmitter<
     super();
   }
 
-  abstract send(text: string): Promise<void>;
+  abstract send(text: string): AsyncGenerator<Evaluation>;
 
   abstract restart(): Promise<void>;
 }

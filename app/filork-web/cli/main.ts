@@ -16,6 +16,8 @@ import {
   onDisconnect,
 } from "firebase/database";
 
+import { toTerminalMessage } from "@core/extensions/console/types";
+
 // TODO: Don't only create new sessions
 let session = createSession();
 console.log(`Session created: ${session.key}`);
@@ -65,7 +67,7 @@ onChildAdded(
         child(document.ref, "updates"),
         startAt(undefined, updates.length.toString())
       ),
-      (update) => {
+      async (update) => {
         if (update.key === null)
           throw Error("Update handler called on root document");
 
@@ -86,7 +88,12 @@ onChildAdded(
             code = doc.sliceString(from, to);
           }
 
-          tidal.send(code);
+          for await (let evaluation of tidal.send(code)) {
+            push(child(user, "console"), {
+              ...toTerminalMessage(evaluation, "Tidal"),
+              clientID,
+            });
+          }
         }
       }
     );

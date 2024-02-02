@@ -5,7 +5,7 @@
 }
 
 .cm-console:last-child {
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .cm-console-message {
@@ -87,7 +87,7 @@
   top: 0;
   left: -24px;
   box-sizing: border-box;
-  background: var(--col-bg-shadow);
+  background: var(--col-bg-shadow-soft);
   padding: 4px 6px;
   width: 24px;
   height: 100%;
