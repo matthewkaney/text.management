@@ -11,6 +11,10 @@ import {
   consoleState,
   consoleMessageEffect,
 } from "@core/extensions/console/codemirror";
+import { getClientID } from "@codemirror/collab";
+
+type WindowWithMessageFlag = Window &
+  typeof globalThis & { showAllMessages: boolean };
 
 export function remoteConsole(session: DatabaseReference) {
   const consolePlugin = ViewPlugin.define((view) => {
@@ -22,8 +26,14 @@ export function remoteConsole(session: DatabaseReference) {
 
       consoleListeners[user.key] = onChildAdded(
         child(user.ref, "console"),
-        (message) => {
-          view.dispatch({ effects: consoleMessageEffect.of(message.val()) });
+        (messageSnapshot) => {
+          let message = messageSnapshot.val();
+          if (
+            message.clientID === getClientID(view.state) ||
+            (window as WindowWithMessageFlag).showAllMessages
+          ) {
+            view.dispatch({ effects: consoleMessageEffect.of(message) });
+          }
         }
       );
     });

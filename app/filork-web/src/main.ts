@@ -7,8 +7,12 @@ window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
   parent.id = "editor";
 
-  let sessionID = window.location.pathname.slice(1);
+  let [_, sessionID, isAll] = window.location.pathname.split("/");
   let session: DatabaseReference;
+
+  // TODO: Pass this down in a better form than a global variable
+  // @ts-ignore
+  window.showAllMessages = isAll === "all";
 
   if (sessionID) {
     session = getSession(sessionID);

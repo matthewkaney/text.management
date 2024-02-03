@@ -77,12 +77,11 @@
 }
 
 .cm-console-message-input {
-  margin-left: 24px;
+  padding-left: 24px;
   position: relative;
 }
 
 .cm-console-message-input::before {
-  content: ">";
   position: absolute;
   top: 0;
   left: -24px;
@@ -91,4 +90,10 @@
   padding: 4px 6px;
   width: 24px;
   height: 100%;
+}
+
+.invisible {
+  clip: rect(0px 0px 0px 0px);
+  position: absolute;
+  margin: 0;
 }

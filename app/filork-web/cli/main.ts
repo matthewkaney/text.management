@@ -43,7 +43,7 @@ tidal.getVersion().then((version) => {
 });
 
 tidal.on("message", (message) => {
-  push(child(user, "console"), message);
+  push(child(user, "console"), toTerminalMessage(message, "Tidal"));
 });
 
 // Pull one document
@@ -77,7 +77,6 @@ onChildAdded(
         doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
 
         for (let evaluationJson of evaluations) {
-          console.log(evaluationJson);
           let evaluation = JSON.parse(evaluationJson);
           let code: string;
 
