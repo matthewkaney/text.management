@@ -93,7 +93,11 @@
 }
 
 .invisible {
-  clip: rect(0px 0px 0px 0px);
+  clip: rect(0 0 0 0);
+  margin: -1px;
   position: absolute;
-  margin: 0;
+  width: 0;
+  height: 0;
+  left: 0;
+  overflow: hidden;
 }
