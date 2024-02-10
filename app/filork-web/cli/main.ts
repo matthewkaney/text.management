@@ -1,6 +1,8 @@
-// TODO: Allow reconnecting to a session...
+#!/usr/bin/env node
 
-import { createSession } from "@core/extensions/firebase/session";
+import { program } from "commander";
+
+import { createSession, getSession } from "@core/extensions/firebase/session";
 
 import { GHCI } from "@management/lang-tidal";
 
@@ -14,16 +16,30 @@ import {
   startAt,
   set,
   onDisconnect,
+  DatabaseReference,
 } from "firebase/database";
 
 import { toTerminalMessage } from "@core/extensions/console/types";
 
-// TODO: Don't only create new sessions
-let session = createSession();
-console.log(`Session created: ${session.key}`);
-let result = push(child(session, "documents"), {
-  start: { text: [""], version: 0 },
-});
+// Set up commands
+program.option("-r, --remote <session id>");
+
+program.parse();
+
+const options = program.opts();
+
+let session: DatabaseReference;
+
+if (options.remote) {
+  session = getSession(options.remote);
+  console.log(`Joining session: ${session.key}`);
+} else {
+  session = createSession();
+  console.log(`Session created: ${session.key}`);
+  let result = push(child(session, "documents"), {
+    start: { text: [""], version: 0 },
+  });
+}
 
 // Set up user info
 let user = push(child(session, "users"), {

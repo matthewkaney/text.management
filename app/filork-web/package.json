@@ -2,6 +2,9 @@
   "name": "@management/text-management-filork-web",
   "version": "0.9.0",
   "private": "true",
+  "bin": {
+    "filork": "dist/cli/main.js"
+  },
   "targets": {
     "web": {
       "source": "src/index.html",
@@ -17,9 +20,10 @@
     }
   },
   "scripts": {
-    "cli": "parcel build --target cli && node dist/cli/main.js",
+    "prepare": "npm run build:cli",
     "dev": "parcel serve --target web",
     "build": "parcel build --target web",
+    "build:cli": "parcel build --target cli",
     "postversion": "git add package.json",
     "preview": "npm run build && firebase hosting:channel:deploy filork --only filork"
   }
