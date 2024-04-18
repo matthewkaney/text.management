@@ -100,12 +100,25 @@ export class GHCI extends Engine<GHCIEvents> {
 
     // let stdout = new ReadableStream();
 
-    const child = spawn("ghci", ["-XOverloadedStrings"], {
-      env: {
-        ...process.env,
-        editor_port: port,
-      },
-    });
+    // const child = spawn("ghci", ["-XOverloadedStrings"], {
+    //   env: {
+    //     ...process.env,
+    //     editor_port: port,
+    //   },
+    // });
+
+    const child = spawn(
+      "cabal",
+      ["repl", "--repl-options", "-XOverloadedStrings"],
+      {
+        // TODO: pull this from settings
+        cwd: "/path/to/tidal/repo",
+        env: {
+          ...process.env,
+          editor_port: port,
+        },
+      }
+    );
 
     this.wrapper = new ProcessWrapper(child);
 
