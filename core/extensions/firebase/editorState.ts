@@ -1,4 +1,9 @@
-import { EditorState, Extension, Text, ChangeSet } from "@codemirror/state";
+import {
+  Extension,
+  Text,
+  ChangeSet,
+  EditorStateConfig,
+} from "@codemirror/state";
 import { DataSnapshot } from "firebase/database";
 
 import { peer } from "./peer";
@@ -6,7 +11,7 @@ import { peer } from "./peer";
 export function stateFromDatabase(
   snapshot: DataSnapshot,
   extensions: Extension[] = []
-) {
+): EditorStateConfig {
   let data = snapshot.val();
 
   // Get document information/versioning from database
@@ -19,8 +24,8 @@ export function stateFromDatabase(
     doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
   }
 
-  return EditorState.create({
+  return {
     doc,
     extensions: [extensions, peer(snapshot)],
-  });
+  };
 }

@@ -14,12 +14,13 @@ import {
 import { peer } from "@core/extensions/firebase/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
 
-import { fileSync } from "./file";
+import { fileSync, getFileName, remoteFileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
 import { set, child, onChildAdded, query } from "firebase/database";
 import { getSession, createSession } from "@core/extensions/firebase/session";
+import { stateFromDatabase } from "@core/extensions/firebase/editorState";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -155,7 +156,25 @@ export class Editor {
             ],
           });
         } else {
-          // TODO: Open new tab...
+          layout.dispatch({
+            changes: [
+              {
+                view: new EditorTabView(
+                  layout,
+                  id,
+                  api,
+                  stateFromDatabase(doc, [
+                    tidal(),
+                    evaluation(api.evaluate),
+                    basicSetup,
+                    oneDark,
+                    remoteFileSync("Remote File"),
+                    // remoteConsole(session),
+                  ])
+                ),
+              },
+            ],
+          });
         }
       });
     });

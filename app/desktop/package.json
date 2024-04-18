@@ -54,10 +54,12 @@
     }
   },
   "devDependencies": {
+    "@types/electron-prompt": "^1.6.5",
     "electron": "^26.2.2",
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
+    "electron-prompt": "^1.7.0",
     "electron-updater": "^6.1.4",
     "fix-path": "^4.0.0"
   }

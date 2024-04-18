@@ -324,8 +324,18 @@ function createRemote(window?: BrowserWindow) {
   }
 }
 
-function joinRemote(window?: BrowserWindow) {
+import prompt from "electron-prompt";
+
+menu.on("joinRemote", joinRemote);
+
+async function joinRemote(window?: BrowserWindow) {
   if (window) {
+    let session = await prompt(
+      { title: "Join Remote Session", label: "Session key:" },
+      window
+    );
+    let [send] = wrapIPC(window.webContents);
+    send("joinRemote", { session });
   }
 }
 
