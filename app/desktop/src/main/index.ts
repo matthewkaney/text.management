@@ -136,8 +136,9 @@ const createWindow = () => {
     });
 
     listeners.push(
-      listen("evaluation", (code) => {
-        tidal.send(code);
+      listen("evaluation", async (code) => {
+        for await (let evaluation of tidal.send(code)) {
+        }
       })
     );
 

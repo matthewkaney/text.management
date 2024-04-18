@@ -118,7 +118,12 @@ export class Editor {
       let sessionRef =
         typeof session === "string" ? getSession(session) : createSession();
 
-      console.log(`Joined session: ${sessionRef.key}`);
+      tidalConsole.update(
+        toTerminalMessage(
+          { level: "info", output: `Joined session: ${sessionRef.key}` },
+          "System"
+        )
+      );
 
       let documents: {
         [id: string]: { start: { text: string[]; version: number } };
