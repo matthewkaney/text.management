@@ -120,13 +120,13 @@ export class Editor {
       console.log(`Joined session: ${sessionRef.key}`);
 
       let documents: {
-        [id: string]: { start: { text: string; version: number } };
+        [id: string]: { start: { text: string[]; version: number } };
       } = {};
 
       for (let tabID in layout.state.tabs) {
         let { contents } = layout.state.tabs[tabID];
         if (contents instanceof EditorState) {
-          let text = contents.doc.toString();
+          let text = contents.doc.toJSON();
           let version = 0;
           documents[tabID] = { start: { text, version } };
         }
