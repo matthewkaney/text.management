@@ -11,6 +11,7 @@ interface DocumentEvents {
   loaded: FileStatus & { doc: Text; version: number };
   status: SavedStatus;
   update: DocumentState;
+  closed: void;
 }
 
 interface FileStatus {
@@ -137,6 +138,11 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
     this.content = content;
     this.emit("update", content);
   }
+
+  async close() {
+    // TODO: Better handling to catch save errors, emit additional saves, etc
+    this.emit("closed", undefined);
+  }
 }
 
 interface FilesystemEvents {
@@ -181,6 +187,10 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     let id = getID();
     let document = new DesktopDocument(id, path, defaultContent);
     this.docs.set(id, document);
+
+    document.once("closed", () => {
+      this.docs.delete(id);
+    });
 
     this.emit("open", document);
 
