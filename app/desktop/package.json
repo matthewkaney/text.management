@@ -58,6 +58,7 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
+    "electron-store": "^8.2.0",
     "electron-updater": "^6.1.4",
     "fix-path": "^4.0.0"
   }
