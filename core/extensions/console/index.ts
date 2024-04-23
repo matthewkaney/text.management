@@ -1,8 +1,7 @@
-import { ConsoleMessage } from "@management/cm-console";
-
-import { TerminalMessage } from "@core/api";
-
 import "./style.css";
+
+export * from "./types";
+import { TerminalMessage } from "./types";
 
 export function console(history: TerminalMessage[] = []) {
   let consoleNode = document.createElement("div");
@@ -36,25 +35,40 @@ export function console(history: TerminalMessage[] = []) {
   };
 }
 
-function messageConstructor(message: ConsoleMessage) {
+function messageConstructor(message: TerminalMessage) {
   const messageNode = document.createElement("div");
   messageNode.classList.add("cm-console-message");
   messageNode.classList.add(`cm-console-message-${message.level}`);
-  messageNode.appendChild(messageSourceConstructor(message));
-  messageNode.appendChild(messageContentConstructor(message));
+  // messageNode.appendChild(consoleDiv(message.source, "source"));
+
+  const messageContent = messageNode.appendChild(document.createElement("div"));
+  messageContent.classList.add("cm-console-message-content");
+  if ("input" in message) {
+    messageContent.appendChild(consoleDiv(message.input, "input", "Evaluate"));
+  }
+  if (message.output) {
+    messageContent.appendChild(
+      consoleDiv(
+        message.output,
+        "output",
+        message.level === "error" ? "Error" : "Result"
+      )
+    );
+  }
   return messageNode;
 }
 
-function messageSourceConstructor(message: ConsoleMessage) {
-  const messageSource = document.createElement("div");
-  messageSource.classList.add("cm-console-message-source");
-  messageSource.innerText = message.source;
-  return messageSource;
-}
+function consoleDiv(message: string, type: string, label?: string) {
+  const node = document.createElement("div");
+  node.classList.add(`cm-console-message-${type}`);
 
-function messageContentConstructor(message: ConsoleMessage) {
-  const messageContent = document.createElement("div");
-  messageContent.classList.add("cm-console-message-content");
-  messageContent.innerText = message.text;
-  return messageContent;
+  if (label) {
+    let header = node.appendChild(document.createElement("h2"));
+    header.classList.add("invisible");
+    header.innerText = label;
+  }
+
+  node.appendChild(document.createTextNode(message));
+
+  return node;
 }

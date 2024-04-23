@@ -1,16 +1,20 @@
 import { StateField, StateEffect } from "@codemirror/state";
-import { Panel, showPanel } from "@codemirror/view";
+import { EditorView, Panel, showPanel } from "@codemirror/view";
 
-import { TerminalMessage } from "@core/api";
+import { TerminalMessage } from ".";
 
 import { console as baseConsole } from ".";
 
 export function console(history?: TerminalMessage[]) {
-  return showPanel.of(ConsolePanel);
+  return showPanel.from(consoleState, (messages) =>
+    messages.length ? ConsolePanel : null
+  );
 }
 
-function ConsolePanel(): Panel {
-  const { dom, update, destroy } = baseConsole();
+function ConsolePanel({ state }: EditorView): Panel {
+  const { dom, update, destroy } = baseConsole(
+    state.field(consoleState, false)
+  );
 
   return {
     dom,
@@ -37,6 +41,8 @@ export const consoleState = StateField.define<TerminalMessage[]>({
   update: (value, transaction) => {
     for (let effect of transaction.effects) {
       if (effect.is(consoleMessageEffect)) {
+        window.console.log("State, Console Effect");
+        window.console.log(effect.value);
         value = [...value, effect.value];
       }
     }

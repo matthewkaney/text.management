@@ -11,19 +11,35 @@ import {
   consoleState,
   consoleMessageEffect,
 } from "@core/extensions/console/codemirror";
+import { getClientID } from "@codemirror/collab";
+
+type WindowWithMessageFlag = Window &
+  typeof globalThis & { showAllMessages: boolean };
 
 export function remoteConsole(session: DatabaseReference) {
   const consolePlugin = ViewPlugin.define((view) => {
     let consoleListeners: { [userKey: string]: () => void } = {};
+    let activeListener: string | null = null;
 
     let addUserListener = onChildAdded(child(session.ref, "users"), (user) => {
       if (user.key === null)
         throw Error("User added callback returned root node");
 
+      if (activeListener === null) {
+        activeListener = user.key;
+      }
+
       consoleListeners[user.key] = onChildAdded(
         child(user.ref, "console"),
-        (message) => {
-          view.dispatch({ effects: consoleMessageEffect.of(message.val()) });
+        (messageSnapshot) => {
+          let message = messageSnapshot.val();
+          if (
+            user.key === activeListener &&
+            (message.clientID === getClientID(view.state) ||
+              (window as WindowWithMessageFlag).showAllMessages)
+          ) {
+            view.dispatch({ effects: consoleMessageEffect.of(message) });
+          }
         }
       );
     });
@@ -36,6 +52,10 @@ export function remoteConsole(session: DatabaseReference) {
 
         consoleListeners[user.key]();
         delete consoleListeners[user.key];
+
+        if (activeListener === user.key) {
+          activeListener = Object.keys(consoleListeners)[0] || null;
+        }
       }
     );
 

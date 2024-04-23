@@ -7,16 +7,20 @@ import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
 import { applyTransaction, LayoutView } from "@core/extensions/layout";
-import { console as electronConsole } from "@core/extensions/console";
+import {
+  console as electronConsole,
+  toTerminalMessage,
+} from "@core/extensions/console";
 import { peer } from "@core/extensions/firebase/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
 
-import { fileSync } from "./file";
+import { fileSync, getFileName, remoteFileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
 import { set, child, onChildAdded, query } from "firebase/database";
 import { getSession, createSession } from "@core/extensions/firebase/session";
+import { stateFromDatabase } from "@core/extensions/firebase/editorState";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -60,7 +64,7 @@ export class Editor {
     });
 
     api.onConsoleMessage((message) => {
-      tidalConsole.update(message);
+      tidalConsole.update(toTerminalMessage(message, "Tidal"));
     });
 
     api.onOpen(({ id, path }) => {
@@ -114,16 +118,21 @@ export class Editor {
       let sessionRef =
         typeof session === "string" ? getSession(session) : createSession();
 
-      console.log(`Joined session: ${sessionRef.key}`);
+      tidalConsole.update(
+        toTerminalMessage(
+          { level: "info", output: `Joined session: ${sessionRef.key}` },
+          "System"
+        )
+      );
 
       let documents: {
-        [id: string]: { start: { text: string; version: number } };
+        [id: string]: { start: { text: string[]; version: number } };
       } = {};
 
       for (let tabID in layout.state.tabs) {
         let { contents } = layout.state.tabs[tabID];
         if (contents instanceof EditorState) {
-          let text = contents.doc.toString();
+          let text = contents.doc.toJSON();
           let version = 0;
           documents[tabID] = { start: { text, version } };
         }
@@ -152,7 +161,25 @@ export class Editor {
             ],
           });
         } else {
-          // TODO: Open new tab...
+          layout.dispatch({
+            changes: [
+              {
+                view: new EditorTabView(
+                  layout,
+                  id,
+                  api,
+                  stateFromDatabase(doc, [
+                    tidal(),
+                    evaluation(api.evaluate),
+                    basicSetup,
+                    oneDark,
+                    remoteFileSync("Remote File"),
+                    // remoteConsole(session),
+                  ])
+                ),
+              },
+            ],
+          });
         }
       });
     });

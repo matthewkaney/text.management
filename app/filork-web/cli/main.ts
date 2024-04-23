@@ -1,6 +1,8 @@
-// TODO: Allow reconnecting to a session...
+#!/usr/bin/env node
 
-import { createSession } from "@core/extensions/firebase/session";
+import { program } from "commander";
+
+import { createSession, getSession } from "@core/extensions/firebase/session";
 
 import { GHCI } from "@management/lang-tidal";
 
@@ -14,14 +16,30 @@ import {
   startAt,
   set,
   onDisconnect,
+  DatabaseReference,
 } from "firebase/database";
 
-// TODO: Don't only create new sessions
-let session = createSession();
-console.log(`Session created: ${session.key}`);
-let result = push(child(session, "documents"), {
-  start: { text: [""], version: 0 },
-});
+import { toTerminalMessage } from "@core/extensions/console/types";
+
+// Set up commands
+program.option("-r, --remote <session id>");
+
+program.parse();
+
+const options = program.opts();
+
+let session: DatabaseReference;
+
+if (options.remote) {
+  session = getSession(options.remote);
+  console.log(`Joining session: ${session.key}`);
+} else {
+  session = createSession();
+  console.log(`Session created: ${session.key}`);
+  let result = push(child(session, "documents"), {
+    start: { text: [""], version: 0 },
+  });
+}
 
 // Set up user info
 let user = push(child(session, "users"), {
@@ -41,7 +59,7 @@ tidal.getVersion().then((version) => {
 });
 
 tidal.on("message", (message) => {
-  push(child(user, "console"), message);
+  push(child(user, "console"), toTerminalMessage(message, "Tidal"));
 });
 
 // Pull one document
@@ -65,7 +83,7 @@ onChildAdded(
         child(document.ref, "updates"),
         startAt(undefined, updates.length.toString())
       ),
-      (update) => {
+      async (update) => {
         if (update.key === null)
           throw Error("Update handler called on root document");
 
@@ -75,7 +93,6 @@ onChildAdded(
         doc = ChangeSet.fromJSON(JSON.parse(changes)).apply(doc);
 
         for (let evaluationJson of evaluations) {
-          console.log(evaluationJson);
           let evaluation = JSON.parse(evaluationJson);
           let code: string;
 
@@ -86,7 +103,12 @@ onChildAdded(
             code = doc.sliceString(from, to);
           }
 
-          tidal.send(code);
+          for await (let evaluation of tidal.send(code)) {
+            push(child(user, "console"), {
+              ...toTerminalMessage(evaluation, "Tidal"),
+              clientID,
+            });
+          }
         }
       }
     );

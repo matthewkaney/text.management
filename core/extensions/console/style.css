@@ -5,16 +5,21 @@
 }
 
 .cm-console:last-child {
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .cm-console-message {
-  padding: 4px 6px;
   margin: 0;
 }
 
+.cm-console-message-source,
+.cm-console-message-input,
+.cm-console-message-output {
+  padding: 4px 6px;
+}
+
 .cm-console-message-source {
-  margin-left: 12px;
+  padding-left: 12px;
 }
 
 .cm-console {
@@ -43,16 +48,23 @@
   overflow-wrap: anywhere;
 }
 
-.cm-console-message-info {
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
+  border-color: var(--col-bg-shadow);
+  background-color: var(--col-bg-shadow-soft);
+}
+
+.cm-console-message-info .cm-console-message-output {
   background-color: var(--col-bg-shadow);
 }
 
-.cm-console-message-info .cm-console-message-source {
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
   color: var(--col-text-soft);
 }
 
-.cm-console-message-warn,
-.cm-console-message-error {
+.cm-console-message-error .cm-console-message-input,
+.cm-console-message-error .cm-console-message-output {
   background-image: repeating-linear-gradient(
     135deg,
     #6c000050 0px 10px,
@@ -60,7 +72,32 @@
   );
 }
 
-.cm-console-message-warn .cm-console-message-source,
 .cm-console-message-error .cm-console-message-source {
   color: coral;
+}
+
+.cm-console-message-input {
+  padding-left: 24px;
+  position: relative;
+}
+
+.cm-console-message-input::before {
+  position: absolute;
+  top: 0;
+  left: -24px;
+  box-sizing: border-box;
+  background: var(--col-bg-shadow-soft);
+  padding: 4px 6px;
+  width: 24px;
+  height: 100%;
+}
+
+.invisible {
+  clip: rect(0 0 0 0);
+  margin: -1px;
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 0;
+  overflow: hidden;
 }

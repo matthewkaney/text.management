@@ -149,6 +149,10 @@ export const oneDarkTheme = EditorView.theme(
       },
     },
 
+    "& .cm-panels": {
+      backgroundColor: "transparent",
+    },
+
     "*::-webkit-scrollbar-thumb": {
       backgroundColor: col("bg-shadow"),
     },

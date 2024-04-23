@@ -78,6 +78,19 @@ export function fileSync(
   );
 }
 
+export function remoteFileSync(path: string) {
+  console.log("remote file sync called!");
+  return [
+    saveState.init(() => ({
+      path,
+      saved: true,
+      version: 0,
+      thisVersion: 0,
+    })),
+    fileID.of(null),
+  ];
+}
+
 export function getSaveStatus(state: EditorState) {
   const { version, thisVersion, saved } = state.field(saveState);
 
