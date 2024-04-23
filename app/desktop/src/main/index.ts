@@ -11,12 +11,10 @@ import { autoUpdater } from "electron-updater";
 autoUpdater.checkForUpdatesAndNotify();
 
 import { GHCI } from "@management/lang-tidal";
-import { Filesystem } from "./filesystem";
+import { filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
 import { menu } from "./menu";
-
-const filesystem = new Filesystem();
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -194,15 +192,25 @@ async function newFile() {
 }
 
 menu.on("openFile", openFile);
-async function openFile(window?: BrowserWindow) {
+async function openFile({
+  window,
+  path,
+}: {
+  window?: BrowserWindow;
+  path?: string;
+}) {
   if (window) {
-    let result = await dialog.showOpenDialog(window, {
-      properties: ["openFile"],
-    });
+    if (typeof path !== "string") {
+      let result = await dialog.showOpenDialog(window, {
+        properties: ["openFile"],
+      });
 
-    if (result.canceled) return;
+      if (result.canceled) return;
 
-    filesystem.loadDoc(result.filePaths[0]);
+      path = result.filePaths[0];
+    }
+
+    filesystem.loadDoc(path);
   } else {
     dialog.showOpenDialog({ properties: ["openFile"] });
   }
@@ -293,4 +301,9 @@ function showAbout(window?: BrowserWindow) {
 menu.currentDoc = filesystem.currentDoc;
 filesystem.on("current", (doc) => {
   menu.currentDoc = doc;
+});
+
+menu.setRecentFiles(filesystem.recentFiles);
+filesystem.on("recentFiles", (recent) => {
+  menu.setRecentFiles(recent);
 });

@@ -1,6 +1,8 @@
 import { dirname } from "path";
 import { readFile, writeFile, mkdir } from "fs/promises";
 
+import Store from "electron-store";
+
 import { ChangeSet, Text } from "@codemirror/state";
 
 import { EventEmitter } from "@core/events";
@@ -149,10 +151,31 @@ interface FilesystemEvents {
   open: DesktopDocument;
   current: DesktopDocument | null;
   setCurrent: string;
+  recentFiles: string[];
 }
 
-export class Filesystem extends EventEmitter<FilesystemEvents> {
+interface FileHistory {
+  files: string[];
+}
+
+class Filesystem extends EventEmitter<FilesystemEvents> {
   docs = new Map<string, DesktopDocument>();
+
+  private history = new Store<FileHistory>({
+    name: "history",
+    defaults: {
+      files: [],
+    },
+  });
+
+  constructor() {
+    super();
+
+    // TODO: Do we ever need to unsubscribe from this?
+    this.history.onDidChange("files", (files) => {
+      this.emit("recentFiles", files?.slice(0, 10) ?? []);
+    });
+  }
 
   getDoc(id: string) {
     return this.docs.get(id) ?? null;
@@ -188,7 +211,21 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
     let document = new DesktopDocument(id, path, defaultContent);
     this.docs.set(id, document);
 
+    if (path) {
+      this.addRecentFile(path);
+    }
+
+    let oldPath = path;
+
+    const unlisten = document.on("status", ({ path: newPath }) => {
+      if (newPath !== oldPath) {
+        this.addRecentFile(newPath);
+        oldPath = newPath;
+      }
+    });
+
     document.once("closed", () => {
+      unlisten();
       this.docs.delete(id);
     });
 
@@ -211,4 +248,18 @@ export class Filesystem extends EventEmitter<FilesystemEvents> {
   get currentDoc() {
     return this._currentDocID !== null ? this.getDoc(this._currentDocID) : null;
   }
+
+  get recentFiles() {
+    return this.history.get("files").slice(0, 10);
+  }
+
+  private addRecentFile(path: string) {
+    let history = [
+      path,
+      ...this.history.get("files").filter((p) => p !== path),
+    ];
+    this.history.set("files", history);
+  }
 }
+
+export const filesystem = new Filesystem();
