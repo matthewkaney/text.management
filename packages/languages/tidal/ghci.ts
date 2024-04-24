@@ -9,6 +9,7 @@ import { join } from "path";
 import { createReadStream } from "fs";
 import { readFile } from "fs/promises";
 
+import { OSCPacket } from "@core/osc/types";
 import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
 import { Engine } from "../core/engine";
@@ -20,7 +21,7 @@ import { generateIntegrationCode } from "./editor-integration";
 interface GHCIEvents {
   message: TerminalMessage;
   now: number;
-  openSettings: string;
+  osc: OSCPacket;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -73,6 +74,8 @@ export class GHCI extends Engine<GHCIEvents> {
           if (typeof message.args[0] === "number") {
             this.emit("now", message.args[0]);
           }
+        } else {
+          this.emit("osc", message);
         }
       });
     });

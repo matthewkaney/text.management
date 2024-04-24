@@ -1,4 +1,5 @@
 import type { DocumentUpdate, TerminalMessage } from "@core/api";
+import type { OSCPacket } from "@core/osc/types";
 
 import type { SavedStatus } from "./main/filesystem";
 
@@ -26,6 +27,7 @@ export interface ToRendererChannels {
   console: TerminalMessage;
   tidalVersion: string;
   tidalNow: number;
+  tidalOSC: OSCPacket;
   toggleConsole: undefined;
   showAbout: string;
 }

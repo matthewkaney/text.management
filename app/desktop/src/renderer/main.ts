@@ -36,6 +36,10 @@ export class Editor {
       let canvas = parent.appendChild(document.createElement("iframe"));
       canvas.src = background;
       canvas.classList.add("background");
+
+      api.onTidalOSC((message) => {
+        canvas.contentWindow?.postMessage(message);
+      });
     }
 
     // Keep track of Tidal state

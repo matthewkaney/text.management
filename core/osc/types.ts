@@ -1,10 +1,15 @@
 /**
+ * An object representing an OSC packet (either a message or a bundle).
+ */
+export type OSCPacket = OSCBundle | OSCMessage;
+
+/**
  * An object representing a complete OSC bundle.
  */
 export interface OSCBundle {
   time: number;
   ntpTime: [number, number];
-  packets: (OSCBundle | OSCMessage)[];
+  packets: OSCPacket[];
 }
 
 /**
@@ -59,7 +64,7 @@ const OSCArgumentTags = [
 /**
  * Any one of those type strings.
  */
-export type OSCArgumentTag = typeof OSCArgumentTags[number];
+export type OSCArgumentTag = (typeof OSCArgumentTags)[number];
 
 /**
  * The list of type strings for the arguments of an OSC message. An argument
