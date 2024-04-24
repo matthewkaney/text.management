@@ -12,6 +12,7 @@ import {
   toTerminalMessage,
 } from "@core/extensions/console";
 import { peer } from "@core/extensions/firebase/peer";
+import { getUserProfile } from "@core/extensions/firebase/user";
 import { toolbarConstructor } from "@core/extensions/toolbar";
 
 import { fileSync, getFileName, remoteFileSync } from "./file";
@@ -21,6 +22,7 @@ import { AboutTabView } from "@core/extensions/layout/tabs/about";
 import { set, child, onChildAdded, query } from "firebase/database";
 import { getSession, createSession } from "@core/extensions/firebase/session";
 import { stateFromDatabase } from "@core/extensions/firebase/editorState";
+import { remoteCursors } from "@core/extensions/cursors/remoteCursors";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -125,6 +127,8 @@ export class Editor {
         )
       );
 
+      let user = getUserProfile(sessionRef, { editor: layout.state.current });
+
       let documents: {
         [id: string]: { start: { text: string[]; version: number } };
       } = {};
@@ -155,7 +159,9 @@ export class Editor {
               applyTransaction.of({
                 id,
                 transaction: tabState.update({
-                  effects: StateEffect.appendConfig.of([peer(doc)]),
+                  effects: StateEffect.appendConfig.of([
+                    peer(doc, user.key ?? undefined),
+                  ]),
                 }),
               }),
             ],
@@ -168,12 +174,13 @@ export class Editor {
                   layout,
                   id,
                   api,
-                  stateFromDatabase(doc, [
+                  stateFromDatabase(doc, user.key ?? undefined, [
                     tidal(),
                     evaluation(api.evaluate),
                     basicSetup,
                     oneDark,
                     remoteFileSync("Remote File"),
+                    remoteCursors(user),
                     // remoteConsole(session),
                   ])
                 ),

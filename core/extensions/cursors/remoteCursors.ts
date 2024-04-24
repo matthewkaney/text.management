@@ -20,7 +20,7 @@ export function remoteCursors(user: DatabaseReference) {
 
   const remoteCursors = ViewPlugin.define((view) => {
     if (user === null || user.parent === null)
-      throw Error("Cursor tracking setup with invalid user.");
+      throw Error("Cursor tracking set up with invalid user.");
 
     const offChildAdded = onChildAdded(user.parent, (userSnapshot) => {
       if (user.isEqual(userSnapshot.ref)) return;

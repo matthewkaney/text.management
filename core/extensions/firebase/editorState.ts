@@ -4,13 +4,13 @@ import {
   ChangeSet,
   EditorStateConfig,
 } from "@codemirror/state";
-import { DatabaseReference, DataSnapshot } from "firebase/database";
+import { DataSnapshot } from "firebase/database";
 
 import { peer } from "./peer";
 
 export function stateFromDatabase(
   snapshot: DataSnapshot,
-  user: DatabaseReference,
+  clientID: string | undefined,
   extensions: Extension[] = []
 ): EditorStateConfig {
   let data = snapshot.val();
@@ -27,6 +27,6 @@ export function stateFromDatabase(
 
   return {
     doc,
-    extensions: [extensions, peer(snapshot, user)],
+    extensions: [extensions, peer(snapshot, clientID)],
   };
 }
