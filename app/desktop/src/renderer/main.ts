@@ -26,7 +26,7 @@ const { api } = window as Window &
     api: typeof ElectronAPI;
   };
 
-const background: string | null = null;
+const background: string | null = "http://localhost:1234";
 
 export class Editor {
   constructor(parent: HTMLElement) {
@@ -38,7 +38,7 @@ export class Editor {
       canvas.classList.add("background");
 
       api.onTidalOSC((message) => {
-        canvas.contentWindow?.postMessage(message);
+        canvas.contentWindow?.postMessage(message, background);
       });
     }
 

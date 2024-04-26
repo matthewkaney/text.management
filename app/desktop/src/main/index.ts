@@ -143,6 +143,12 @@ const createWindow = () => {
     );
 
     listeners.push(
+      tidal.on("osc", (message) => {
+        send("tidalOSC", message);
+      })
+    );
+
+    listeners.push(
       tidal.on("now", (now) => {
         send("tidalNow", now);
       })
