@@ -258,10 +258,7 @@ async function close({ window, id }: CloseOptions) {
     return;
   }
 
-  if (
-    !document.saved &&
-    (!document.content || !document.content.doc.eq(Text.empty))
-  ) {
+  if (document.needsSave) {
     let { response } = await dialog.showMessageBox(window, {
       type: "warning",
       message: "Do you want to save your changes?",
@@ -290,6 +287,23 @@ async function close({ window, id }: CloseOptions) {
 
   // We're done here, so close the file
   send("close", { id });
+}
+
+async function closeAll(window?: BrowserWindow) {
+  if (!window) return;
+
+  let [send] = wrapIPC(window.webContents);
+
+  let docs = [...filesystem.docs.values()];
+
+  if (docs.some((doc) => doc.needsSave)) {
+    // TODO: Logic for prompting saves etc etc
+  }
+
+  // Close all documents
+  await Promise.all(
+    docs.map((doc) => doc.close().then(() => send("close", { id: doc.id })))
+  );
 }
 
 menu.on("about", showAbout);
