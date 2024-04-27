@@ -4,6 +4,7 @@ import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { join } from "path";
 import { readFile } from "fs/promises";
 
+import { OSCPacket } from "@core/osc/types";
 import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
@@ -16,7 +17,7 @@ import { EventEmitter } from "@core/events";
 interface GHCIEvents {
   message: Evaluation | Log;
   now: number;
-  openSettings: string;
+  osc: OSCPacket;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -73,6 +74,8 @@ export class GHCI extends Engine<GHCIEvents> {
           if (typeof message.args[0] === "number") {
             this.emit("now", message.args[0]);
           }
+        } else {
+          this.emit("osc", message);
         }
       });
     });

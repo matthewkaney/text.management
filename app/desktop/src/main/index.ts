@@ -97,36 +97,7 @@ const createWindow = () => {
 
     listeners.push(
       listen("requestClose", async ({ id }) => {
-        let document = filesystem.getDoc(id);
-
-        if (!document) throw Error("Tried to close a non-existent document");
-
-        if (!document.saved) {
-          let { response } = await dialog.showMessageBox(window, {
-            type: "warning",
-            message: "Do you want to save your changes?",
-            buttons: ["Save", "Don't Save", "Cancel"],
-          });
-
-          // Cancelled
-          if (response === 2) return;
-
-          // Save
-          if (response === 0) {
-            if (document.path) {
-              document.save();
-            } else {
-              let { canceled, filePath } = await dialog.showSaveDialog(window);
-
-              if (!canceled && filePath) {
-                document.save(filePath);
-              }
-            }
-          }
-        }
-
-        // We're done here, so close the file
-        send("close", { id });
+        await close({ window, id });
       })
     );
 
@@ -169,6 +140,12 @@ const createWindow = () => {
     listeners.push(
       tidal.on("message", (message) => {
         send("console", message);
+      })
+    );
+
+    listeners.push(
+      tidal.on("osc", (message) => {
+        send("tidalOSC", message);
       })
     );
 
@@ -304,6 +281,9 @@ async function close({ window, id }: CloseOptions) {
       }
     }
   }
+
+  // Close document
+  await document.close();
 
   // We're done here, so close the file
   send("close", { id });

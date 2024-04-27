@@ -1,4 +1,5 @@
 import type { DocumentUpdate, Evaluation, Log } from "@core/api";
+import type { OSCPacket } from "@core/osc/types";
 
 import type { SavedStatus } from "./main/filesystem";
 
@@ -26,6 +27,7 @@ export interface ToRendererChannels {
   console: Evaluation | Log;
   tidalVersion: string;
   tidalNow: number;
+  tidalOSC: OSCPacket;
   toggleConsole: undefined;
   showAbout: string;
   joinRemote: { session: string | null };
