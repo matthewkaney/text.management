@@ -9,13 +9,18 @@ const tabFocusField = StateField.define({
   update: (value, transaction) => {
     let newValue: boolean | null = null;
 
+    // Remote transactions have no effect
+    if (transaction.annotation(Transaction.remote)) {
+      return value;
+    }
+
     for (let effect of transaction.effects) {
       if (effect.is(toggleTabFocus)) {
         newValue = !value;
       }
     }
 
-    return newValue ?? !!transaction.annotation(Transaction.remote);
+    return newValue ?? false;
   },
   provide: (field) => [
     EditorView.editorAttributes.of((view) =>
