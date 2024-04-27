@@ -91,9 +91,6 @@ export class GHCI extends Engine<GHCIEvents> {
     } = await this.settings;
     const port = (await this.socket).address().port.toString();
 
-    // TEMPORARY:
-    bootFiles = [];
-
     // this.outputFilters.push(
     //   /^Loaded package environment from \S+$/,
     //   /^GHCi, version \d+\.\d+\.\d+: https:\/\/www.haskell.org\/ghc\/.*$/,
