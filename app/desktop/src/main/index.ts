@@ -109,6 +109,7 @@ const createWindow = () => {
     listeners.push(
       listen("evaluation", async (code) => {
         for await (let evaluation of tidal.send(code)) {
+          send("console", evaluation);
         }
       })
     );
