@@ -35,10 +35,19 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
     return this.fileStatus.path;
   }
 
-  get saved() {
+  get needsSave() {
+    // Check for blank documents
+    if (
+      this.fileStatus.saved === false &&
+      (!this.content || this.content.doc.eq(Text.empty))
+    ) {
+      return false;
+    }
+
+    // Then check if the document has been edited
     return this.fileStatus.version === this.content?.version
-      ? this.fileStatus.saved
-      : false;
+      ? !this.fileStatus.saved
+      : true;
   }
 
   constructor(

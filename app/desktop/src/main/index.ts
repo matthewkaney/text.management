@@ -14,6 +14,8 @@ import { GHCI } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
+import { Text } from "@codemirror/state";
+
 import { menu } from "./menu";
 
 const filesystem = new Filesystem();
@@ -257,9 +259,14 @@ async function close({ window, id }: CloseOptions) {
   id = id ?? filesystem.currentDocID;
   let document = id ? filesystem.getDoc(id) : filesystem.currentDoc;
 
-  if (!id || !document) throw Error("Tried to close a non-existent document");
+  if (!id || !document) {
+    if (id) {
+      send("close", { id });
+    }
+    return;
+  }
 
-  if (!document.saved) {
+  if (document.needsSave) {
     let { response } = await dialog.showMessageBox(window, {
       type: "warning",
       message: "Do you want to save your changes?",
@@ -288,6 +295,23 @@ async function close({ window, id }: CloseOptions) {
 
   // We're done here, so close the file
   send("close", { id });
+}
+
+async function closeAll(window?: BrowserWindow) {
+  if (!window) return;
+
+  let [send] = wrapIPC(window.webContents);
+
+  let docs = [...filesystem.docs.values()];
+
+  if (docs.some((doc) => doc.needsSave)) {
+    // TODO: Logic for prompting saves etc etc
+  }
+
+  // Close all documents
+  await Promise.all(
+    docs.map((doc) => doc.close().then(() => send("close", { id: doc.id })))
+  );
 }
 
 menu.on("about", showAbout);

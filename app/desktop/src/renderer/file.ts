@@ -1,6 +1,12 @@
 import { ElectronAPI } from "../preload";
 
-import { EditorState, StateField, StateEffect, Facet } from "@codemirror/state";
+import {
+  EditorState,
+  StateField,
+  StateEffect,
+  Facet,
+  Text,
+} from "@codemirror/state";
 import { ViewPlugin } from "@codemirror/view";
 
 import { SavedStatus } from "../main/filesystem";
@@ -93,6 +99,11 @@ export function remoteFileSync(path: string) {
 
 export function getSaveStatus(state: EditorState) {
   const { version, thisVersion, saved } = state.field(saveState);
+
+  // Empty docs are never unsaved
+  if (state.doc.eq(Text.empty)) {
+    return true;
+  }
 
   return version === thisVersion ? saved : false;
 }
