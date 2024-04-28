@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref } from "firebase/database";
+import { connectDatabaseEmulator, getDatabase, ref } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCCI6aaQue3ouM3xwhpnZN13NV1FVHOTr8",
@@ -15,6 +15,9 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 const db = getDatabase();
+
+// Uncomment this for offline emulator mode...
+// connectDatabaseEmulator(db, "127.0.0.1", 9000);
 
 export function getSession(id: string) {
   return ref(db, `sessions/${id}`);

@@ -1,0 +1,40 @@
+{
+  "rules": {
+    "sessionIds": {
+      "$sessionId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "sessions": {
+      "$session": {
+        ".read": true,
+        ".write": "!data.exists()",
+        "documents": {
+          "$document": {
+        		"updates": {
+          		"$update": {
+            		".write": "!data.exists()"
+          		}
+            }
+        	}
+        },
+        "versions": {
+          "$version": {
+            ".write": "!data.exists()"
+          }
+        },
+        "users": {
+          "$user": {
+            ".write": true
+          }
+        },
+        "console": {
+          "$message": {
+            ".write": "!data.exists()"
+          }
+        }
+      }
+    }
+  }
+}
