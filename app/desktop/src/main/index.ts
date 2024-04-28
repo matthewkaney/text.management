@@ -341,6 +341,9 @@ async function joinRemote(window?: BrowserWindow) {
       window
     );
     let [send] = wrapIPC(window.webContents);
+
+    await closeAll(window);
+
     send("joinRemote", { session });
   }
 }
