@@ -8,7 +8,9 @@ import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { TidalSettings, normalizeTidalSettings } from "./settings";
+import { StateManagement } from "@core/state";
+export { TidalSettingsSchema } from "./settings";
+import { TidalSettingsSchema, TidalSettings } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
 import { EventEmitter } from "@core/events";
@@ -20,16 +22,18 @@ interface GHCIEvents {
 }
 
 export class GHCI extends Engine<GHCIEvents> {
-  private _settings: Promise<TidalSettings>;
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: (Evaluation | Log)[] = [];
 
-  constructor(private extensionFolder: string) {
+  constructor(private settings: StateManagement<TidalSettings>) {
     super();
 
-    this._settings = this.loadSettings();
+    this.settings.on("change", () => {
+      this.reloadSettings;
+    });
+
     this.socket = this.initSocket();
     this.process = this.initProcess();
 
@@ -42,21 +46,6 @@ export class GHCI extends Engine<GHCIEvents> {
         listener(message);
       }
     };
-  }
-
-  private async loadSettings() {
-    try {
-      const settings = JSON.parse(await readFile(this.settingsPath, "utf-8"));
-
-      // TODO: Update/validate settings, etc
-      return normalizeTidalSettings(settings);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
-        throw err;
-      }
-
-      return normalizeTidalSettings({});
-    }
   }
 
   private initSocket() {
@@ -81,15 +70,13 @@ export class GHCI extends Engine<GHCIEvents> {
   private wrapper: ProcessWrapper | null = null;
 
   private async initProcess() {
-    let {
+    console.log(JSON.stringify(this.settings.getData()));
+    const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
-    } = await this.settings;
+    } = this.settings.getData();
     const port = (await this.socket).address().port.toString();
-
-    // TEMPORARY:
-    bootFiles = [];
 
     // this.outputFilters.push(
     //   /^Loaded package environment from \S+$/,
@@ -174,9 +161,7 @@ export class GHCI extends Engine<GHCIEvents> {
     return join(stdout, "BootTidal.hs");
   }
 
-  async reloadSettings() {
-    this._settings = this.loadSettings();
-
+  private async reloadSettings() {
     // TODO: Some sort of check that settings have actually changed?
     this.emit("message", {
       level: "info",
@@ -212,14 +197,6 @@ export class GHCI extends Engine<GHCIEvents> {
     }
 
     return this.version;
-  }
-
-  get settings() {
-    return this._settings;
-  }
-
-  get settingsPath() {
-    return join(this.extensionFolder, "settings.json");
   }
 
   async close() {
