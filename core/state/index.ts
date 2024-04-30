@@ -1,23 +1,30 @@
-import rfdc from "rfdc";
-
 import { EventEmitter } from "@core/events";
 
-import { SettingsSchema } from "./schema";
+import { SettingsSchema, getDefaults, getValid } from "./schema";
 
-const clone = rfdc();
-
-interface StateEvents<T extends SettingsSchema> {
-  change: Required<FromSchema<T>>;
+interface StateEvents {
+  change: any;
 }
 
-class StateManagement<S extends SettingsSchema> extends EventEmitter<
-  StateEvents<S>
-> {
-  private data: FromSchema<S>;
+export class StateManagement<
+  S extends SettingsSchema
+> extends EventEmitter<StateEvents> {
+  private defaults: any;
+  private data: any;
 
-  // constructor(private spec: S, initial: Partial<FromSchema<S>> = {}) {
-  //   super();
+  constructor(private schema: S, initial: any = {}) {
+    super();
 
-  //   this.data = clone(initial);
-  // }
+    this.defaults = getDefaults(schema);
+    this.data = getValid(schema, initial);
+  }
+
+  update(data: any) {
+    this.data = getValid(this.schema, data);
+    this.emit("change", this.getData());
+  }
+
+  getData() {
+    return { ...this.defaults, ...this.data };
+  }
 }

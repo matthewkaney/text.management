@@ -10,7 +10,9 @@ import { autoUpdater } from "electron-updater";
 
 autoUpdater.checkForUpdatesAndNotify();
 
-import { GHCI } from "@management/lang-tidal";
+import { StateManagement } from "@core/state";
+
+import { GHCI, TidalSettingsSchema } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
@@ -18,7 +20,13 @@ import { menu } from "./menu";
 
 const filesystem = new Filesystem();
 
-const createWindow = () => {
+const settingsPath = resolve(app.getPath("userData"), "settings.json");
+
+const createWindow = (
+  configuration: StateManagement<typeof TidalSettingsSchema>
+) => {
+  const tidal = new GHCI(configuration);
+
   const window = new BrowserWindow({
     show: false,
     width: 800,
@@ -27,8 +35,6 @@ const createWindow = () => {
       preload: resolve(app.getAppPath(), "build/preload/index.js"),
     },
   });
-
-  const tidal = new GHCI(resolve(app.getPath("userData")));
 
   let listeners: (() => void)[] = [];
   let docsListeners: { [id: string]: typeof listeners } = {};
@@ -93,7 +99,7 @@ const createWindow = () => {
       listen("newTab", () => {
         filesystem.loadDoc();
       })
-    )
+    );
 
     listeners.push(
       listen("requestClose", async ({ id }) => {
@@ -149,11 +155,19 @@ const createWindow = () => {
 
     listeners.push(
       menu.on("settings", async () => {
-        let settingsDoc = filesystem.loadDoc(tidal.settingsPath, "{}");
+        let settingsDoc = filesystem.loadDoc(settingsPath, "{}");
 
         settingsDoc.on("status", ({ saved }) => {
           if (saved === true) {
-            tidal.reloadSettings();
+            try {
+              let settingsText = settingsDoc.content?.doc.toString();
+
+              if (typeof settingsText === "string") {
+                configuration.update(JSON.parse(settingsText));
+              }
+            } catch (error) {
+              console.log("Error updating settings");
+            }
           }
         });
       })
@@ -197,8 +211,23 @@ const createWindow = () => {
   });
 };
 
-app.whenReady().then(() => {
-  createWindow();
+import { readFile } from "fs/promises";
+
+app.whenReady().then(async () => {
+  const settings = new StateManagement(TidalSettingsSchema);
+
+  // Try loading settings
+  let settingsData = {};
+
+  try {
+    settingsData = JSON.parse(await readFile(settingsPath, "utf-8"));
+  } catch (err) {
+    // TODO: Throw some sort of error? For now, just fall back to the empty object
+  }
+
+  settings.update(settingsData);
+
+  createWindow(settings);
 
   // app.on("activate", () => {
   //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
