@@ -35,7 +35,30 @@ interface ArrayValueSchema extends BaseValueSchema {
 
 interface BaseValueSchema {}
 
-export function getDefaults<S extends SettingsSchema>(schema: S) {
+export type FromSchema<S extends SettingsSchema> = {
+  [Property in keyof S]: S[Property] extends NumberValueSchema
+    ? number
+    : S[Property] extends StringValueSchema
+    ? string
+    : S[Property] extends BooleanValueSchema
+    ? boolean
+    : S[Property] extends ArrayValueSchema
+    ? FromArraySchema<S[Property]>
+    : never;
+};
+
+type FromArraySchema<S extends ArrayValueSchema> =
+  S["items"] extends NumberValueSchema
+    ? number[]
+    : S["items"] extends StringValueSchema
+    ? string[]
+    : S["items"] extends BooleanValueSchema
+    ? boolean[]
+    : never;
+
+export function getDefaults<S extends SettingsSchema>(
+  schema: S
+): FromSchema<S> {
   const defaults: any = {};
 
   for (let key in schema) {
@@ -60,7 +83,10 @@ export function getDefaults<S extends SettingsSchema>(schema: S) {
   return defaults;
 }
 
-export function getValid<S extends SettingsSchema>(schema: S, data: any) {
+export function getValid<S extends SettingsSchema>(
+  schema: S,
+  data: any
+): Partial<FromSchema<S>> {
   const validData: any = {};
 
   function getValidPrimitive(schema: PrimitiveValueSchema, value: any) {
@@ -88,7 +114,6 @@ export function getValid<S extends SettingsSchema>(schema: S, data: any) {
           if (value !== undefined) {
             validData[key] = value;
           }
-          validData[key] = value;
         } else if (schema[key].type === "array") {
           const value = data[key];
           if (Array.isArray(value)) {

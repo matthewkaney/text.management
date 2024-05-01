@@ -2,7 +2,6 @@ import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { join } from "path";
-import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
@@ -10,7 +9,7 @@ import { Engine } from "../core/engine";
 
 import { StateManagement } from "@core/state";
 export { TidalSettingsSchema } from "./settings";
-import { TidalSettingsSchema, TidalSettings } from "./settings";
+import { TidalSettingsSchema } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
 import { EventEmitter } from "@core/events";
@@ -27,7 +26,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private history: (Evaluation | Log)[] = [];
 
-  constructor(private settings: StateManagement<TidalSettings>) {
+  constructor(private settings: StateManagement<typeof TidalSettingsSchema>) {
     super();
 
     this.settings.on("change", () => {
