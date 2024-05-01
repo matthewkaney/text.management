@@ -1,16 +1,16 @@
 import { EventEmitter } from "@core/events";
 
-import { SettingsSchema, getDefaults, getValid } from "./schema";
+import { FromSchema, SettingsSchema, getDefaults, getValid } from "./schema";
 
-interface StateEvents {
-  change: any;
+interface StateEvents<S extends SettingsSchema> {
+  change: FromSchema<S>;
 }
 
-export class StateManagement<
-  S extends SettingsSchema
-> extends EventEmitter<StateEvents> {
-  private defaults: any;
-  private data: any;
+export class StateManagement<S extends SettingsSchema> extends EventEmitter<
+  StateEvents<S>
+> {
+  private defaults: FromSchema<S>;
+  private data: Partial<FromSchema<S>>;
 
   constructor(private schema: S, initial: any = {}) {
     super();
@@ -24,7 +24,7 @@ export class StateManagement<
     this.emit("change", this.getData());
   }
 
-  getData() {
+  getData(): FromSchema<S> {
     return { ...this.defaults, ...this.data };
   }
 }

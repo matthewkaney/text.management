@@ -7,7 +7,6 @@ import { once } from "events";
 import { createInterface } from "readline";
 import { join } from "path";
 import { createReadStream } from "fs";
-import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
 import { TerminalMessage } from "@core/api";
@@ -15,7 +14,7 @@ import { Engine } from "../core/engine";
 
 import { StateManagement } from "@core/state";
 export { TidalSettingsSchema } from "./settings";
-import { TidalSettingsSchema, TidalSettings } from "./settings";
+import { TidalSettingsSchema } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
 
@@ -31,7 +30,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private history: TerminalMessage[] = [];
 
-  constructor(private settings: StateManagement<TidalSettings>) {
+  constructor(private settings: StateManagement<typeof TidalSettingsSchema>) {
     super();
 
     this.settings.on("change", () => {
