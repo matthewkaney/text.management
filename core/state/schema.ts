@@ -35,26 +35,29 @@ interface ArrayValueSchema extends BaseValueSchema {
 
 interface BaseValueSchema {}
 
-export type FromSchema<S extends SettingsSchema> = {
-  [Property in keyof S]: S[Property] extends NumberValueSchema
-    ? number
-    : S[Property] extends StringValueSchema
-    ? string
-    : S[Property] extends BooleanValueSchema
-    ? boolean
-    : S[Property] extends ArrayValueSchema
-    ? FromArraySchema<S[Property]>
-    : never;
-};
+export { FromSchema } from "json-schema-to-ts";
+import { FromSchema } from "json-schema-to-ts";
 
-type FromArraySchema<S extends ArrayValueSchema> =
-  S["items"] extends NumberValueSchema
-    ? number[]
-    : S["items"] extends StringValueSchema
-    ? string[]
-    : S["items"] extends BooleanValueSchema
-    ? boolean[]
-    : never;
+// export type FromSchema<S extends SettingsSchema> = {
+//   [Property in keyof S]: S[Property] extends NumberValueSchema
+//     ? number
+//     : S[Property] extends StringValueSchema
+//     ? string
+//     : S[Property] extends BooleanValueSchema
+//     ? boolean
+//     : S[Property] extends ArrayValueSchema
+//     ? FromArraySchema<S[Property]>
+//     : never;
+// };
+
+// type FromArraySchema<S extends ArrayValueSchema> =
+//   S["items"] extends NumberValueSchema
+//     ? number[]
+//     : S["items"] extends StringValueSchema
+//     ? string[]
+//     : S["items"] extends BooleanValueSchema
+//     ? boolean[]
+//     : never;
 
 export function getDefaults<S extends SettingsSchema>(
   schema: S
