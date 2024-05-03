@@ -1,4 +1,4 @@
-import type { DocumentUpdate, TerminalMessage } from "@core/api";
+import type { DocumentUpdate, Evaluation, Log } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
 import { OSCArgumentValueList } from "@core/osc/types";
@@ -12,6 +12,7 @@ export interface ToMainChannels {
   evaluation: string;
   restart: undefined;
   openTidalSettings: undefined;
+  newTab: undefined;
 }
 
 export interface ToRendererChannels {
@@ -23,9 +24,10 @@ export interface ToRendererChannels {
   status: { withID: string; content: SavedStatus };
   setCurrent: { id: string };
   close: { id: string };
-  console: TerminalMessage;
+  console: Evaluation | Log;
   tidalVersion: string;
   tidalNow: number;
+  toggleConsole: undefined;
   showAbout: string;
   tidalHighlight: OSCArgumentValueList;
 }

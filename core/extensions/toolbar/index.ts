@@ -3,67 +3,66 @@ import { ElectronAPI } from "@core/api";
 
 import "./style.css";
 
-export function toolbar(api: typeof ElectronAPI, version?: string) {
-  function toolbarConstructor(): Panel {
-    let toolbarNode = document.createElement("div");
-    toolbarNode.classList.add("cm-toolbar");
-    toolbarNode.setAttribute("role", "menubar");
-    toolbarNode.setAttribute("aria-label", "Editor Controls");
+export function toolbarConstructor(
+  api: typeof ElectronAPI,
+  version?: string
+): Panel {
+  let toolbarNode = document.createElement("div");
+  toolbarNode.classList.add("cm-toolbar");
+  toolbarNode.setAttribute("role", "menubar");
+  toolbarNode.setAttribute("aria-label", "Editor Controls");
 
-    // Status indicators for future use: ◯◉✕
-    let tidalInfo = new ToolbarMenu(
-      `Tidal (${version ?? "Disconnected"})`,
-      [
-        {
-          label: "Restart Tidal",
-          action: () => {
-            api.restart();
-          },
+  // Status indicators for future use: ◯◉✕
+  let tidalInfo = new ToolbarMenu(
+    `Tidal (${version ?? "Disconnected"})`,
+    [
+      {
+        label: "Restart Tidal",
+        action: () => {
+          api.restart();
         },
-        {
-          label: "Tidal Settings",
-          action: () => {
-            api.openTidalSettings();
-          },
-        },
-      ],
-      "status"
-    );
-    toolbarNode.appendChild(tidalInfo.dom);
-
-    let offTidalVersion = api.onTidalVersion((version) => {
-      tidalInfo.label = `Tidal (${version})`;
-    });
-
-    // Tempo info
-    let tempoInfo = new ToolbarMenu(`◯ 0`, [], "timer");
-    toolbarNode.appendChild(tempoInfo.dom);
-
-    let offTidalNow = api.onTidalNow((cycle) => {
-      cycle = Math.max(0, cycle);
-      let whole = Math.floor(cycle);
-      let part = "◓◑◒◐"[Math.floor(cycle * 4) % 4];
-
-      let mods = [4, 8, 16];
-      let modString = mods.map((mod) => `${whole % mod}/${mod}`).join(" ");
-
-      tempoInfo.label = `${part} ${whole} ${modString}`;
-    });
-
-    api.onTidalHighlight((highlight) => {
-      console.log('## highlight', highlight);
-    })
-
-    return {
-      dom: toolbarNode,
-      destroy() {
-        offTidalVersion();
-        offTidalNow();
       },
-    };
-  }
+      {
+        label: "Tidal Settings",
+        action: () => {
+          api.openTidalSettings();
+        },
+      },
+    ],
+    "status"
+  );
+  toolbarNode.appendChild(tidalInfo.dom);
 
-  return showPanel.of(toolbarConstructor);
+  let offTidalVersion = api.onTidalVersion((version) => {
+    tidalInfo.label = `Tidal (${version})`;
+  });
+
+  // Tempo info
+  let tempoInfo = new ToolbarMenu(`◯ 0`, [], "timer");
+  toolbarNode.appendChild(tempoInfo.dom);
+
+  let offTidalNow = api.onTidalNow((cycle) => {
+    cycle = Math.max(0, cycle);
+    let whole = Math.floor(cycle);
+    let part = "◓◑◒◐"[Math.floor(cycle * 4) % 4];
+
+    let mods = [4, 8, 16];
+    let modString = mods.map((mod) => `${whole % mod}/${mod}`).join(" ");
+
+    tempoInfo.label = `${part} ${whole} ${modString}`;
+  });
+
+  return {
+    dom: toolbarNode,
+    destroy() {
+      offTidalVersion();
+      offTidalNow();
+    },
+  };
+}
+
+export function toolbarExtension(api: typeof ElectronAPI, version?: string) {
+  return showPanel.of(() => toolbarConstructor(api, version));
 }
 
 interface MenuItem {

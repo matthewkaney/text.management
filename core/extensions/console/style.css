@@ -1,0 +1,94 @@
+.cm-console {
+  margin: 12px 18px 0 18px;
+  max-height: 30vh;
+  line-height: 1.4;
+}
+
+.cm-console:last-child {
+  margin-bottom: 12px;
+}
+
+.cm-console-message {
+  margin: 0;
+}
+
+.cm-console-message-source,
+.cm-console-message-input,
+.cm-console-message-output {
+  padding: 4px 6px;
+}
+
+.cm-console-message-source {
+  padding-left: 12px;
+}
+
+.cm-console {
+  overflow-y: auto;
+}
+
+.cm-console-message {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.cm-console-message:not(:first-child) {
+  clip-path: inset(1px 0 0 0);
+}
+
+.cm-console-message:not(:last-child) {
+  clip-path: inset(0 0 1px 0);
+}
+
+.cm-console-message:not(:first-child):not(:last-child) {
+  clip-path: inset(1px 0);
+}
+
+.cm-console-message-content {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
+  border-color: var(--col-bg-shadow);
+  background-color: var(--col-bg-shadow-soft);
+}
+
+.cm-console-message-info .cm-console-message-output {
+  background-color: var(--col-bg-shadow);
+}
+
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
+  color: var(--col-text-soft);
+}
+
+.cm-console-message-error .cm-console-message-input,
+.cm-console-message-error .cm-console-message-output {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #6c000050 0px 10px,
+    #a6020250 10px 20px
+  );
+}
+
+.cm-console-message-error .cm-console-message-source {
+  color: coral;
+}
+
+.cm-console-message-input {
+  margin-left: 24px;
+  position: relative;
+}
+
+.cm-console-message-input::before {
+  content: ">";
+  position: absolute;
+  top: 0;
+  left: -24px;
+  box-sizing: border-box;
+  background: var(--col-bg-shadow);
+  padding: 4px 6px;
+  width: 24px;
+  height: 100%;
+}

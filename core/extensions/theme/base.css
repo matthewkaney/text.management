@@ -3,6 +3,11 @@
   src: local("Fira Code"), url("FiraCode-VF.woff2") format("woff2");
 }
 
+* {
+  font-family: Fira Code, monospace;
+  color: var(--col-text);
+}
+
 html,
 body {
   height: 100%;
@@ -31,7 +36,7 @@ body {
 
 @media (prefers-color-scheme: light) {
   :root {
-    --col-bg: #d8d5d4; 
+    --col-bg: #d8d5d4;
     --col-bg-shadow: #ffffff59; /* 35% opacity */
     --col-bg-shadow-soft: #ffffff1f; /* 12% opacity */
     --col-text: #252221;

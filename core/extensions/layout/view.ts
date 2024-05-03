@@ -12,6 +12,7 @@ import "./style.css";
 export class LayoutView {
   readonly dom: HTMLDivElement;
   private tabBar = new TabBar(this);
+  readonly panelArea: HTMLDivElement;
 
   state: LayoutState = LayoutState.create();
 
@@ -19,12 +20,16 @@ export class LayoutView {
 
   constructor(
     parent: HTMLElement,
-    private updateCurrent: (current: string | null) => void
+    private updateCurrent: (current: string | null) => void,
+    public newTab: () => void
   ) {
     this.dom = document.createElement("div");
     this.dom.classList.add("editor-layout");
 
     this.dom.appendChild(this.tabBar.dom);
+
+    this.panelArea = this.dom.appendChild(document.createElement("div"));
+    this.panelArea.classList.add("editor-panels");
 
     parent.appendChild(this.dom);
     console.log('# test');
@@ -81,7 +86,7 @@ export class LayoutView {
 
       if (!currentTab) throw Error("View doesn't have old new tab");
 
-      this.dom.appendChild(currentTab.dom);
+      this.dom.insertBefore(currentTab.dom, this.panelArea);
     }
 
     // Update tab bar
