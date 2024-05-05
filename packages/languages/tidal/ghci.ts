@@ -11,14 +11,22 @@ import { Engine } from "../core/engine";
 import { TidalSettings, normalizeTidalSettings } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
-import { OSCArgumentValueList } from "@core/osc/types";
+import { NTPTime } from "@core/osc/types";
 import { EventEmitter } from "@core/events";
+
+export interface HighlightEvent {
+  miniID: number;
+  from: number;
+  to: number;
+  onset: NTPTime;
+  duration: number;
+}
 
 interface GHCIEvents {
   message: Evaluation | Log;
   now: number;
   openSettings: string;
-  highlight: OSCArgumentValueList;
+  highlight: HighlightEvent;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -69,16 +77,23 @@ export class GHCI extends Engine<GHCIEvents> {
       });
 
       socket.on("message", (data) => {
-        let message = parse(data);
+        let packet = parse(data);
 
-        if ("address" in message) {
+        for (let message of asMessages(packet)) {
           if (message.address === "/now") {
             if (typeof message.args[0] === "number") {
               this.emit("now", message.args[0]);
             }
           } else if (message.address === "/highlight") {
-            console.log(`Highlight: ${message.args}`);
-            this.emit("highlight", message.args);
+            let [_orbit, duration, _cycle, from, miniID, to] =
+              message.args as number[];
+            this.emit("highlight", {
+              miniID,
+              from,
+              to,
+              onset: message.ntpTime,
+              duration,
+            });
           }
         }
       });
@@ -242,6 +257,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
 import { extractStatements } from "./parse";
 import { EOL } from "os";
+import { asMessages } from "@core/osc/utils";
 
 interface ProcessWrapperEvents {
   prologue: string;

@@ -18,12 +18,12 @@ const blinkField = StateField.define({
   },
 });
 
-const highlight = Decoration.mark({
+const highlightDecoration = Decoration.mark({
   attributes: { style: "background-color: deeppink" },
 });
 
 const blinkDecoration = EditorView.decorations.from(blinkField, (value) =>
-  value ? Decoration.set([highlight.range(0, 10)]) : Decoration.none
+  value ? Decoration.set([highlightDecoration.range(0, 10)]) : Decoration.none
 );
 
 const blinkPlugin = ViewPlugin.define((view) => {

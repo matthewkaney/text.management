@@ -11,7 +11,7 @@ highlightTarget = Target {oName = "Text Management Highlights",
                           oBusPort = Nothing,
                           oLatency = 0.02,
                           oWindow = Nothing,
-                          oSchedule = Live,
+                          oSchedule = Pre BundleStamp,
                           oHandshake = False
                          }
 :}

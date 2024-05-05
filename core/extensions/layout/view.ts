@@ -32,7 +32,6 @@ export class LayoutView {
     this.panelArea.classList.add("editor-panels");
 
     parent.appendChild(this.dom);
-    console.log('# test');
   }
 
   dispatch({ changes, current, effects }: LayoutTransactionSpec) {
