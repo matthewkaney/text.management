@@ -76,19 +76,20 @@
   color: coral;
 }
 
-.cm-console-message-input {
-  margin-left: 24px;
+.cm-console-message-input,
+.cm-console-message-output {
+  padding-left: 24px;
   position: relative;
 }
 
-.cm-console-message-input::before {
-  content: ">";
-  position: absolute;
-  top: 0;
-  left: -24px;
-  box-sizing: border-box;
-  background: var(--col-bg-shadow);
-  padding: 4px 6px;
+.cm-console-message-icon {
   width: 24px;
-  height: 100%;
+  position: absolute;
+  top: 3px;
+  left: 0;
+  color: var(--col-text-soft);
+}
+
+.cm-console-message-error .cm-console-message-output .cm-console-message-icon {
+  color: crimson;
 }
