@@ -25,6 +25,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: resolve(app.getAppPath(), "build/preload/index.js"),
+      sandbox: process.env.NODE_ENV === "production",
     },
   });
 
