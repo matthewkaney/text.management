@@ -61,11 +61,11 @@
   },
   "devDependencies": {
     "electron": "^30.0.2",
-    "electron-builder": "^24.6.4",
+    "electron-builder": "^24.13.3",
     "electronmon": "^2.0.3"
   },
   "dependencies": {
-    "electron-updater": "^6.1.4",
+    "electron-updater": "^6.1.8",
     "fix-path": "^4.0.0"
   }
 }
