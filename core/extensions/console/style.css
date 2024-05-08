@@ -4,26 +4,43 @@
   line-height: 1.4;
 }
 
+.cm-console::-webkit-scrollbar {
+  width: 18px;
+}
+
+.cm-console::-webkit-scrollbar-thumb {
+  background-color: var(--col-bg-shadow);
+}
+
+.cm-console::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
 .cm-console:last-child {
   margin-bottom: 12px;
 }
 
 .cm-console-message {
-  padding: 4px 6px;
   margin: 0;
 }
 
+.cm-console-message-source,
+.cm-console-message-input,
+.cm-console-message-output {
+  padding: 4px 6px;
+}
+
 .cm-console-message-source {
-  margin-left: 12px;
+  padding-left: 12px;
+  float: right;
 }
 
 .cm-console {
   overflow-y: auto;
 }
 
-.cm-console-message {
-  display: flex;
-  flex-direction: row-reverse;
+.cm-console > div.scrolling {
+  margin-right: 2px;
 }
 
 .cm-console-message:not(:first-child) {
@@ -43,16 +60,23 @@
   overflow-wrap: anywhere;
 }
 
-.cm-console-message-info {
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
+  border-color: var(--col-bg-shadow);
+  background-color: var(--col-bg-shadow-soft);
+}
+
+.cm-console-message-info .cm-console-message-output {
   background-color: var(--col-bg-shadow);
 }
 
-.cm-console-message-info .cm-console-message-source {
+.cm-console-message-info .cm-console-message-source,
+.cm-console-message-info .cm-console-message-input {
   color: var(--col-text-soft);
 }
 
-.cm-console-message-warn,
-.cm-console-message-error {
+.cm-console-message-error .cm-console-message-input,
+.cm-console-message-error .cm-console-message-output {
   background-image: repeating-linear-gradient(
     135deg,
     #6c000050 0px 10px,
@@ -60,7 +84,29 @@
   );
 }
 
-.cm-console-message-warn .cm-console-message-source,
 .cm-console-message-error .cm-console-message-source {
   color: coral;
+}
+
+.cm-console-message-input,
+.cm-console-message-output {
+  padding-left: 24px;
+  position: relative;
+}
+
+.cm-console-message-icon {
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  top: 3px;
+  left: 0;
+  color: var(--col-text-soft);
+}
+
+.cm-console-message-icon svg {
+  display: block;
+}
+
+.cm-console-message-error .cm-console-message-output .cm-console-message-icon {
+  color: crimson;
 }

@@ -3,8 +3,9 @@
     "strict": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+    "jsxImportSource": "nano-jsx/esm",
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./",
     "paths": {
