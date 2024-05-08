@@ -15,6 +15,7 @@
   },
   "scripts": {
     "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
+    "dev": "parcel watch --target main --target preload --target renderer --no-hmr & electronmon .",
     "build": "parcel build --target main --target preload --target renderer",
     "start": "electron .",
     "pack": "electron-builder --config build.config.js",
@@ -53,9 +54,15 @@
       }
     }
   },
+  "electronmon": {
+    "patterns": [
+      "!src/**/*"
+    ]
+  },
   "devDependencies": {
-    "electron": "^26.2.2",
-    "electron-builder": "^24.6.4"
+    "electron": "^30.0.2",
+    "electron-builder": "^24.6.4",
+    "electronmon": "^2.0.3"
   },
   "dependencies": {
     "electron-updater": "^6.1.4",

@@ -21,7 +21,7 @@ export function wrapIPC(webContents: WebContents) {
     webContents.ipc.on(channel, handle);
 
     return () => {
-      webContents.off(channel, handle);
+      webContents.ipc.off(channel, handle);
     };
   }
 

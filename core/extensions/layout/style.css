@@ -4,6 +4,7 @@
   height: 100%;
   display: flex !important;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .tab-content {
@@ -14,7 +15,6 @@
 .tab-bar {
   padding: 0 calc(1.5 * 12px);
   color: var(--col-text);
-  font-family: Fira Code, monospace;
   font-size: calc(1.2727 * 12px);
   line-height: calc(2.5 * 12px);
   border-bottom: solid 2px var(--col-bg-shadow);
@@ -40,8 +40,8 @@
   font-size: inherit;
   line-height: inherit;
   appearance: none;
-border: none;
-outline: none;
+  border: none;
+  outline: none;
 }
 
 .tab-container:not(.current) {
@@ -113,4 +113,8 @@ outline: none;
 
 .new-tab-button:hover {
   background: var(--col-bg-shadow);
+}
+
+.editor-panels {
+  font-size: 15.2724px;
 }
