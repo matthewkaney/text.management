@@ -4,7 +4,7 @@
     "name": "Matthew Kaney",
     "email": "matthew.s.kaney@gmail.com"
   },
-  "version": "0.9.0",
+  "version": "1.0.0-beta.1",
   "private": "true",
   "description": "Live code editor",
   "license": "GPL-3.0-or-later",
