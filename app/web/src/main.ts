@@ -13,7 +13,6 @@ import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { ElectronAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
-import { SettingsPage } from "@core/extensions/settings";
 // import { toolbar } from "@core/extensions/toolbar";
 import { fileSync } from "../../desktop/src/renderer/file";
 

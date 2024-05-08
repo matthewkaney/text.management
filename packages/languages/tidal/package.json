@@ -19,12 +19,11 @@
   "author": "Matthew Kaney",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@codemirror/language": "^6.0.0",
-    "@codemirror/legacy-modes": "^6.0.0",
-    "json-schema-to-ts": "^2.9.2",
-    "semver": "^7.5.4"
+    "@codemirror/language": "^6.10.1",
+    "@codemirror/legacy-modes": "^6.4.0",
+    "semver": "^7.6.1"
   },
   "devDependencies": {
-    "@types/semver": "^7.5.3"
+    "@types/semver": "^7.5.8"
   }
 }
