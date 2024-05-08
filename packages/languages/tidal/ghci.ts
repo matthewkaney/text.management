@@ -117,7 +117,7 @@ export class GHCI extends Engine<GHCIEvents> {
       this.sendFile(await this.defaultBootfile());
     }
 
-    for (let path of bootFiles) {
+    for (let path of bootFiles ?? []) {
       try {
         this.sendFile(path);
       } catch (err) {

@@ -1,6 +1,8 @@
 import { EventEmitter } from "@core/events";
 
-import { FromSchema, SettingsSchema, getDefaults, getValid } from "./schema";
+import { getDefaults, getValid } from "./schema";
+
+import { SettingsSchema, FromSchema } from "./schema";
 
 interface StateEvents<S extends SettingsSchema> {
   change: FromSchema<S>;

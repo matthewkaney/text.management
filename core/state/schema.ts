@@ -1,71 +1,22 @@
+import { JSONSchema, FromSchema as FromJSONSchema } from "json-schema-to-ts";
+
 export interface SettingsSchema {
-  [name: string]: ValueSchema;
+  properties: Readonly<Record<string, JSONSchema & object>>;
 }
 
-type ValueSchema =
-  | NumberValueSchema
-  | StringValueSchema
-  | BooleanValueSchema
-  | ArrayValueSchema;
+export type FromSchema<S extends SettingsSchema> = FromJSONSchema<
+  S & { type: "object" }
+> &
+  object;
 
-interface NumberValueSchema extends BaseValueSchema {
-  type: "number";
-  default?: number;
-}
-
-interface StringValueSchema extends BaseValueSchema {
-  type: "string";
-  default?: string;
-}
-
-interface BooleanValueSchema extends BaseValueSchema {
-  type: "boolean";
-  default?: boolean;
-}
-
-type PrimitiveValueSchema =
-  | NumberValueSchema
-  | StringValueSchema
-  | BooleanValueSchema;
-
-interface ArrayValueSchema extends BaseValueSchema {
-  type: "array";
-  items: PrimitiveValueSchema;
-}
-
-interface BaseValueSchema {}
-
-export { FromSchema } from "json-schema-to-ts";
-import { FromSchema } from "json-schema-to-ts";
-
-// export type FromSchema<S extends SettingsSchema> = {
-//   [Property in keyof S]: S[Property] extends NumberValueSchema
-//     ? number
-//     : S[Property] extends StringValueSchema
-//     ? string
-//     : S[Property] extends BooleanValueSchema
-//     ? boolean
-//     : S[Property] extends ArrayValueSchema
-//     ? FromArraySchema<S[Property]>
-//     : never;
-// };
-
-// type FromArraySchema<S extends ArrayValueSchema> =
-//   S["items"] extends NumberValueSchema
-//     ? number[]
-//     : S["items"] extends StringValueSchema
-//     ? string[]
-//     : S["items"] extends BooleanValueSchema
-//     ? boolean[]
-//     : never;
-
-export function getDefaults<S extends SettingsSchema>(
-  schema: S
-): FromSchema<S> {
+export function getDefaults<
+  S extends SettingsSchema,
+  SchemaData = FromSchema<S>
+>(schema: S): SchemaData {
   const defaults: any = {};
 
-  for (let key in schema) {
-    let valueOptions = schema[key];
+  for (let key in schema.properties) {
+    let valueOptions = schema.properties[key];
 
     switch (valueOptions.type) {
       case "number":
@@ -86,13 +37,13 @@ export function getDefaults<S extends SettingsSchema>(
   return defaults;
 }
 
-export function getValid<S extends SettingsSchema>(
+export function getValid<S extends SettingsSchema, SchemaData = FromSchema<S>>(
   schema: S,
   data: any
-): Partial<FromSchema<S>> {
+): Partial<SchemaData> {
   const validData: any = {};
 
-  function getValidPrimitive(schema: PrimitiveValueSchema, value: any) {
+  function getValidPrimitive(schema: JSONSchema & object, value: any) {
     if (schema.type === "number" && typeof value === "number") {
       return value;
     } else if (schema.type === "string" && typeof value === "string") {
@@ -104,23 +55,21 @@ export function getValid<S extends SettingsSchema>(
 
   if (typeof data === "object") {
     for (let key in data) {
-      if (key in schema) {
+      if (key in schema.properties) {
+        let prop = schema.properties[key];
         if (
-          schema[key].type === "number" ||
-          schema[key].type === "string" ||
-          schema[key].type === "boolean"
+          prop.type === "number" ||
+          prop.type === "string" ||
+          prop.type === "boolean"
         ) {
-          const value = getValidPrimitive(
-            schema[key] as PrimitiveValueSchema,
-            data[key]
-          );
+          const value = getValidPrimitive(prop, data[key]);
           if (value !== undefined) {
             validData[key] = value;
           }
-        } else if (schema[key].type === "array") {
+        } else if (prop.type === "array" && typeof prop.items === "object") {
           const value = data[key];
           if (Array.isArray(value)) {
-            const arraySchema = (schema[key] as ArrayValueSchema).items;
+            const arraySchema = prop.items;
             validData[key] = value.filter((v) =>
               getValidPrimitive(arraySchema, v)
             );
