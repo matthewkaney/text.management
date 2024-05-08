@@ -4,6 +4,18 @@
   line-height: 1.4;
 }
 
+.cm-console::-webkit-scrollbar {
+  width: 18px;
+}
+
+.cm-console::-webkit-scrollbar-thumb {
+  background-color: var(--col-bg-shadow);
+}
+
+.cm-console::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
 .cm-console:last-child {
   margin-bottom: 12px;
 }
@@ -20,15 +32,15 @@
 
 .cm-console-message-source {
   padding-left: 12px;
+  float: right;
 }
 
 .cm-console {
   overflow-y: auto;
 }
 
-.cm-console-message {
-  display: flex;
-  flex-direction: row-reverse;
+.cm-console > div.scrolling {
+  margin-right: 2px;
 }
 
 .cm-console-message:not(:first-child) {
@@ -84,10 +96,15 @@
 
 .cm-console-message-icon {
   width: 24px;
+  height: 24px;
   position: absolute;
   top: 3px;
   left: 0;
   color: var(--col-text-soft);
+}
+
+.cm-console-message-icon svg {
+  display: block;
 }
 
 .cm-console-message-error .cm-console-message-output .cm-console-message-icon {
