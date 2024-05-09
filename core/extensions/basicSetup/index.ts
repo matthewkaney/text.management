@@ -14,8 +14,10 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { decorateEmptyLines } from "./emptyLines";
 import { tabFocus } from "./tabTrapping";
+import { searchKeymap } from "@codemirror/search";
 
 export const basicSetup = [
+  keymap.of(searchKeymap),
   // lineNumbers(),
   drawSelection(),
   highlightActiveLine(),
