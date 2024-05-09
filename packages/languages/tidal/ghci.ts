@@ -75,6 +75,7 @@ export class GHCI extends Engine<GHCIEvents> {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
+      "tidal.runFromSource": sourceLocation,
     } = this.settings.getData();
     const port = (await this.socket).address().port.toString();
 
@@ -87,25 +88,29 @@ export class GHCI extends Engine<GHCIEvents> {
 
     // let stdout = new ReadableStream();
 
-    // const child = spawn("ghci", ["-XOverloadedStrings"], {
-    //   env: {
-    //     ...process.env,
-    //     editor_port: port,
-    //   },
-    // });
+    let child: ChildProcessWithoutNullStreams;
 
-    const child = spawn(
-      "cabal",
-      ["repl", "--repl-options", "-XOverloadedStrings"],
-      {
-        // TODO: pull this from settings
-        cwd: "/path/to/tidal/repo",
+    if (!sourceLocation) {
+      child = spawn("ghci", ["-XOverloadedStrings", "-package", "hosc"], {
         env: {
           ...process.env,
           editor_port: port,
         },
-      }
-    );
+      });
+    } else {
+      child = spawn(
+        "cabal",
+        ["repl", "--repl-options", "-XOverloadedStrings"],
+        {
+          // TODO: pull this from settings
+          cwd: "/path/to/tidal/repo",
+          env: {
+            ...process.env,
+            editor_port: port,
+          },
+        }
+      );
+    }
 
     this.wrapper = new ProcessWrapper(child);
 
@@ -114,9 +119,6 @@ export class GHCI extends Engine<GHCIEvents> {
     });
 
     if (!disableEditorIntegration) {
-      // this.outputFilters.push(
-      //   /package flags have changed, resetting and loading new packages\.\.\./
-      // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
       await this.send(integrationCode);
 

@@ -14,7 +14,7 @@ startStream config oscmap
       watchClock stream = forkIO checkClock
         where
           checkClock :: IO ()
-          checkClock = do time <- streamGetNow stream
+          checkClock = do time <- streamGetnow stream
                           sendMessage editorSocket (Message "/now" [Float $ realToFrac time])
                           threadDelay 100000
                           checkClock
