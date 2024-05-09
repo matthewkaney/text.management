@@ -54,7 +54,8 @@ const createWindow = (
     // Attach file handlers
     listeners.push(
       filesystem.on("open", (document) => {
-        let { id, path, content, saved } = document;
+        let { id, path, content, fileStatus } = document;
+        let { saved } = fileStatus;
 
         let docListeners: typeof listeners = [];
         docsListeners[id] = docListeners;
