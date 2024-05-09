@@ -13,7 +13,7 @@ import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { ElectronAPI } from "@core/api";
 import { console as electronConsole } from "@core/extensions/console";
 import { peer } from "@core/extensions/peer";
-import { toolbar } from "@core/extensions/toolbar";
+// import { toolbar } from "@core/extensions/toolbar";
 import { fileSync } from "../../desktop/src/renderer/file";
 
 let empty = () => {};
@@ -66,7 +66,7 @@ export class Editor {
               // electronConsole(api),
               // peer(api, 0),
               // @ts-ignore
-              toolbar(emptyApi, "1.9.4"),
+              // toolbar(emptyApi, "1.9.4"),
             ],
           }),
         },

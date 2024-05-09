@@ -2,6 +2,7 @@ import { promisify } from "util";
 import { Socket, createSocket } from "dgram";
 import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { join } from "path";
+import { readFile } from "fs/promises";
 
 import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
@@ -129,7 +130,7 @@ export class GHCI extends Engine<GHCIEvents> {
       this.sendFile(await this.defaultBootfile());
     }
 
-    for (let path of bootFiles) {
+    for (let path of bootFiles ?? []) {
       try {
         this.sendFile(path);
       } catch (err) {
