@@ -16,8 +16,6 @@ import { GHCI, TidalSettingsSchema } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
-import { Text } from "@codemirror/state";
-
 import { menu } from "./menu";
 
 const filesystem = new Filesystem();
@@ -48,6 +46,12 @@ const createWindow = (
     listeners.push(
       listen("current", ({ id }) => {
         filesystem.currentDocID = id;
+      })
+    );
+
+    listeners.push(
+      filesystem.on("current", (doc) => {
+        if (doc) send("setCurrent", { id: doc.id });
       })
     );
 
@@ -174,6 +178,23 @@ const createWindow = (
   });
 
   window.loadFile("./build/renderer/index.html");
+
+  window.on("close", async (event) => {
+    let docs = [...filesystem.docs.values()];
+
+    if (!docs.some((doc) => doc.needsSave)) return;
+
+    event.preventDefault();
+
+    try {
+      await closeAll(window);
+      window.close();
+    } catch (error) {
+      if (!(error instanceof CancelledError)) {
+        console.log("Unexpected Error: " + (error as Error).message);
+      }
+    }
+  });
 
   window.on("closed", () => {
     for (let listener of listeners) {
@@ -320,6 +341,12 @@ async function close({ window, id }: CloseOptions) {
   send("close", { id });
 }
 
+class CancelledError extends Error {
+  constructor() {
+    super("Close All action was cancelled");
+  }
+}
+
 async function closeAll(window?: BrowserWindow) {
   if (!window) return;
 
@@ -328,7 +355,34 @@ async function closeAll(window?: BrowserWindow) {
   let docs = [...filesystem.docs.values()];
 
   if (docs.some((doc) => doc.needsSave)) {
-    // TODO: Logic for prompting saves etc etc
+    let { response } = await dialog.showMessageBox(window, {
+      type: "warning",
+      message: "Do you want to save your changes?",
+      buttons: ["Save", "Don't Save", "Cancel"],
+    });
+
+    // Cancelled
+    if (response === 2) throw new CancelledError();
+
+    // Save
+    if (response === 0) {
+      for (let doc of docs) {
+        if (doc.needsSave) {
+          if (doc.path !== null) {
+            doc.save();
+          } else {
+            filesystem.currentDocID = doc.id;
+            let { canceled, filePath } = await dialog.showSaveDialog(window);
+
+            if (!canceled && filePath) {
+              await doc.save(filePath);
+            } else {
+              throw new CancelledError();
+            }
+          }
+        }
+      }
+    }
   }
 
   // Close all documents
