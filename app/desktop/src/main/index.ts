@@ -8,7 +8,7 @@ fixPath();
 
 import { autoUpdater } from "electron-updater";
 
-autoUpdater.checkForUpdatesAndNotify();
+// autoUpdater.checkForUpdatesAndNotify();
 
 import { StateManagement } from "@core/state";
 
