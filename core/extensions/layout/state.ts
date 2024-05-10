@@ -156,6 +156,7 @@ export const swapContents = StateEffect.define<{
 export abstract class TabState<T> {
   abstract readonly name: string;
   abstract readonly fileID: string | null;
+  abstract readonly title: string | null;
 
   protected constructor(readonly contents: T, readonly id = getID()) {}
 

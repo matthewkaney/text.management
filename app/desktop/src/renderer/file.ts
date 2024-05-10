@@ -111,3 +111,8 @@ export function getFileName(state: EditorState) {
 export function getFileID(state: EditorState) {
   return state.facet(fileID);
 }
+
+export function getFilePath(state: EditorState) {
+  const { path } = state.field(saveState);
+  return path;
+}

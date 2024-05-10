@@ -22,6 +22,10 @@ export class AboutTabState extends EditorTabState {
   get fileID() {
     return null;
   }
+
+  get title() {
+    return null;
+  }
 }
 
 export class AboutTabView extends TabView<EditorState> {

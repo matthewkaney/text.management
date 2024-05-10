@@ -47,7 +47,7 @@ export class TabBar {
       }
     });
 
-    this.newTabButton = new NewTabButton(this.parent) 
+    this.newTabButton = new NewTabButton(this.parent);
     this.dom.appendChild(this.newTabButton.dom);
   }
 
@@ -67,7 +67,7 @@ export class TabBar {
         this.children.set(state.id, tab);
         // TODO: This assumes that all added tabs are added to the end
         // but before the new tab button
-        this.dom.insertBefore(tab.dom, this.newTabButton.dom)
+        this.dom.insertBefore(tab.dom, this.newTabButton.dom);
       }
     }
 
@@ -148,6 +148,7 @@ class TabButton {
     this.tabButton.setAttribute("aria-selected", selected.toString());
     this.tabButton.tabIndex = selected ? 0 : -1;
     this.tabButton.innerText = this.state.name;
+    this.tabButton.title = this.state.title ?? "";
     this.closeButton.tabIndex = selected ? 0 : -1;
   }
 

@@ -11,6 +11,7 @@ import {
 import {
   getFileName,
   getFileID,
+  getFilePath,
 } from "../../../../app/desktop/src/renderer/file";
 
 import { ElectronAPI } from "@core/api";
@@ -30,6 +31,10 @@ export class EditorTabState extends TabState<EditorState> {
 
   get fileID() {
     return getFileID(this.contents);
+  }
+
+  get title() {
+    return getFilePath(this.contents);
   }
 }
 
