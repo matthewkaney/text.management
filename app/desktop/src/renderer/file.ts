@@ -85,10 +85,11 @@ export function fileSync(
 }
 
 export function getSaveStatus(state: EditorState) {
-  const { version, thisVersion, saved } = state.field(saveState);
+  const { version, thisVersion, path, saved } = state.field(saveState);
 
   // Empty docs are never unsaved
-  if (state.doc.eq(Text.empty)) {
+  // TODO: Have this check be done in the main process
+  if (!path && state.doc.eq(Text.empty)) {
     return true;
   }
 

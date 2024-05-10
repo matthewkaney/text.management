@@ -36,9 +36,9 @@ export class DesktopDocument extends EventEmitter<DocumentEvents> {
   }
 
   get needsSave() {
-    // Check for blank documents
+    // Check for blank, unsaved documents
     if (
-      this.fileStatus.saved === false &&
+      !this.fileStatus.path &&
       (!this.content || this.content.doc.eq(Text.empty))
     ) {
       return false;
