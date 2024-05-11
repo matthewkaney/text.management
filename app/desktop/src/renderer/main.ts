@@ -5,6 +5,8 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
+import { settings } from "@core/extensions/settings/editor";
+
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 // import { peer } from "@core/extensions/peer";
@@ -14,7 +16,6 @@ import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
-import { blinkExtension } from "@core/extensions/highlights";
 import {
   evaluationWithHighlights,
   highlighter,
@@ -66,6 +67,9 @@ export class Editor {
     });
 
     api.onOpen(({ id, path }) => {
+      // TODO: This is a hacky heuristic
+      let languageMode = path?.endsWith("settings.json") ? settings() : tidal();
+
       let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
 
@@ -75,10 +79,8 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
-                  tidal(),
-                  evaluationWithHighlights((code) => {
-                    api.evaluate(code);
-                  }),
+                  languageMode,
+                  evaluationWithHighlights(api.evaluate),
                   highlighter(api),
                   basicSetup,
                   oneDark,

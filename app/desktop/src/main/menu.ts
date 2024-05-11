@@ -266,15 +266,15 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
 
     if (document) {
       const trackSaveState = () => {
-        this.saveItem.enabled = document.saved !== true;
+        this.saveItem.enabled = document.needsSave;
         this.saveAsItem.enabled = true;
         this.closeItem.enabled = true;
 
         let unStatus = document.on("status", () => {
-          this.saveItem.enabled = document.saved !== true;
+          this.saveItem.enabled = document.needsSave;
         });
         let unUpdate = document.on("update", () => {
-          this.saveItem.enabled = document.saved !== true;
+          this.saveItem.enabled = document.needsSave;
         });
 
         if (this._untrackDocument) this._untrackDocument();
