@@ -8,6 +8,8 @@ fixPath();
 
 import { autoUpdater } from "electron-updater";
 
+import { dialog } from "electron";
+
 // autoUpdater.checkForUpdatesAndNotify();
 
 import { StateManagement } from "@core/state";
@@ -170,6 +172,12 @@ const createWindow = (
       })
     );
 
+    listeners.push(
+      tidal.on("highlight", (highlightEvent) => {
+        send("tidalHighlight", highlightEvent);
+      })
+    );
+
     // For now, load a blank document on startup
     filesystem.loadDoc();
 
@@ -239,8 +247,6 @@ app.whenReady().then(async () => {
 // app.on("window-all-closed", () => {
 //   if (process.platform !== "darwindow") app.quit();
 // });
-
-import { dialog } from "electron";
 
 menu.on("newFile", newFile);
 async function newFile() {

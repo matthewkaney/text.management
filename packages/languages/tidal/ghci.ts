@@ -13,12 +13,23 @@ export { TidalSettingsSchema } from "./settings";
 import { TidalSettingsSchema } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
+import { NTPTime } from "@core/osc/types";
 import { EventEmitter } from "@core/events";
+
+export interface HighlightEvent {
+  miniID: number;
+  from: number;
+  to: number;
+  onset: NTPTime;
+  cycle: number;
+  duration: number;
+}
 
 interface GHCIEvents {
   message: Evaluation | Log;
   now: number;
   openSettings: string;
+  highlight: HighlightEvent;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -56,11 +67,24 @@ export class GHCI extends Engine<GHCIEvents> {
       });
 
       socket.on("message", (data) => {
-        let message = parse(data);
+        let packet = parse(data);
 
-        if ("address" in message && message.address === "/now") {
-          if (typeof message.args[0] === "number") {
-            this.emit("now", message.args[0]);
+        for (let message of asMessages(packet)) {
+          if (message.address === "/now") {
+            if (typeof message.args[0] === "number") {
+              this.emit("now", message.args[0]);
+            }
+          } else if (message.address === "/highlight") {
+            let [_orbit, duration, cycle, from, miniID, to] =
+              message.args as number[];
+            this.emit("highlight", {
+              miniID: miniID - 1,
+              from,
+              to,
+              onset: message.ntpTime,
+              cycle,
+              duration: duration / 1000, // Convert from microseconds
+            });
           }
         }
       });
@@ -215,6 +239,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
 import { extractStatements } from "./parse";
 import { EOL } from "os";
+import { asMessages } from "@core/osc/utils";
 
 interface ProcessWrapperEvents {
   prologue: string;

@@ -1,7 +1,6 @@
 import { ElectronAPI } from "../preload";
 
 import { Text } from "@codemirror/state";
-import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
@@ -16,6 +15,11 @@ import { toolbarConstructor } from "@core/extensions/toolbar";
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
+
+import {
+  evaluationWithHighlights,
+  highlighter,
+} from "@management/lang-tidal/highlights";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -76,7 +80,8 @@ export class Editor {
                 doc,
                 extensions: [
                   languageMode,
-                  evaluation(api.evaluate),
+                  evaluationWithHighlights(api.evaluate),
+                  highlighter(api),
                   basicSetup,
                   oneDark,
                   fileSync(
