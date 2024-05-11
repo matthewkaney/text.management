@@ -181,10 +181,10 @@ const createWindow = () => {
     );
 
     listeners.push(
-      tidal.on("highlight", (highlightList: OSCArgumentValueList) => {
-        send("tidalHighlight", highlightList);
+      tidal.on("highlight", (highlightEvent) => {
+        send("tidalHighlight", highlightEvent);
       })
-    )
+    );
 
     // For now, load a blank document on startup
     filesystem.loadDoc();

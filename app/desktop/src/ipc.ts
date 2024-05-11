@@ -1,7 +1,7 @@
 import type { DocumentUpdate, Evaluation, Log } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
-import { OSCArgumentValueList } from "@core/osc/types";
+import { HighlightEvent } from "@management/lang-tidal";
 
 export type Handler<T> = (event: T) => void;
 
@@ -29,5 +29,5 @@ export interface ToRendererChannels {
   tidalNow: number;
   toggleConsole: undefined;
   showAbout: string;
-  tidalHighlight: OSCArgumentValueList;
+  tidalHighlight: HighlightEvent;
 }

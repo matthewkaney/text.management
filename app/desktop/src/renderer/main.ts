@@ -15,7 +15,10 @@ import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
 import { blinkExtension } from "@core/extensions/highlights";
-import { evaluationWithHighlights } from "./tidalHighlights";
+import {
+  evaluationWithHighlights,
+  highlighter,
+} from "@management/lang-tidal/highlights";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -76,6 +79,7 @@ export class Editor {
                   evaluationWithHighlights((code) => {
                     api.evaluate(code);
                   }),
+                  highlighter(api),
                   basicSetup,
                   oneDark,
                   fileSync(

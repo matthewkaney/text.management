@@ -19,6 +19,7 @@ export interface HighlightEvent {
   from: number;
   to: number;
   onset: NTPTime;
+  cycle: number;
   duration: number;
 }
 
@@ -85,14 +86,15 @@ export class GHCI extends Engine<GHCIEvents> {
               this.emit("now", message.args[0]);
             }
           } else if (message.address === "/highlight") {
-            let [_orbit, duration, _cycle, from, miniID, to] =
+            let [_orbit, duration, cycle, from, miniID, to] =
               message.args as number[];
             this.emit("highlight", {
-              miniID,
+              miniID: miniID - 1,
               from,
               to,
               onset: message.ntpTime,
-              duration,
+              cycle,
+              duration: duration / 1000, // Convert from microseconds
             });
           }
         }
