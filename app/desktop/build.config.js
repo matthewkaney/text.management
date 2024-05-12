@@ -18,6 +18,9 @@ module.exports = {
     entitlements: "resources/entitlements.mac.plist",
     entitlementsInherit: "resources/entitlements.mac.plist",
     gatekeeperAssess: false,
+    notarize: {
+      teamId: "FWL6RL9HUZ",
+    },
     target: {
       target: "default",
       arch: ["x64", "arm64"],

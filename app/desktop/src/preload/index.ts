@@ -60,6 +60,8 @@ const ElectronAPI = {
 
   requestClose: (id: string) => send("requestClose", { id }),
 
+  newTab: () => send("newTab", undefined),
+
   onClose: listen("close"),
 
   onSetCurrent: listen("setCurrent"),
@@ -80,9 +82,13 @@ const ElectronAPI = {
 
   onConsoleMessage: listen("console"),
 
+  onToggleConsole: listen("toggleConsole"),
+
   onTidalVersion: listen("tidalVersion"),
 
   onTidalNow: listen("tidalNow"),
+
+  onTidalHighlight: listen("tidalHighlight"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);
