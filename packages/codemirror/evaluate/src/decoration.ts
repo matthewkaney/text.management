@@ -1,4 +1,9 @@
-import { ViewPlugin, ViewUpdate, Decoration } from "@codemirror/view";
+import {
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  Decoration,
+} from "@codemirror/view";
 import { Facet, StateEffect, Range } from "@codemirror/state";
 
 import { evalEffect } from "./evaluate";
@@ -73,3 +78,7 @@ export function evalDecoration() {
     { decorations: (v) => v.decorations }
   );
 }
+
+const evalTheme = EditorView.baseTheme({
+  "& .cm-evaluated": { backgroundColor: "#FFFFFF" },
+});

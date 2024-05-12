@@ -1,31 +1,76 @@
-import { EditorState, Facet, StateEffect } from "@codemirror/state";
+import {
+  EditorState,
+  Facet,
+  StateEffect,
+  Transaction,
+} from "@codemirror/state";
+import { ViewPlugin } from "@codemirror/view";
 
-export type Evaluation =
+class Evaluation {
+  constructor(
+    readonly code: string,
+    readonly span?: { from: number; to: number }
+  ) {}
+}
+
+export function evaluate(
+  state: EditorState,
+  from: number,
+  to?: number
+): Transaction;
+export function evaluate(state: EditorState, code: string): Transaction;
+export function evaluate(
+  state: EditorState,
+  fromOrCode: number | string,
+  to?: number
+) {
+  if (typeof fromOrCode === "string") {
+    return state.update({
+      effects: evaluationEffect.of(new Evaluation(fromOrCode)),
+    });
+  } else {
+    return state.update({
+      effects: evaluationEffect.of(
+        new Evaluation(state.sliceDoc(fromOrCode, to))
+      ),
+    });
+  }
+}
+
+export type EvaluationSpec =
   | { from: number; to: number; code: string }
   | { from: number; to: number }
   | { code: string };
-export const evalEffect = StateEffect.define<Evaluation>();
+
+export const evaluationEffect = StateEffect.define<Evaluation>();
 
 export type EvaluationHandler = (
-  evaluation: Evaluation & { code: string }
+  evaluation: Evaluation,
+  origin: Transaction
 ) => void;
 
-export const evalActions = Facet.define<EvaluationHandler>({
-  enables: EditorState.transactionExtender.of((tr) => {
-    for (let effect of tr.effects) {
-      if (effect.is(evalEffect)) {
-        for (let action of tr.startState.facet(evalActions)) {
-          if (!("code" in effect.value)) {
-            let { from, to } = effect.value;
-            let code = tr.newDoc.sliceString(from, to);
-            action({ from, to, code });
-          } else {
-            action(effect.value);
+const evaluationDispatch = ViewPlugin.define(() => ({
+  update: (update) => {
+    for (let tr of update.transactions) {
+      for (let effect of tr.effects) {
+        if (effect.is(evaluationEffect)) {
+          for (let action of tr.state.facet(evaluationAction)) {
+            action(effect.value, tr);
           }
         }
       }
     }
+  },
+}));
 
-    return null;
-  }),
+const evaluationAction = Facet.define<EvaluationHandler>({
+  enables: evaluationDispatch,
 });
+
+import { evalDecoration, evalTheme } from "./decoration";
+
+export function evaluation(action?: EvaluationHandler) {
+  let extensions = [evalDecoration(), evalTheme, keymap.of(evalKeymap)];
+  if (action) extensions.push(evalAction.of(action));
+  return extensions;
+}
