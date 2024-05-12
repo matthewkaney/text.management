@@ -1,5 +1,9 @@
 import { Evaluation, Log } from "@core/api";
 
+interface ClearConsole {
+  clear: true;
+}
+
 import { messageConstructor } from "./message";
 import "./style.css";
 
@@ -34,8 +38,17 @@ export function console(history: (Evaluation | Log)[] = []) {
   observer.observe(consoleNode);
   observer.observe(consoleWrapperNode);
 
+  let oldMessages = consoleWrapperNode.appendChild(
+    document.createElement("div")
+  );
+  let newMessages = consoleWrapperNode.appendChild(
+    document.createElement("div")
+  );
+
+  oldMessages.style.display = "none";
+
   for (let message of history) {
-    consoleWrapperNode.appendChild(messageConstructor(message));
+    newMessages.appendChild(messageConstructor(message));
   }
 
   let visible = true;
@@ -48,13 +61,17 @@ export function console(history: (Evaluation | Log)[] = []) {
 
   return {
     dom: consoleNode,
-    update(message: Evaluation | Log) {
-      let lastElement = consoleWrapperNode.appendChild(
-        messageConstructor(message)
-      );
+    update(message: Evaluation | Log | ClearConsole) {
+      if ("clear" in message) {
+        while (newMessages.firstChild) {
+          oldMessages.appendChild(newMessages.firstChild);
+        }
+      } else {
+        let lastElement = newMessages.appendChild(messageConstructor(message));
 
-      toggleVisibility(true);
-      lastElement.scrollIntoView({ behavior: "smooth" });
+        toggleVisibility(true);
+        lastElement.scrollIntoView({ behavior: "smooth" });
+      }
     },
     toggleVisibility,
     destroy() {},

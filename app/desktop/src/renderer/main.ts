@@ -9,13 +9,13 @@ import { settings } from "@core/extensions/settings/editor";
 
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
-// import { peer } from "@core/extensions/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
 
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
+import { evaluation } from "packages/codemirror/evaluate/src";
 import {
   evaluationWithHighlights,
   highlighter,
@@ -82,6 +82,9 @@ export class Editor {
                   languageMode,
                   evaluationWithHighlights(api.evaluate),
                   highlighter(api),
+                  evaluation(() => {
+                    tidalConsole.update({ clear: true });
+                  }),
                   basicSetup,
                   oneDark,
                   fileSync(
@@ -89,7 +92,6 @@ export class Editor {
                     { path, saved, version, thisVersion: version },
                     api
                   ),
-                  // peer(version),
                 ],
               }),
             },
