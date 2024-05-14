@@ -1,0 +1,7 @@
+{
+  "background": "#d8d5d4",
+  "foreground": "#252221",
+  "ui.background": "#ffffff72",
+  "ui.backgroundInactive": "#ffffff40",
+  "ui.backgroundActive": "#ffffffe6"
+}
