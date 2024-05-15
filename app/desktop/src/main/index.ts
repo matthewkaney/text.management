@@ -12,9 +12,9 @@ import { dialog } from "electron";
 
 // autoUpdater.checkForUpdatesAndNotify();
 
-import { StateManagement } from "@core/state";
+import { Config } from "@core/state";
 
-import { GHCI, TidalSettingsSchema } from "@management/lang-tidal";
+import { GHCI } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
@@ -24,9 +24,7 @@ const filesystem = new Filesystem();
 
 const settingsPath = resolve(app.getPath("userData"), "settings.json");
 
-const createWindow = (
-  configuration: StateManagement<typeof TidalSettingsSchema>
-) => {
+const createWindow = (configuration: Config) => {
   const tidal = new GHCI(configuration);
 
   const window = new BrowserWindow({
@@ -178,6 +176,13 @@ const createWindow = (
       })
     );
 
+    send("settingsData", configuration.data);
+    listeners.push(
+      configuration.on("change", (data) => {
+        send("settingsData", data);
+      })
+    );
+
     // For now, load a blank document on startup
     filesystem.loadDoc();
 
@@ -224,7 +229,7 @@ const createWindow = (
 import { readFile } from "fs/promises";
 
 app.whenReady().then(async () => {
-  const settings = new StateManagement(TidalSettingsSchema);
+  const settings = new Config();
 
   // Try loading settings
   let settingsData = {};

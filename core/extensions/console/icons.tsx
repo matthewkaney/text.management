@@ -15,7 +15,6 @@ export function ErrorIcon() {
 }
 
 function Icon({ svgSource }: { svgSource: string }) {
-  console.log(svgSource);
   return (
     <div
       class="cm-console-message-icon"

@@ -17,7 +17,7 @@
   color: var(--col-text);
   font-size: calc(1.2727 * 12px);
   line-height: calc(2.5 * 12px);
-  border-bottom: solid 2px var(--col-bg-shadow);
+  border-bottom: solid 2px var(--color-ui-background);
   margin-bottom: -1px;
   display: flex;
 }
@@ -59,12 +59,12 @@
 
 .tab {
   padding: 0 calc(2.5 * 12px) 0 calc(0.5 * 12px);
-  background: var(--col-bg-shadow-soft);
+  background: var(--color-ui-background-inactive);
 }
 
 .tab-container.current .tab,
 .tab:hover {
-  background: var(--col-bg-shadow);
+  background: var(--color-ui-background);
 }
 
 .tab:focus-visible {
@@ -86,7 +86,7 @@
   height: calc(1.5 * 12px);
   line-height: calc(1.5 * 12px);
   text-align: center;
-  background: var(--col-bg-shadow-soft);
+  background: var(--color-ui-background-inactive);
 }
 
 .tab-container:not(.current):not(:hover) .close-button {
@@ -94,7 +94,7 @@
 }
 
 .tab-container .close-button:hover {
-  background: var(--col-bg-shadow);
+  background: var(--color-ui-background);
 }
 
 .tab-container .close-button:focus-visible {
@@ -103,7 +103,7 @@
 }
 
 .new-tab-button {
-  background: var(--col-bg-shadow-soft);
+  background: var(--color-ui-background-inactive);
   border: none;
   color: inherit;
   height: 30px;
@@ -112,7 +112,7 @@
 }
 
 .new-tab-button:hover {
-  background: var(--col-bg-shadow);
+  background: var(--color-ui-background);
 }
 
 .editor-panels {

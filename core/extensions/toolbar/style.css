@@ -4,7 +4,7 @@
   display: flex;
   justify-content: flex-end;
   padding: 0 18px;
-  border-top: solid 2px var(--col-bg-shadow);
+  border-top: solid 2px var(--color-ui-background-inactive);
   line-height: 30px;
   margin-top: 18px;
 }
@@ -24,7 +24,7 @@
 }
 
 .cm-active-menu .cm-menu-item-list {
-  background-color: var(--col-bg);
+  background-color: var(--color-background);
   display: flex;
   flex-direction: column;
   position: absolute;
@@ -33,7 +33,7 @@
 }
 
 .cm-menu-item-group {
-  border: solid var(--col-bg-shadow);
+  border: solid var(--color-ui-background);
   border-width: 2px 2px 0;
 }
 
@@ -45,7 +45,7 @@
   line-height: inherit;
   margin-top: -2px;
   padding: 2px 6px 0;
-  background-color: var(--col-bg-shadow-soft);
+  background-color: var(--color-ui-background-inactive);
   clip-path: inset(
     var(--in-top, 0) var(--in-right, 0) var(--in-bottom, 0) var(--in-left, 0)
   );
@@ -68,7 +68,7 @@
 /* .cm-menu-trigger:hover,
 .cm-active-menu .cm-menu-trigger,
 .cm-menu-item:hover {
-  background-color: var(--col-bg-shadow);
+  background-color: var(--color-ui-background);
 } */
 
 .cm-menu-item {
