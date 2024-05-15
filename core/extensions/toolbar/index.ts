@@ -1,16 +1,24 @@
 import { showPanel, Panel } from "@codemirror/view";
+
 import { ElectronAPI } from "@core/api";
+import { Config } from "@core/state";
+
+import { getTimer } from "./timer";
 
 import "./style.css";
 
 export function toolbarConstructor(
   api: typeof ElectronAPI,
+  configuration: Config,
   version?: string
 ): Panel {
   let toolbarNode = document.createElement("div");
   toolbarNode.classList.add("cm-toolbar");
   toolbarNode.setAttribute("role", "menubar");
   toolbarNode.setAttribute("aria-label", "Editor Controls");
+
+  let timer = getTimer(configuration);
+  toolbarNode.appendChild(timer.dom);
 
   // Status indicators for future use: ◯◉✕
   let tidalInfo = new ToolbarMenu(
@@ -61,8 +69,12 @@ export function toolbarConstructor(
   };
 }
 
-export function toolbarExtension(api: typeof ElectronAPI, version?: string) {
-  return showPanel.of(() => toolbarConstructor(api, version));
+export function toolbarExtension(
+  api: typeof ElectronAPI,
+  configuration: Config,
+  version?: string
+) {
+  return showPanel.of(() => toolbarConstructor(api, configuration, version));
 }
 
 interface MenuItem {
