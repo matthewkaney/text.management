@@ -4,18 +4,6 @@
   line-height: 1.4;
 }
 
-.cm-console::-webkit-scrollbar {
-  width: 18px;
-}
-
-.cm-console::-webkit-scrollbar-thumb {
-  background-color: var(--color-ui-background);
-}
-
-.cm-console::-webkit-scrollbar-corner {
-  background-color: transparent;
-}
-
 .cm-console:last-child {
   margin-bottom: 12px;
 }

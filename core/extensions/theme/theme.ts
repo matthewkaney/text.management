@@ -15,29 +15,19 @@ const coral = "#e06c75",
   highlightBackground = "#2c313a",
   selection = "#3E4451";
 
-const size = 12;
-
-export const base = EditorView.theme({
+export const managementTheme = EditorView.theme({
   "&": {
-    fontFamily: "Fira Code, monospace",
+    fontFamily: "inherit",
     width: "100%",
     height: "100%",
     overflow: "auto",
-  },
-
-  ".cm-line": {
-    width: "fit-content",
-  },
-});
-
-export const layoutTheme = EditorView.theme({
-  "&": {
-    fontSize: `${1.6363 * size}px`,
-    lineHeight: `${2.5 * size}px`,
+    color: col("foreground"),
+    "& ::selection": { backgroundColor: selection },
+    caretColor: col("foreground"),
   },
 
   ".cm-scroller": {
-    margin: `${1.5 * size}px`,
+    margin: `var(--s-1-5)`,
   },
 
   ".cm-scroller:not(:last-child)": {
@@ -45,36 +35,34 @@ export const layoutTheme = EditorView.theme({
   },
 
   ".cm-line": {
-    padding: `0 ${0.5 * size}px`,
+    width: "fit-content",
+    padding: `0 var(--s-0-5)`,
+    backgroundColor: col("ui-background"),
+  },
+
+  ".cm-line:first-child, .cm-line.cm-emptyLine + .cm-line:not(.cm-emptyLine)": {
+    paddingTop: "var(--s-0-5)",
+    marginTop: "calc(var(--s-0-5) * -1)",
+  },
+
+  ".cm-line:last-child, .cm-line:not(.cm-emptyLine):has(+ .cm-emptyLine)": {
+    paddingBottom: "var(--s-0-5)",
+    marginBottom: "calc(var(--s-0-5) * -1)",
   },
 
   ".cm-emptyLine:not(.cm-activeLine)": {
     padding: "0",
   },
 
-  ".cm-gutters": {
-    marginRight: `${size}px`,
-  },
+  // ".cm-gutters": {
+  //   marginRight: `${size}px`,
+  // },
 
-  ".cm-lineNumbers .cm-gutterElement": {
-    padding: `0 ${0.5 * size}px`,
-  },
+  // ".cm-lineNumbers .cm-gutterElement": {
+  //   padding: `0 ${0.5 * size}px`,
+  // },
 
-  "*::-webkit-scrollbar": {
-    width: `${size}px`,
-  },
-});
-
-/// The editor theme styles for One Dark.
-export const oneDarkTheme = EditorView.theme({
-  "&": {
-    color: col("foreground"),
-    "& ::selection": { backgroundColor: selection },
-    caretColor: col("foreground"),
-    fontFamily: "inherit",
-  },
-
-  ".cm-content": { padding: 0 },
+  ".cm-content": { padding: "var(--s-0-5) 0" },
 
   "&.cm-editor.cm-focused": { outline: "none" },
   "&.cm-focused .cm-cursor": {
@@ -92,16 +80,8 @@ export const oneDarkTheme = EditorView.theme({
   },
 
   "& .cm-scroller": {
-    fontFamily: "Fira Code, monospace",
+    fontFamily: "inherit",
     lineHeight: "inherit",
-  },
-
-  ".cm-line": {
-    backgroundColor: col("ui-background"),
-  },
-
-  ".cm-line.cm-activeLine": {
-    boxShadow: "0 0 2px --color-background",
   },
 
   ".cm-searchMatch": {
@@ -149,16 +129,6 @@ export const oneDarkTheme = EditorView.theme({
       backgroundColor: highlightBackground,
       color: ivory,
     },
-  },
-
-  "*::-webkit-scrollbar-thumb": {
-    backgroundColor: col("ui-background-inactive"),
-  },
-  "*::-webkit-scrollbar-thumb:hover": {
-    backgroundColor: col("ui-background"),
-  },
-  "*::-webkit-scrollbar-corner": {
-    backgroundColor: "transparent",
   },
 });
 
@@ -214,8 +184,6 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
 /// Extension to enable the One Dark theme (both the editor theme and
 /// the highlight style).
 export const oneDark: Extension = [
-  base,
-  layoutTheme,
-  oneDarkTheme,
+  managementTheme,
   syntaxHighlighting(oneDarkHighlightStyle),
 ];

@@ -13,10 +13,10 @@
 }
 
 .tab-bar {
-  padding: 0 calc(1.5 * 12px);
-  color: var(--col-text);
-  font-size: calc(1.2727 * 12px);
-  line-height: calc(2.5 * 12px);
+  padding: 0 var(--s-1-5);
+  /* color: var(--col-text); */
+  font-size: var(--font-small);
+  line-height: var(--s-3);
   border-bottom: solid 2px var(--color-ui-background);
   margin-bottom: -1px;
   display: flex;
