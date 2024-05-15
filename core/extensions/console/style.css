@@ -9,7 +9,7 @@
 }
 
 .cm-console::-webkit-scrollbar-thumb {
-  background-color: var(--col-bg-shadow);
+  background-color: var(--color-ui-background);
 }
 
 .cm-console::-webkit-scrollbar-corner {
@@ -33,6 +33,8 @@
 .cm-console-message-source {
   padding-left: 12px;
   float: right;
+  box-shadow: inset 2px -2px var(--color-background);
+  z-index: 1;
 }
 
 .cm-console {
@@ -60,46 +62,53 @@
   overflow-wrap: anywhere;
 }
 
-.cm-console-message-info .cm-console-message-source,
-.cm-console-message-info .cm-console-message-input {
-  border-color: var(--col-bg-shadow);
-  background-color: var(--col-bg-shadow-soft);
-}
-
+/* .cm-console-message-info .cm-console-message-input,
 .cm-console-message-info .cm-console-message-output {
-  background-color: var(--col-bg-shadow);
+  margin-left: 18px;
+  background-color: var(--color-ui-background);
+} */
+
+.cm-console-message-info .cm-console-message-source {
+  color: var(--col-text-inactive);
 }
 
-.cm-console-message-info .cm-console-message-source,
-.cm-console-message-info .cm-console-message-input {
-  color: var(--col-text-soft);
-}
-
-.cm-console-message-error .cm-console-message-input,
+/* .cm-console-message-error .cm-console-message-input,
 .cm-console-message-error .cm-console-message-output {
   background-image: repeating-linear-gradient(
     135deg,
     #6c000050 0px 10px,
     #a6020250 10px 20px
   );
-}
+} */
 
-.cm-console-message-error .cm-console-message-source {
+/* .cm-console-message-error .cm-console-message-source {
   color: coral;
-}
+} */
 
 .cm-console-message-input,
 .cm-console-message-output {
-  padding-left: 24px;
+  margin-left: 24px;
   position: relative;
+  background-color: var(--color-ui-background-inactive);
+}
+
+.cm-console-message-input::before,
+.cm-console-message-output::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -24px;
+  width: 24px;
+  height: 100%;
+  background-color: var(--color-ui-background);
 }
 
 .cm-console-message-icon {
   width: 24px;
   height: 24px;
   position: absolute;
-  top: 3px;
-  left: 0;
+  top: 0;
+  left: -24px;
   color: var(--col-text-soft);
 }
 
@@ -107,6 +116,16 @@
   display: block;
 }
 
-.cm-console-message-error .cm-console-message-output .cm-console-message-icon {
-  color: crimson;
+.cm-console-message-error .cm-console-message-input,
+.cm-console-message-error .cm-console-message-output {
+  background-color: #ffd9d580;
+}
+
+.cm-console-message-error .cm-console-message-input::before,
+.cm-console-message-error .cm-console-message-output::before {
+  background-color: crimson;
+}
+
+.cm-console-message-error .cm-console-message-icon {
+  color: white;
 }

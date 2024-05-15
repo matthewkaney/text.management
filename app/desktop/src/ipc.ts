@@ -30,4 +30,5 @@ export interface ToRendererChannels {
   toggleConsole: undefined;
   showAbout: string;
   tidalHighlight: HighlightEvent;
+  settingsData: any;
 }

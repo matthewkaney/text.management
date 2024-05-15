@@ -5,14 +5,13 @@ import { tags as t } from "@lezer/highlight";
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
-const col = (name: string) => `var(--col-${name})`;
+const col = (name: string) => `var(--color-${name})`;
 
 const coral = "#e06c75",
   ivory = "#abb2bf",
   stone = "#7d8799", // Brightened compared to original to increase contrast
   whiskey = "#d19a66",
   violet = "#c678dd",
-  darkBackground = "#21252b",
   highlightBackground = "#2c313a",
   selection = "#3E4451";
 
@@ -67,106 +66,110 @@ export const layoutTheme = EditorView.theme({
 });
 
 /// The editor theme styles for One Dark.
-export const oneDarkTheme = EditorView.theme(
-  {
-    "&": {
-      color: col("text"),
-      "& ::selection": { backgroundColor: selection },
-      caretColor: col("text"),
-      fontFamily: "inherit",
-    },
+export const oneDarkTheme = EditorView.theme({
+  "&": {
+    color: col("foreground"),
+    "& ::selection": { backgroundColor: selection },
+    caretColor: col("foreground"),
+    fontFamily: "inherit",
+  },
 
-    ".cm-content": { padding: 0 },
+  ".cm-content": { padding: 0 },
 
-    "&.cm-editor.cm-focused": { outline: "none" },
-    "&.cm-focused .cm-cursor": {
-      borderLeftColor: col("text"),
-      borderLeftWidth: "2px",
-      marginLeft: "-1px",
-    },
+  "&.cm-editor.cm-focused": { outline: "none" },
+  "&.cm-focused .cm-cursor": {
+    borderLeftColor: col("foreground"),
+    borderLeftWidth: "2px",
+    marginLeft: "-1px",
+  },
 
-    "&.cm-tab-focus": {
-      boxShadow: "inset 0 0 0 4px orange",
-    },
+  "&.cm-tab-focus": {
+    boxShadow: "inset 0 0 0 4px orange",
+  },
 
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: col("text-invert"),
-    },
+  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
+    backgroundColor: col("text-invert"),
+  },
 
-    "& .cm-scroller": {
-      fontFamily: "Fira Code, monospace",
-      lineHeight: "inherit",
-    },
+  "& .cm-scroller": {
+    fontFamily: "Fira Code, monospace",
+    lineHeight: "inherit",
+  },
 
-    ".cm-line": {
-      backgroundColor: col("bg-shadow"),
-    },
+  ".cm-line": {
+    backgroundColor: col("ui-background"),
+  },
 
-    ".cm-searchMatch": {
-      backgroundColor: "#72a1ff59",
-      outline: "1px solid #457dff",
-    },
-    ".cm-searchMatch.cm-searchMatch-selected": {
-      backgroundColor: "#6199ff2f",
-    },
+  ".cm-line.cm-activeLine": {
+    boxShadow: "0 0 2px --color-background",
+  },
 
-    ".cm-selectionMatch": { backgroundColor: "#aafe661a" },
+  ".cm-searchMatch": {
+    backgroundColor: "#72a1ff59",
+    outline: "1px solid #457dff",
+  },
+  ".cm-searchMatch.cm-searchMatch-selected": {
+    backgroundColor: "#6199ff2f",
+  },
 
-    "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
-      backgroundColor: col("text-2"),
-      color: col("text-invert"),
-    },
+  ".cm-selectionMatch": { backgroundColor: "#aafe661a" },
 
-    ".cm-matchingBracket, .cm-nonmatchingBracket": {
-      backgroundColor: "transparent",
-      boxShadow: `inset 0 0 0 2px ${col("text-2")}`,
-    },
+  "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
+    backgroundColor: col("text-2"),
+    color: col("text-invert"),
+  },
 
-    ".cm-gutters": {
-      backgroundColor: col("bg-shadow"),
-      color: col("text"),
-      border: "none",
-    },
+  ".cm-matchingBracket, .cm-nonmatchingBracket": {
+    backgroundColor: "transparent",
+    boxShadow: `inset 0 0 0 2px ${col("text-2")}`,
+  },
 
-    ".cm-lineNumbers .cm-gutterElement": {
-      color: "inherit",
-    },
+  ".cm-gutters": {
+    backgroundColor: col("ui-background"),
+    color: col("foreground"),
+    border: "none",
+  },
 
-    ".cm-foldPlaceholder": {
-      backgroundColor: "transparent",
-      border: "none",
-      color: "#ddd",
-    },
+  ".cm-lineNumbers .cm-gutterElement": {
+    color: "inherit",
+  },
 
-    ".cm-tooltip": {
-      border: "1px solid #181a1f",
-      backgroundColor: darkBackground,
-    },
-    ".cm-tooltip-autocomplete": {
-      "& > ul > li[aria-selected]": {
-        backgroundColor: highlightBackground,
-        color: ivory,
-      },
-    },
+  ".cm-foldPlaceholder": {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#ddd",
+  },
 
-    "*::-webkit-scrollbar-thumb": {
-      backgroundColor: col("bg-shadow"),
-    },
-    "*::-webkit-scrollbar-corner": {
-      backgroundColor: "transparent",
+  ".cm-tooltip": {
+    border: "1px solid #181a1f",
+    backgroundColor: col("background"),
+  },
+  ".cm-tooltip-autocomplete": {
+    "& > ul > li[aria-selected]": {
+      backgroundColor: highlightBackground,
+      color: ivory,
     },
   },
-  { dark: true }
-);
+
+  "*::-webkit-scrollbar-thumb": {
+    backgroundColor: col("ui-background-inactive"),
+  },
+  "*::-webkit-scrollbar-thumb:hover": {
+    backgroundColor: col("ui-background"),
+  },
+  "*::-webkit-scrollbar-corner": {
+    backgroundColor: "transparent",
+  },
+});
 
 /// The highlighting style for code in the One Dark theme.
 export const oneDarkHighlightStyle = HighlightStyle.define([
   { tag: t.keyword, color: violet },
   {
     tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-    color: col("text"),
+    color: col("foreground"),
   },
-  { tag: [t.function(t.variableName), t.labelName], color: col("text") },
+  { tag: [t.function(t.variableName), t.labelName], color: col("foreground") },
   { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: whiskey },
   { tag: [t.definition(t.name), t.separator], color: ivory },
   {
