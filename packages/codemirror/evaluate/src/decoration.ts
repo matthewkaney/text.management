@@ -1,12 +1,7 @@
-import {
-  EditorView,
-  ViewPlugin,
-  ViewUpdate,
-  Decoration,
-} from "@codemirror/view";
-import { Facet, StateEffect, Range } from "@codemirror/state";
+import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
+import { Facet, StateEffect } from "@codemirror/state";
 
-import { evalEffect } from "./evaluate";
+import { Evaluation, evaluationEffect } from "./evaluate";
 
 export const flashDuration = Facet.define({
   combine(values: readonly number[]) {
@@ -14,71 +9,71 @@ export const flashDuration = Facet.define({
   },
 });
 
-const endEvalEffect = StateEffect.define<symbol>();
+const endEvalEffect = StateEffect.define<Evaluation>();
 
-export function evalDecoration() {
-  return ViewPlugin.fromClass(
-    class {
-      decorations = Decoration.none;
+const evaluationTheme = EditorView.baseTheme({
+  "& .cm-evaluated": { backgroundColor: "#FFFFFF" },
+});
 
-      private timers = new Set<number>();
+export const evaluateDecorationPlugin = ViewPlugin.define(
+  (view) => {
+    let decorations = Decoration.none;
+    let timers = new Set<number>();
 
-      update({ view, state, transactions }: ViewUpdate) {
+    return {
+      update: ({ state, transactions }) => {
+        let flashTime = state.facet(flashDuration);
+
         for (let tr of transactions) {
-          let flashTime = state.facet(flashDuration);
-          this.decorations = this.decorations.map(tr.changes);
+          if (tr.docChanged) {
+            decorations = decorations.map(tr.changes);
+          }
 
-          let newDecorations: Range<Decoration>[] = [];
-          let oldDecorations = new Set<symbol>();
           for (let effect of tr.effects) {
-            if (effect.is(evalEffect) && "from" in effect.value) {
-              let { from, to } = effect.value;
+            if (
+              effect.is(evaluationEffect) &&
+              effect.value.span !== undefined
+            ) {
+              let { from, to } = effect.value.span;
 
               if (from === to) break;
 
-              let id = Symbol();
-
-              let timer: number = window.setTimeout(() => {
-                this.timers.delete(timer);
-                view.dispatch({ effects: endEvalEffect.of(id) });
+              let timer = window.setTimeout(() => {
+                timers.delete(timer);
+                view.dispatch({ effects: endEvalEffect.of(effect.value) });
               }, flashTime);
-              this.timers.add(timer);
 
-              newDecorations.push(
-                Decoration.mark({
-                  class: "cm-evaluated",
-                  id: id,
-                }).range(from, to)
-              );
-            }
+              timers.add(timer);
 
-            if (effect.is(endEvalEffect)) {
-              oldDecorations.add(effect.value);
+              decorations = decorations.update({
+                add: [
+                  Decoration.mark({
+                    class: "cm-evaluated",
+                    evaluation: effect.value,
+                  }).range(from, to),
+                ],
+              });
+            } else if (effect.is(endEvalEffect)) {
+              decorations = decorations.update({
+                filter: (_f, _t, value) =>
+                  value.spec.evaluation !== effect.value,
+              });
             }
           }
-
-          this.decorations = this.decorations.update({
-            add: newDecorations,
-            sort: true,
-            filter: (_f, _t, { spec: { id } }) => {
-              return !oldDecorations.has(id);
-            },
-          });
         }
-      }
+      },
 
-      destroy() {
-        for (let timer of this.timers) {
+      destroy: () => {
+        for (let timer of timers) {
           window.clearTimeout(timer);
         }
+      },
 
-        this.timers = new Set();
-      }
-    },
-    { decorations: (v) => v.decorations }
-  );
-}
-
-const evalTheme = EditorView.baseTheme({
-  "& .cm-evaluated": { backgroundColor: "#FFFFFF" },
-});
+      getDecorations: () => decorations,
+    };
+  },
+  {
+    provide: () => evaluationTheme,
+    decorations: (value) => value.getDecorations(),
+  }
+);

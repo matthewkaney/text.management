@@ -1,10 +1,11 @@
 import {
   EditorState,
+  Extension,
   Facet,
   StateEffect,
   Transaction,
 } from "@codemirror/state";
-import { ViewPlugin } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 
 class Evaluation {
   constructor(
@@ -12,6 +13,8 @@ class Evaluation {
     readonly span?: { from: number; to: number }
   ) {}
 }
+
+export type { Evaluation };
 
 export function evaluate(
   state: EditorState,
@@ -31,7 +34,10 @@ export function evaluate(
   } else {
     return state.update({
       effects: evaluationEffect.of(
-        new Evaluation(state.sliceDoc(fromOrCode, to))
+        new Evaluation(state.sliceDoc(fromOrCode, to), {
+          from: fromOrCode,
+          to: to ?? state.doc.length,
+        })
       ),
     });
   }
@@ -49,28 +55,30 @@ export type EvaluationHandler = (
   origin: Transaction
 ) => void;
 
-const evaluationDispatch = ViewPlugin.define(() => ({
-  update: (update) => {
-    for (let tr of update.transactions) {
-      for (let effect of tr.effects) {
-        if (effect.is(evaluationEffect)) {
-          for (let action of tr.state.facet(evaluationAction)) {
-            action(effect.value, tr);
-          }
+const evaluationDispatch = EditorView.updateListener.of((update) => {
+  for (let tr of update.transactions) {
+    for (let effect of tr.effects) {
+      if (effect.is(evaluationEffect)) {
+        for (let action of tr.state.facet(evaluationAction)) {
+          action(effect.value, tr);
         }
       }
     }
-  },
-}));
+  }
+});
 
-const evaluationAction = Facet.define<EvaluationHandler>({
+export const evaluationAction = Facet.define<EvaluationHandler>({
   enables: evaluationDispatch,
 });
 
-import { evalDecoration, evalTheme } from "./decoration";
+import { evaluateDecorationPlugin } from "./decoration";
 
 export function evaluation(action?: EvaluationHandler) {
-  let extensions = [evalDecoration(), evalTheme, keymap.of(evalKeymap)];
-  if (action) extensions.push(evalAction.of(action));
+  let extensions: Extension[] = [evaluateDecorationPlugin];
+
+  if (action) {
+    extensions.push(evaluationAction.of(action));
+  }
+
   return extensions;
 }
