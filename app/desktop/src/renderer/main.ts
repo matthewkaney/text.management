@@ -92,7 +92,7 @@ export class Editor {
                   languageMode,
                   evaluationWithHighlights(api.evaluate),
                   highlighter(api),
-                  basicSetup,
+                  basicSetup(configuration),
                   oneDark,
                   fileSync(
                     id,
