@@ -3,9 +3,10 @@ import { ViewPlugin, lineNumbers as cmLineNumbers } from "@codemirror/view";
 import { Config } from "@core/state";
 import { SettingsSchema } from "@core/state/schema";
 
-const editorSettings = {
+export const EditorSettings = {
   properties: {
     "editor.lineNumbers": {
+      description: "Whether line numbers are displayed in the editor",
       enum: ["off", "on"],
       default: "on",
     },
@@ -16,7 +17,7 @@ const lineNumberConf = new Compartment();
 
 export function lineNumbers(configuration: Config) {
   const plugin = ViewPlugin.define((view) => {
-    const editorConfig = configuration.extend(editorSettings);
+    const editorConfig = configuration.extend(EditorSettings);
     const unlisten = editorConfig.on("change", (data) => {
       let lineNumberSetting = data["editor.lineNumbers"] ?? "on";
 
