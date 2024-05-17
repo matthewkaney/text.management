@@ -13,8 +13,7 @@
 }
 
 .tab-bar {
-  padding: 0 var(--s-1-5);
-  /* color: var(--col-text); */
+  padding: 0 var(--s-2);
   font-size: var(--font-small);
   line-height: var(--s-3);
   border-bottom: solid 2px var(--color-ui-background);
@@ -58,17 +57,34 @@
 }
 
 .tab {
-  padding: 0 calc(2.5 * 12px) 0 calc(0.5 * 12px);
+  padding: 0 var(--s-3) 0 var(--s-1);
   background: var(--color-ui-background-inactive);
 }
 
 .tab-container.current .tab,
-.tab:hover {
+.tab:hover,
+.tab:has(> .close-button:hover) {
   background: var(--color-ui-background);
+
+  --p1: calc(100% - var(--s-2-5));
+  --p2: calc(100% - var(--s-0-5));
+
+  clip-path: polygon(
+    0 0,
+    0 100%,
+    100% 100%,
+    var(--p2) var(--p2),
+    var(--p1) var(--p2),
+    var(--p1) var(--p1),
+    var(--p2) var(--p1),
+    var(--p2) var(--p2),
+    100% 100%,
+    100% 0
+  );
 }
 
 .tab:focus-visible {
-  box-shadow: inset 0 0 0 4px orange;
+  box-shadow: inset 0 0 0 4px var(--color-focus-border);
 }
 
 .tab-container.current .tab:focus-visible {
@@ -78,13 +94,14 @@
 }
 
 .tab-container .close-button {
+  clip-path: inset(2px);
   padding: 0;
   position: absolute;
-  top: calc(0.5 * 12px);
-  right: calc(0.5 * 12px);
-  width: calc(1.5 * 12px);
-  height: calc(1.5 * 12px);
-  line-height: calc(1.5 * 12px);
+  top: var(--s-0-5);
+  right: var(--s-0-5);
+  width: var(--s-2);
+  height: var(--s-2);
+  line-height: var(--s-2);
   text-align: center;
   background: var(--color-ui-background-inactive);
 }
@@ -104,17 +121,18 @@
 
 .new-tab-button {
   background: var(--color-ui-background-inactive);
+  clip-path: inset(2px 0 2px 1px);
   border: none;
   color: inherit;
-  height: 30px;
-  width: 30px;
-  line-height: 30px;
+  height: var(--s-3);
+  width: var(--s-2);
+  line-height: var(--s-3);
 }
 
 .new-tab-button:hover {
   background: var(--color-ui-background);
 }
 
-.editor-panels {
+/* .editor-panels {
   font-size: 15.2724px;
-}
+} */

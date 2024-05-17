@@ -27,7 +27,7 @@ export const managementTheme = EditorView.theme({
   },
 
   ".cm-scroller": {
-    margin: `var(--s-1-5)`,
+    margin: `var(--s-2)`,
   },
 
   ".cm-scroller:not(:last-child)": {
