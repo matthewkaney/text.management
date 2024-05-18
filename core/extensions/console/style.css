@@ -11,8 +11,10 @@
   position: relative;
   padding: var(--s-0-5);
   margin-left: var(--s-0-5);
+  font-size: var(--font-small);
   float: right;
-  box-shadow: inset 2px 0 var(--color-background), 0 2px var(--color-background);
+  border-left: solid 2px var(--color-background);
+  border-bottom: solid 2px var(--color-background);
   z-index: 1;
   user-select: none;
 }
@@ -59,10 +61,29 @@
 
 .cm-console-message-input,
 .cm-console-message-output {
-  margin-left: var(--s-2);
+  margin-left: calc(var(--s-2) + 1px);
   padding: var(--s-0-5);
+  padding-left: calc(var(--s-0-5) - 1px);
   position: relative;
+  white-space: pre-wrap;
+}
+
+.cm-console-message-input {
+  font-size: var(--font-small);
+  min-height: var(--s-2);
   background-color: var(--color-ui-background-inactive);
+}
+
+.cm-console-message-output {
+  background-color: var(--color-ui-background);
+}
+
+.cm-console-message-input:has(+ .cm-console-message-output) {
+  clip-path: margin-box inset(0 0 1px 0);
+}
+
+.cm-console-message-input + .cm-console-message-output {
+  clip-path: margin-box inset(1px 0 0 0);
 }
 
 .cm-console-message-input::before,
@@ -70,10 +91,10 @@
   content: "";
   position: absolute;
   top: 0;
-  left: calc(var(--s-2) * -1);
-  width: calc(var(--s-2));
+  left: calc(var(--s-2) * -1 - 1px);
+  width: calc(var(--s-2) - 1px);
   height: 100%;
-  background-color: var(--color-ui-background);
+  background-color: var(--color-ui-background-inactive);
 }
 
 .cm-console-message-icon {
@@ -81,7 +102,7 @@
   height: var(--s-2);
   position: absolute;
   top: var(--s-0-5);
-  left: calc(var(--s-2) * -1);
+  left: calc(var(--s-2) * -1 - 1px);
   color: var(--col-text-soft);
 }
 
@@ -91,12 +112,12 @@
 
 .cm-console-message-error .cm-console-message-input,
 .cm-console-message-error .cm-console-message-output {
-  background-color: #ffd9d580;
+  background-color: #edbdb79a;
 }
 
 .cm-console-message-error .cm-console-message-input::before,
 .cm-console-message-error .cm-console-message-output::before {
-  background-color: crimson;
+  background-color: #cf3625;
 }
 
 .cm-console-message-error .cm-console-message-icon {
