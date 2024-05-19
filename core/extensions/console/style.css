@@ -13,10 +13,15 @@
   margin-left: var(--s-0-5);
   font-size: var(--font-small);
   float: right;
-  border-left: solid 2px var(--color-background);
-  border-bottom: solid 2px var(--color-background);
   z-index: 1;
   user-select: none;
+  clip-path: inset(0 0 1px 1px);
+  background-color: var(--color-ui-background);
+}
+
+.cm-console-message-error .cm-console-message-source {
+  background-color: #cf3625;
+  color: white;
 }
 
 .cm-console {
