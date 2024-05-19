@@ -58,7 +58,7 @@
 }
 
 .cm-menu-trigger:focus-visible {
-  box-shadow: inset 0 0 0 2px orange;
+  box-shadow: inset 0 0 0 2px var(--color-focus-border);
 }
 
 .cm-menu-trigger:focus-visible {
@@ -78,5 +78,5 @@
 
 .cm-menu-item:focus-visible {
   clip-path: none;
-  box-shadow: 0 0 0 2px orange;
+  box-shadow: 0 0 0 2px var(--color-focus-border);
 }

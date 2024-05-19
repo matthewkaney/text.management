@@ -72,11 +72,20 @@ export const managementTheme = EditorView.theme({
   },
 
   "&.cm-tab-focus": {
-    boxShadow: "inset 0 0 0 4px orange",
+    boxShadow: "inset 0 0 0 4px var(--color-focus-border)",
   },
 
-  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-    backgroundColor: col("text-invert"),
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+    background: col("selection-background"),
+  },
+
+  "&.cm-focused ::selection": {
+    background: "transparent",
+  },
+
+  ".cm-selectionBackground": {
+    background: col("selection-background"),
+    color: col("foreground-invert"),
   },
 
   "& .cm-scroller": {

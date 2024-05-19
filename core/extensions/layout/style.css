@@ -115,7 +115,7 @@
 }
 
 .tab-container .close-button:focus-visible {
-  background: orange;
+  background: var(--color-focus-border);
   color: var(--col-background);
 }
 

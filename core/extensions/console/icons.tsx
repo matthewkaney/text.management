@@ -33,7 +33,5 @@ interface IconProps {
 }
 
 function Icon({ children }: IconProps) {
-  console.log(children);
-
   return <div class="cm-console-message-icon">{children}</div>;
 }

@@ -36,11 +36,9 @@ interface MessageContentProps {
 
 function MessageContent({ message }: MessageContentProps) {
   const ref = useCallback((current: HTMLDivElement | null) => {
-    console.log(current);
     if (current !== null) {
       const observer = new ResizeObserver(([size]) => {
         let { blockSize, inlineSize } = size.borderBoxSize[0];
-        console.log(size);
         const points = [
           "0 0",
           `calc(100% - ${inlineSize + 1}px) 0`,
@@ -49,7 +47,6 @@ function MessageContent({ message }: MessageContentProps) {
           "100% 100%",
           "0 100%",
         ];
-        console.log(points.join(", "));
         current.style.clipPath = `polygon(${points.join(", ")})`;
       });
 

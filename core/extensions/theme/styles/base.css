@@ -45,3 +45,8 @@ body {
   z-index: -100;
   border: none;
 }
+
+::selection {
+  background: var(--color-selection-background);
+  color: var(--color-foreground-inverted);
+}

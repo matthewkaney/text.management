@@ -11,6 +11,7 @@ export const ThemeColorSchema = {
   properties: {
     background: { ...color, description: "General background color" },
     foreground: { ...color, description: "General foreground color" },
+    foregroundInverted: { ...color, description: "Inverted foreground color" },
     focusBorder: { ...color, description: "Border color for focused elements" },
     errorBackground: {
       ...color,
@@ -19,6 +20,10 @@ export const ThemeColorSchema = {
     errorForeground: {
       ...color,
       description: "General foreground color for errors",
+    },
+    selectionBackground: {
+      ...color,
+      description: "Selection background",
     },
     "ui.background": color,
     "ui.backgroundInactive": color,

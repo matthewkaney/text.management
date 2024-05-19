@@ -1,6 +1,11 @@
 {
   "background": "#d8d5d4",
   "foreground": "#252221",
+  "foregroundInverted": "#eceae9",
+  "focusBorder": "#f3a81d",
+  "errorBackground": "#edbdb79a",
+  "errorForeground": "#cf3625",
+  "selectionBackground": "#000000e0",
   "ui.background": "#ffffff72",
   "ui.backgroundInactive": "#ffffff40",
   "ui.backgroundActive": "#ffffffe6"
