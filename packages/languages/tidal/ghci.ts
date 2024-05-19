@@ -133,20 +133,15 @@ export class GHCI extends Engine<GHCIEvents> {
       // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
       await this.send(integrationCode);
-
-      // Disable reloading of Sound.Tidal.Context since it's already loaded
-      this.wrapper.addInputFilter(
-        /^[ \t]*import[ \t]+Sound\.Tidal\.Context.*$/m
-      );
     }
 
     if (useDefaultBootfile) {
-      this.sendFile(await this.defaultBootfile());
+      await this.sendFile(await this.defaultBootfile());
     }
 
     for (let path of bootFiles ?? []) {
       try {
-        this.sendFile(path);
+        await this.sendFile(path);
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;
