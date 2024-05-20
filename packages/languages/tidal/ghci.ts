@@ -8,7 +8,7 @@ import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { StateManagement } from "@core/state";
+import { Config, ConfigExtension } from "@core/state";
 export { TidalSettingsSchema } from "./settings";
 import { TidalSettingsSchema } from "./settings";
 
@@ -33,13 +33,17 @@ interface GHCIEvents {
 }
 
 export class GHCI extends Engine<GHCIEvents> {
+  private settings: ConfigExtension<typeof TidalSettingsSchema>;
+
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: (Evaluation | Log)[] = [];
 
-  constructor(private settings: StateManagement<typeof TidalSettingsSchema>) {
+  constructor(settings: Config) {
     super();
+
+    this.settings = settings.extend(TidalSettingsSchema);
 
     this.settings.on("change", () => {
       this.reloadSettings;
@@ -94,12 +98,11 @@ export class GHCI extends Engine<GHCIEvents> {
   private wrapper: ProcessWrapper | null = null;
 
   private async initProcess() {
-    console.log(JSON.stringify(this.settings.getData()));
     const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
-    } = this.settings.getData();
+    } = this.settings.data;
     const port = (await this.socket).address().port.toString();
 
     // this.outputFilters.push(
@@ -130,20 +133,15 @@ export class GHCI extends Engine<GHCIEvents> {
       // );
       const integrationCode = generateIntegrationCode(await this.getVersion());
       await this.send(integrationCode);
-
-      // Disable reloading of Sound.Tidal.Context since it's already loaded
-      this.wrapper.addInputFilter(
-        /^[ \t]*import[ \t]+Sound\.Tidal\.Context.*$/m
-      );
     }
 
     if (useDefaultBootfile) {
-      this.sendFile(await this.defaultBootfile());
+      await this.sendFile(await this.defaultBootfile());
     }
 
     for (let path of bootFiles ?? []) {
       try {
-        this.sendFile(path);
+        await this.sendFile(path);
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;

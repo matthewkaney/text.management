@@ -5,12 +5,14 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
+import { Config } from "@core/state";
 import { settings } from "@core/extensions/settings/editor";
 
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 // import { peer } from "@core/extensions/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
+import { ColorScheme } from "@core/extensions/theme/colors";
 
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
@@ -33,6 +35,14 @@ const { api } = window as Window &
   typeof globalThis & {
     api: typeof ElectronAPI;
   };
+
+const configuration = new Config();
+api.onSettingsData((data) => {
+  configuration.update(data);
+});
+
+// Color scheme extension
+const colorScheme = new ColorScheme(configuration);
 
 const background: string | null = null;
 
@@ -81,11 +91,11 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
-                  basicSetup,
-                  languageMode,
+                  oneDark,
                   evaluationWithHighlights(api.evaluate),
                   highlighter(api),
-                  oneDark,
+                  languageMode,
+                  basicSetup,
                   fileSync(
                     id,
                     { path, saved, version, thisVersion: version },
