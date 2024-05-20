@@ -1,24 +1,37 @@
-import inputSVG from "bundle-text:@core/icons/console_input.svg";
-import outputSVG from "bundle-text:@core/icons/console_output.svg";
-import errorSVG from "bundle-text:@core/icons/console_error.svg";
+import Input from "jsx:@core/icons/console_input.svg";
+import Output from "jsx:@core/icons/console_output.svg";
+import Error from "jsx:@core/icons/console_error.svg";
+
+import { ComponentChildren } from "preact";
 
 export function InputIcon() {
-  return <Icon svgSource={inputSVG} />;
+  return (
+    <Icon>
+      <Input />
+    </Icon>
+  );
 }
 
 export function OutputIcon() {
-  return <Icon svgSource={outputSVG} />;
+  return (
+    <Icon>
+      <Output />
+    </Icon>
+  );
 }
 
 export function ErrorIcon() {
-  return <Icon svgSource={errorSVG} />;
+  return (
+    <Icon>
+      <Error />
+    </Icon>
+  );
 }
 
-function Icon({ svgSource }: { svgSource: string }) {
-  return (
-    <div
-      class="cm-console-message-icon"
-      innerHTML={{ __dangerousHtml: svgSource }}
-    ></div>
-  );
+interface IconProps {
+  children: ComponentChildren;
+}
+
+function Icon({ children }: IconProps) {
+  return <div class="cm-console-message-icon">{children}</div>;
 }
