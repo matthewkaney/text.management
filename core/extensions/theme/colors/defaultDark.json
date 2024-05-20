@@ -6,6 +6,7 @@
   "errorBackground": "#823d359a",
   "errorForeground": "#e13825",
   "selectionBackground": "#fffffff0",
+  "livecode.activeEventBackground": "#fff2fa",
   "ui.background": "#00000072",
   "ui.backgroundInactive": "#00000040",
   "ui.backgroundActive": "#000000e6",
