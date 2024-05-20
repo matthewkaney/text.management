@@ -1,29 +1,20 @@
 import { EditorView, KeyBinding } from "@codemirror/view";
 
-import { commandEffect, evalEffect } from "./evaluate";
+import { evaluate } from "./evaluate";
 
-export const evalKeymap: KeyBinding[] = [
-  { key: "Shift-Enter", run: evalSelection },
-  { key: "Mod-Enter", run: evalSelection },
-  { key: "Shift-Enter", run: evalLine },
-  { key: "Mod-Enter", run: evalBlock },
+export const evaluationKeymap: KeyBinding[] = [
+  { key: "Shift-Enter", run: evaluateLine },
+  { key: "Mod-Enter", run: evaluateBlock },
   { key: "Mod-.", run: hush },
 ];
 
-export function evalSelection({ state, dispatch }: EditorView) {
-  if (state.selection.main.empty) return false;
-
-  dispatch({ effects: evalEffect.of(state.selection.main) });
-  return true;
-}
-
-export function evalLine({ state, dispatch }: EditorView) {
+export function evaluateLine({ state, dispatch }: EditorView) {
   const line = state.doc.lineAt(state.selection.main.from);
-  dispatch({ effects: evalEffect.of(line) });
+  dispatch(evaluate(state, line.from, line.to));
   return true;
 }
 
-export function evalBlock({ state, dispatch }: EditorView) {
+export function evaluateBlock({ state, dispatch }: EditorView) {
   let { doc, selection } = state;
   let { text, number } = state.doc.lineAt(selection.main.from);
 
@@ -42,11 +33,11 @@ export function evalBlock({ state, dispatch }: EditorView) {
   let { from } = doc.line(fromL);
   let { to } = doc.line(toL);
 
-  dispatch({ effects: evalEffect.of({ from, to }) });
+  dispatch(evaluate(state, from, to));
   return true;
 }
 
-export function hush({ dispatch }: EditorView) {
-  dispatch({ effects: commandEffect.of({ method: "hush" }) });
+export function hush({ state, dispatch }: EditorView) {
+  dispatch(evaluate(state, "hush"));
   return true;
 }

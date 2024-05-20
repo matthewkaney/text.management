@@ -68,7 +68,7 @@ const ElectronAPI = {
 
   onShowAbout: listen("showAbout"),
 
-  evaluate: (code: string) => {
+  evaluate: ({ code }: { code: string }) => {
     send("evaluation", code);
   },
 
