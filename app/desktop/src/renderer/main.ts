@@ -89,11 +89,11 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
+                  oneDark,
                   evaluationWithHighlights(api.evaluate),
                   highlighter(api),
                   languageMode,
                   basicSetup,
-                  oneDark,
                   fileSync(
                     id,
                     { path, saved, version, thisVersion: version },

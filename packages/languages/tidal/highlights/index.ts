@@ -4,6 +4,7 @@ import {
   Range,
   Extension,
   RangeSetBuilder,
+  Prec,
 } from "@codemirror/state";
 import { Decoration, EditorView, ViewPlugin } from "@codemirror/view";
 
@@ -133,7 +134,11 @@ export function highlighter(api: typeof ElectronAPI): Extension {
     };
   });
 
-  return [highlighterPlugin, highlightSetField, highlightDecorations];
+  return [
+    highlighterPlugin,
+    highlightSetField,
+    Prec.highest(highlightDecorations),
+  ];
 }
 
 const highlightDecoration = Decoration.mark({
