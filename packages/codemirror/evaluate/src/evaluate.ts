@@ -7,14 +7,12 @@ import {
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
-class Evaluation {
+export class Evaluation {
   constructor(
     readonly code: string,
     readonly span?: { from: number; to: number }
   ) {}
 }
-
-export type { Evaluation };
 
 export function evaluate(
   state: EditorState,
