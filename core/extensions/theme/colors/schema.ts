@@ -28,5 +28,13 @@ export const ThemeColorSchema = {
     "ui.background": color,
     "ui.backgroundInactive": color,
     "ui.backgroundActive": color,
+    "livecode.activeEventBackground": color,
+    "syntax.comment": color,
+    "syntax.variable": color,
+    "syntax.keyword": color,
+    "syntax.string": color,
+    "syntax.number": color,
+    "syntax.bracket": color,
+    "syntax.operator": color,
   },
 } as const satisfies JSONSchema;

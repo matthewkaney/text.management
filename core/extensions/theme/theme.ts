@@ -143,14 +143,20 @@ export const managementTheme = EditorView.theme({
 
 /// The highlighting style for code in the One Dark theme.
 export const oneDarkHighlightStyle = HighlightStyle.define([
-  { tag: t.keyword, color: violet },
+  { tag: t.keyword, color: col("syntax-keyword") },
   {
     tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
     color: col("foreground"),
   },
-  { tag: [t.function(t.variableName), t.labelName], color: col("foreground") },
-  { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: whiskey },
-  { tag: [t.definition(t.name), t.separator], color: ivory },
+  {
+    tag: [t.function(t.variableName), t.labelName],
+    color: col("foreground"),
+  },
+  {
+    tag: [t.color, t.constant(t.name), t.standard(t.name)],
+    color: col("syntax-operator"),
+  },
+  { tag: [t.definition(t.name), t.separator], color: col("foreground") },
   {
     tag: [
       t.typeName,
@@ -162,7 +168,7 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
       t.self,
       t.namespace,
     ],
-    color: col("text-4"),
+    color: col("syntax-number"),
   },
   {
     tag: [
@@ -174,20 +180,22 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
       t.link,
       t.special(t.string),
     ],
-    color: col("text-1"),
+    color: col("syntax-operator"),
   },
-  { tag: [t.meta, t.comment], color: col("text-soft") },
+  { tag: [t.meta, t.comment], color: col("syntax-comment") },
   { tag: t.strong, fontWeight: "bold" },
   { tag: t.emphasis, fontStyle: "italic" },
-  { tag: t.link, color: stone, textDecoration: "underline" },
-  { tag: t.heading, fontWeight: "bold", color: coral },
-  { tag: [t.atom, t.bool, t.special(t.variableName)], color: whiskey },
+  { tag: t.link, textDecoration: "underline" },
+  {
+    tag: [t.atom, t.bool, t.special(t.variableName)],
+    color: col("syntax-variable"),
+  },
   {
     tag: [t.processingInstruction, t.string, t.inserted],
-    color: col("text-3"),
+    color: col("syntax-string"),
   },
-  { tag: t.invalid, color: col("text-soft") },
-  { tag: t.bracket, color: col("text-2") },
+  { tag: t.invalid, color: col("error-foreground") },
+  { tag: t.bracket, color: col("syntax-bracket") },
 ]);
 
 /// Extension to enable the One Dark theme (both the editor theme and

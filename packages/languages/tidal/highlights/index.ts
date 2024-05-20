@@ -137,7 +137,10 @@ export function highlighter(api: typeof ElectronAPI): Extension {
 }
 
 const highlightDecoration = Decoration.mark({
-  attributes: { style: "background-color: deeppink" },
+  attributes: {
+    style:
+      "background-color: var(--color-livecode-active-event-background); color: var(--color-foreground-inverted)",
+  },
 });
 
 const highlightDecorations = EditorView.decorations.compute(

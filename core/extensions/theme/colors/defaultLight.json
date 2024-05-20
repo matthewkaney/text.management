@@ -8,5 +8,10 @@
   "selectionBackground": "#000000e0",
   "ui.background": "#ffffff72",
   "ui.backgroundInactive": "#ffffff40",
-  "ui.backgroundActive": "#ffffffe6"
+  "ui.backgroundActive": "#ffffffe6",
+  "syntax.operator": "#700d1c",
+  "syntax.string": "#0f91ea",
+  "syntax.number": "#9e38ad",
+  "syntax.bracket": "#328f84",
+  "syntax.keyword": "#bf528c"
 }
