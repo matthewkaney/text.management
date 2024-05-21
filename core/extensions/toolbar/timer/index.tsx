@@ -1,7 +1,7 @@
 import { Config, ConfigExtension, SettingsSchema } from "@core/state";
 
 import { render } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useLayoutEffect } from "preact/hooks";
 
 import "./style.css";
 
@@ -40,9 +40,11 @@ function Timer({ config }: TimerProps) {
   let [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
+    console.log("Previous duration: " + config.data["countdownClock.duration"]);
     let offChange = config.on(
       "change",
       ({ ["countdownClock.duration"]: newDuration }) => {
+        console.log("UPDATE: " + newDuration);
         newDuration = newDuration ?? defaultDuration;
 
         if (newDuration !== duration) {
@@ -61,7 +63,7 @@ function Timer({ config }: TimerProps) {
     setPlaying((p) => !p);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (playing) {
       let animationFrame: number;
 
@@ -100,17 +102,18 @@ interface TimerLabelProps {
 }
 
 function TimerLabel({ time, duration }: TimerLabelProps) {
+  const isNegative = time > duration;
+  time = Math.abs(duration - time);
+
   const totalMinuteDigits = Math.floor(duration / 60).toString().length;
-  const minutes = Math.floor((duration - time) / 60)
-    .toString()
-    .padStart(totalMinuteDigits);
-  const seconds = Math.ceil((duration - time) % 60)
-    .toString()
-    .padStart(2, "0");
+  const minutes = Math.floor(time / 60);
+  const seconds = isNegative ? Math.floor(time % 60) : Math.ceil(time % 60);
 
   return (
     <span>
-      {minutes}:{seconds}
+      {(minutes !== 0 || seconds !== 0) && isNegative && "-"}
+      {minutes.toString().padStart(totalMinuteDigits)}:
+      {seconds.toString().padStart(2, "0")}
     </span>
   );
 }
@@ -179,12 +182,12 @@ function TimerLabel({ time, duration }: TimerLabelProps) {
 // }
 
 function Indicator({ state }: { state: number | "empty" | "filled" }) {
-  let amount = typeof state === "number" ? state : 0;
+  let amount = Math.min(1, typeof state === "number" ? state : 0);
 
   return (
     <svg class="timer-icon" width="26" height="26" viewBox="-13 -13 26 26">
-      <Arc start={0} end={amount} r1={12} r2={10} />
-      <Arc start={amount} end={1} r1={12} r2={4} />
+      {amount > 0 && <Arc start={0} end={amount} r1={12} r2={10} />}
+      {amount < 1 && <Arc start={amount} end={1} r1={12} r2={4} />}
     </svg>
   );
 }
@@ -198,7 +201,8 @@ interface ArcProps {
 
 function Arc({ start, end, r1, r2 }: ArcProps) {
   // Figure out large arc flag
-  const flag = end - start > 0.5 ? 1 : 0;
+  let flag1 = end - start > 0.5 && end - start < 1 ? 1 : 0;
+  let flag2 = (start - end) % 1 === 0 ? 0 : 1;
 
   // Convert unit angles to radians
   start *= Math.PI * 2;
@@ -207,9 +211,11 @@ function Arc({ start, end, r1, r2 }: ArcProps) {
 
   const data = [
     `M ${Math.sin(start) * r1} ${-Math.cos(start) * r1}`,
-    `A ${r1} ${r1} 0 ${flag} 1 ${Math.sin(end) * r1} ${-Math.cos(end) * r1}`,
+    `A ${r1} ${r1} 0 ${flag1} ${flag2} ${Math.sin(end) * r1} ${
+      -Math.cos(end) * r1
+    }`,
     `L ${Math.sin(end) * r2} ${-Math.cos(end) * r2}`,
-    `A ${r2} ${r2} 0 ${flag} 0 ${Math.sin(start) * r2} ${
+    `A ${r2} ${r2} 0 ${flag1} ${Math.abs(flag2 - 1)} ${Math.sin(start) * r2} ${
       -Math.cos(start) * r2
     }`,
     "Z",
