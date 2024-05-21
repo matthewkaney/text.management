@@ -36,6 +36,9 @@ export class EditorTabState extends TabState<EditorState> {
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
+  // TODO: ScrollTarget type isn't exported currently
+  private scrollSnapshot: any | null = null;
+
   constructor(
     layout: LayoutView,
     id: string,
@@ -69,6 +72,18 @@ export class EditorTabView extends TabView<EditorState> {
       ) {
         this.editor.focus();
       }
+    }
+  }
+
+  beforeUnmount() {
+    this.scrollSnapshot = this.editor.scrollSnapshot();
+  }
+
+  afterMount() {
+    if (this.scrollSnapshot !== null) {
+      this.editor.update([
+        this.editor.state.update({ effects: this.scrollSnapshot }),
+      ]);
     }
   }
 
