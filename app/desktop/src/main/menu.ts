@@ -201,7 +201,7 @@ class ElectronMenu extends EventEmitter<MenuEvents> {
         submenu: [
           {
             label: "Toggle Console",
-            accelerator: "CommandOrControl+`",
+            accelerator: "Control+`",
             click: (_, window) => this.emit("toggleConsole", window),
           },
           { type: "separator" },
