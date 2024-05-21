@@ -1,0 +1,6 @@
+.timer-icon {
+  display: inline-block;
+  margin-right: var(--s-1);
+  vertical-align: middle;
+  margin-top: -2px;
+}
