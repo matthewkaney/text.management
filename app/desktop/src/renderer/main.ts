@@ -22,6 +22,8 @@ import {
   evaluationWithHighlights,
   highlighter,
 } from "@management/lang-tidal/highlights";
+import { keymap } from "@codemirror/view";
+import { evaluationKeymap } from "@management/cm-evaluate";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -89,14 +91,14 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
-                  languageMode,
+                  oneDark,
                   evaluationWithHighlights(api.evaluate),
                   highlighter(api),
                   evaluation(() => {
                     tidalConsole.update({ clear: true });
                   }),
+                  languageMode,
                   basicSetup,
-                  oneDark,
                   fileSync(
                     id,
                     { path, saved, version, thisVersion: version },

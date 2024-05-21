@@ -4,14 +4,14 @@ import {
   Range,
   Extension,
   RangeSetBuilder,
+  Prec,
 } from "@codemirror/state";
-import { Decoration, EditorView, ViewPlugin } from "@codemirror/view";
+import { Decoration, EditorView, ViewPlugin, keymap } from "@codemirror/view";
 
 import {
   evaluation,
-  evalEffect,
-  commandEffect,
-  evalHandler,
+  evaluationEffect,
+  evaluationKeymap,
 } from "@management/cm-evaluate";
 
 import {
@@ -24,31 +24,42 @@ import {
   highlightSetField,
 } from "./state";
 
-export function evaluationWithHighlights(action: evalHandler): Extension {
+export function evaluationWithHighlights(
+  action: (evaluation: { code: string }) => void
+): Extension {
   const handler = EditorState.transactionExtender.of((tr) => {
     // New effects to be added
     let effects = [];
 
     for (let effect of tr.effects) {
-      if (effect.is(evalEffect)) {
-        let { from, to } = effect.value;
-        let code = tr.newDoc.sliceString(from, to);
-        let { newCode, mininotationStrings } = wrapMininotation(code, from);
+      if (effect.is(evaluationEffect)) {
+        if (effect.value.span !== undefined) {
+          let { from, to } = effect.value.span;
+          let { newCode, mininotationStrings } = wrapMininotation(
+            effect.value.code,
+            from
+          );
 
-        action(newCode);
+          action({ code: newCode });
 
-        effects.push(
-          replaceMininotationEffect.of({ from, to, mininotationStrings })
-        );
-      } else if (effect.is(commandEffect)) {
-        action(effect.value.method);
+          effects.push(
+            replaceMininotationEffect.of({ from, to, mininotationStrings })
+          );
+        } else {
+          action(effect.value);
+        }
       }
     }
 
     return effects.length > 0 ? { effects } : null;
   });
 
-  return [evaluation(), handler, mininotationStringField];
+  return [
+    keymap.of(evaluationKeymap),
+    evaluation(),
+    handler,
+    mininotationStringField,
+  ];
 }
 
 function wrapMininotation(code: string, from: number) {
@@ -133,11 +144,18 @@ export function highlighter(api: typeof ElectronAPI): Extension {
     };
   });
 
-  return [highlighterPlugin, highlightSetField, highlightDecorations];
+  return [
+    highlighterPlugin,
+    highlightSetField,
+    Prec.highest(highlightDecorations),
+  ];
 }
 
 const highlightDecoration = Decoration.mark({
-  attributes: { style: "background-color: deeppink" },
+  attributes: {
+    style:
+      "background-color: var(--color-livecode-active-event-background); color: var(--color-foreground-inverted)",
+  },
 });
 
 const highlightDecorations = EditorView.decorations.compute(

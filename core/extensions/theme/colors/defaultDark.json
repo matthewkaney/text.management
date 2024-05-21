@@ -1,7 +1,18 @@
 {
   "background": "#35312f",
   "foreground": "#eceae9",
+  "foregroundInverted": "#252221",
+  "focusBorder": "#ffc117",
+  "errorBackground": "#823d359a",
+  "errorForeground": "#e13825",
+  "selectionBackground": "#fffffff0",
+  "livecode.activeEventBackground": "#ff3696",
   "ui.background": "#00000072",
   "ui.backgroundInactive": "#00000040",
-  "ui.backgroundActive": "#000000e6"
+  "ui.backgroundActive": "#000000e6",
+  "syntax.operator": "#f9c112",
+  "syntax.string": "#2fa8f2",
+  "syntax.number": "#f76559",
+  "syntax.bracket": "#35cdbb",
+  "syntax.keyword": "#c44ed8"
 }
