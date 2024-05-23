@@ -36,8 +36,8 @@ export class EditorTabState extends TabState<EditorState> {
 export class EditorTabView extends TabView<EditorState> {
   private editor;
 
-  // TODO: ScrollTarget type isn't exported currently
-  private scrollSnapshot: any | null = null;
+  private scrollSnapshot: ReturnType<EditorView["scrollSnapshot"]> | null =
+    null;
 
   constructor(
     layout: LayoutView,
