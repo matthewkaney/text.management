@@ -17,8 +17,14 @@ export function toolbarConstructor(
   toolbarNode.setAttribute("role", "menubar");
   toolbarNode.setAttribute("aria-label", "Editor Controls");
 
+  let toolbarLeft = toolbarNode.appendChild(document.createElement("div"));
+  toolbarLeft.classList.add("cm-toolbar-region");
+
+  let toolbarRight = toolbarNode.appendChild(document.createElement("div"));
+  toolbarRight.classList.add("cm-toolbar-region");
+
   let timer = getTimer(configuration);
-  toolbarNode.appendChild(timer.dom);
+  toolbarLeft.appendChild(timer.dom);
 
   // Status indicators for future use: ◯◉✕
   let tidalInfo = new ToolbarMenu(
@@ -39,7 +45,7 @@ export function toolbarConstructor(
     ],
     "status"
   );
-  toolbarNode.appendChild(tidalInfo.dom);
+  toolbarRight.appendChild(tidalInfo.dom);
 
   let offTidalVersion = api.onTidalVersion((version) => {
     tidalInfo.label = `Tidal (${version})`;
@@ -47,7 +53,7 @@ export function toolbarConstructor(
 
   // Tempo info
   let tempoInfo = new ToolbarMenu(`◯ 0`, [], "timer");
-  toolbarNode.appendChild(tempoInfo.dom);
+  toolbarRight.appendChild(tempoInfo.dom);
 
   let offTidalNow = api.onTidalNow((cycle) => {
     cycle = Math.max(0, cycle);

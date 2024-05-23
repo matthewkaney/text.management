@@ -3,15 +3,24 @@ import { Config, ConfigExtension, SettingsSchema } from "@core/state";
 import { render } from "preact";
 import { useState, useEffect, useLayoutEffect } from "preact/hooks";
 
+import { clsx } from "clsx/lite";
+
 import "./style.css";
 
-const defaultDuration = 20 * 60;
+const defaultDuration = 20;
+const defaultWarning = 5;
 
-const TimerSettings = {
+export const TimerSettings = {
   properties: {
     "countdownClock.duration": {
       type: "number",
       default: defaultDuration,
+      description: "Duration of the countdown clock in minutes",
+    },
+    "countdownClock.warningTime": {
+      type: "number",
+      default: defaultWarning,
+      description: "Warning time (when the countdown clock turns red)",
     },
   },
 } as const satisfies SettingsSchema;
@@ -32,25 +41,30 @@ interface TimerProps {
 }
 
 function Timer({ config }: TimerProps) {
-  let [duration, setDuration] = useState(
-    config.data["countdownClock.duration"] ?? defaultDuration
-  );
+  let [duration, setDuration] = useState(defaultDuration);
+  let [warningTime, setWarningTime] = useState(defaultWarning);
   let [playing, setPlaying] = useState(false);
-  let [startTime, setStartTime] = useState(0);
-  let [currentTime, setCurrentTime] = useState(0);
+  let [startTime, setStartTime] = useState(performance.now());
+  let [currentTime, setCurrentTime] = useState(performance.now());
 
-  useEffect(() => {
-    console.log("Previous duration: " + config.data["countdownClock.duration"]);
+  useLayoutEffect(() => {
+    setDuration(config.data["countdownClock.duration"] ?? defaultDuration);
+    setWarningTime(config.data["countdownClock.warningTime"] ?? defaultWarning);
+
     let offChange = config.on(
       "change",
-      ({ ["countdownClock.duration"]: newDuration }) => {
-        console.log("UPDATE: " + newDuration);
+      ({
+        ["countdownClock.duration"]: newDuration,
+        ["countdownClock.warningTime"]: newWarning,
+      }) => {
         newDuration = newDuration ?? defaultDuration;
 
         if (newDuration !== duration) {
           setDuration(newDuration);
           setPlaying(false);
         }
+
+        setWarningTime(newWarning ?? defaultWarning);
       }
     );
 
@@ -83,15 +97,24 @@ function Timer({ config }: TimerProps) {
     }
   }, [playing]);
 
+  const durationSeconds = duration * 60;
+  const elapsed = currentTime - startTime;
+  const remaining = durationSeconds - elapsed;
+
   return (
-    <div class="cm-menu-trigger" onClick={togglePlayState}>
-      <Indicator
-        state={playing ? (currentTime - startTime) / duration : "filled"}
-      />
-      <TimerLabel
-        time={playing ? currentTime - startTime : 0}
-        duration={duration}
-      />
+    <div
+      class={clsx(
+        "cm-menu-trigger",
+        playing && remaining < warningTime * 60 && "timer-warning",
+        playing &&
+          remaining < 0 &&
+          Math.abs(remaining % 1) < 0.5 &&
+          "timer-blink"
+      )}
+      onClick={togglePlayState}
+    >
+      <Indicator amount={playing ? elapsed / durationSeconds : 1} />
+      <TimerLabel time={playing ? elapsed : 0} duration={durationSeconds} />
     </div>
   );
 }
@@ -106,8 +129,9 @@ function TimerLabel({ time, duration }: TimerLabelProps) {
   time = Math.abs(duration - time);
 
   const totalMinuteDigits = Math.floor(duration / 60).toString().length;
-  const minutes = Math.floor(time / 60);
-  const seconds = isNegative ? Math.floor(time % 60) : Math.ceil(time % 60);
+  const nearestSecond = isNegative ? Math.floor(time) : Math.ceil(time);
+  const minutes = Math.floor(nearestSecond / 60);
+  const seconds = nearestSecond % 60;
 
   return (
     <span>
@@ -118,76 +142,15 @@ function TimerLabel({ time, duration }: TimerLabelProps) {
   );
 }
 
-//   let startTime: number;
-//   let playing = false;
-
-//   const timer = new ToolbarMenu(renderTime(duration, duration), [], "timer");
-
-//   const indicator = getIndicator();
-//   timer.dom.appendChild(indicator.dom);
-
-//   let animationFrame: number;
-
-//   timer.dom.addEventListener("click", () => {
-//     togglePlayState();
-//   });
-
-//   const togglePlayState = (newPlayState = !playing) => {
-//     if (newPlayState === playing) return;
-
-//     if (playing) {
-//       playing = false;
-//       cancelAnimationFrame(animationFrame);
-//       timer.label = renderTime(duration, duration);
-//     } else {
-//       playing = true;
-//       startTime = performance.now();
-//       animationFrame = requestAnimationFrame(update);
-//     }
-
-//     playing = newPlayState;
-//   };
-
-//   const update = (time: number) => {
-//     const timeElapsed = (time - startTime) / 1000;
-//     timer.label = renderTime(duration - timeElapsed, duration);
-//     indicator.update(timeElapsed / duration);
-//     animationFrame = requestAnimationFrame(update);
-//   };
-
-//   return timer;
-// };
-
-// function renderTime(time: number, duration: number) {
-//   const totalMinuteDigits = Math.floor(duration / 60).toString().length;
-//   const minutes = Math.floor(time / 60)
-//     .toString()
-//     .padStart(totalMinuteDigits);
-//   const seconds = Math.ceil(time % 60)
-//     .toString()
-//     .padStart(2, "0");
-//   return `${minutes}:${seconds}`;
-// }
-
-// function getIndicator() {
-//   const dom = document.createElement("span");
-
-//   const update = (state: number | "empty" | "filled") => {
-//     render(<Indicator state={state} />, dom);
-//   };
-
-//   update("empty");
-
-//   return { dom, update };
-// }
-
-function Indicator({ state }: { state: number | "empty" | "filled" }) {
-  let amount = Math.min(1, typeof state === "number" ? state : 0);
+function Indicator({ amount }: { amount: number }) {
+  const warning = amount > 1;
+  amount = Math.min(1, amount);
 
   return (
     <svg class="timer-icon" width="26" height="26" viewBox="-13 -13 26 26">
       {amount > 0 && <Arc start={0} end={amount} r1={12} r2={10} />}
       {amount < 1 && <Arc start={amount} end={1} r1={12} r2={4} />}
+      {warning && <Arc start={0} end={1} r1={8} r2={0} />}
     </svg>
   );
 }
@@ -221,5 +184,5 @@ function Arc({ start, end, r1, r2 }: ArcProps) {
     "Z",
   ];
 
-  return <path d={data.join(" ")} fill="black" />;
+  return <path d={data.join(" ")} fill="currentColor" />;
 }
