@@ -2,6 +2,7 @@ import { Draft, Draft2019 } from "json-schema-library";
 
 import { EventEmitter } from "@core/events";
 
+export * from "./schema";
 import { SettingsSchema, FromSchema } from "./schema";
 
 interface ConfigEvents<T> {

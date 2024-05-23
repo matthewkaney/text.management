@@ -2,11 +2,15 @@
   color: var(--col-text);
   font-family: Fira Code, monospace;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 0 var(--s-2);
   border-top: solid 2px var(--color-ui-background-inactive);
   line-height: var(--s-3);
   margin-top: var(--s-2);
+}
+
+.cm-toolbar-region {
+  display: flex;
 }
 
 .cm-menu {

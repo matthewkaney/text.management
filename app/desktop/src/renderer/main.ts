@@ -63,7 +63,7 @@ export class Editor {
     let tidalConsole = electronConsole();
     layout.panelArea.appendChild(tidalConsole.dom);
 
-    let toolbar = toolbarConstructor(api, tidalVersion);
+    let toolbar = toolbarConstructor(api, configuration, tidalVersion);
     layout.panelArea.appendChild(toolbar.dom);
 
     api.onTidalVersion((version) => {
