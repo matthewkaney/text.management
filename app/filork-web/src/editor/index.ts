@@ -9,6 +9,9 @@ import { oneDark } from "@core/extensions/theme/theme";
 import { get } from "firebase/database";
 import { stateFromDatabase } from "../firebase/editorState";
 import { Session } from "../firebase/session";
+import { formatter } from "@core/extensions/formatter";
+
+import { json } from "@codemirror/lang-json";
 
 export class Editor {
   constructor(session: Promise<Session>, parent: HTMLElement) {
@@ -20,7 +23,9 @@ export class Editor {
           evaluation(),
           basicSetup,
           oneDark,
-          StreamLanguage.define(haskell),
+          // StreamLanguage.define(haskell),
+          json(),
+          formatter(),
         ]);
 
         new EditorView({ state, parent });
