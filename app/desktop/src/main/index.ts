@@ -8,11 +8,13 @@ fixPath();
 
 import { autoUpdater } from "electron-updater";
 
-autoUpdater.checkForUpdatesAndNotify();
+import { dialog } from "electron";
 
-import { StateManagement } from "@core/state";
+// autoUpdater.checkForUpdatesAndNotify();
 
-import { GHCI, TidalSettingsSchema } from "@management/lang-tidal";
+import { Config } from "@core/state";
+
+import { GHCI } from "@management/lang-tidal";
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
@@ -22,9 +24,7 @@ const filesystem = new Filesystem();
 
 const settingsPath = resolve(app.getPath("userData"), "settings.json");
 
-const createWindow = (
-  configuration: StateManagement<typeof TidalSettingsSchema>
-) => {
+const createWindow = (configuration: Config) => {
   const tidal = new GHCI(configuration);
 
   const window = new BrowserWindow({
@@ -49,10 +49,17 @@ const createWindow = (
       })
     );
 
+    listeners.push(
+      filesystem.on("current", (doc) => {
+        if (doc) send("setCurrent", { id: doc.id });
+      })
+    );
+
     // Attach file handlers
     listeners.push(
       filesystem.on("open", (document) => {
-        let { id, path, content, saved } = document;
+        let { id, path, content, fileStatus } = document;
+        let { saved } = fileStatus;
 
         let docListeners: typeof listeners = [];
         docsListeners[id] = docListeners;
@@ -163,6 +170,19 @@ const createWindow = (
       })
     );
 
+    listeners.push(
+      tidal.on("highlight", (highlightEvent) => {
+        send("tidalHighlight", highlightEvent);
+      })
+    );
+
+    send("settingsData", configuration.data);
+    listeners.push(
+      configuration.on("change", (data) => {
+        send("settingsData", data);
+      })
+    );
+
     // For now, load a blank document on startup
     filesystem.loadDoc();
 
@@ -171,6 +191,23 @@ const createWindow = (
   });
 
   window.loadFile("./build/renderer/index.html");
+
+  window.on("close", async (event) => {
+    let docs = [...filesystem.docs.values()];
+
+    if (!docs.some((doc) => doc.needsSave)) return;
+
+    event.preventDefault();
+
+    try {
+      await closeAll(window);
+      window.close();
+    } catch (error) {
+      if (!(error instanceof CancelledError)) {
+        console.log("Unexpected Error: " + (error as Error).message);
+      }
+    }
+  });
 
   window.on("closed", () => {
     for (let listener of listeners) {
@@ -192,7 +229,7 @@ const createWindow = (
 import { readFile } from "fs/promises";
 
 app.whenReady().then(async () => {
-  const settings = new StateManagement(TidalSettingsSchema);
+  const settings = new Config();
 
   // Try loading settings
   let settingsData = {};
@@ -215,8 +252,6 @@ app.whenReady().then(async () => {
 // app.on("window-all-closed", () => {
 //   if (process.platform !== "darwindow") app.quit();
 // });
-
-import { dialog } from "electron";
 
 menu.on("newFile", newFile);
 async function newFile() {
@@ -279,9 +314,14 @@ async function close({ window, id }: CloseOptions) {
   id = id ?? filesystem.currentDocID;
   let document = id ? filesystem.getDoc(id) : filesystem.currentDoc;
 
-  if (!id || !document) throw Error("Tried to close a non-existent document");
+  if (!id || !document) {
+    if (id) {
+      send("close", { id });
+    }
+    return;
+  }
 
-  if (!document.saved) {
+  if (document.needsSave) {
     let { response } = await dialog.showMessageBox(window, {
       type: "warning",
       message: "Do you want to save your changes?",
@@ -310,6 +350,56 @@ async function close({ window, id }: CloseOptions) {
 
   // We're done here, so close the file
   send("close", { id });
+}
+
+class CancelledError extends Error {
+  constructor() {
+    super("Close All action was cancelled");
+  }
+}
+
+async function closeAll(window?: BrowserWindow) {
+  if (!window) return;
+
+  let [send] = wrapIPC(window.webContents);
+
+  let docs = [...filesystem.docs.values()];
+
+  if (docs.some((doc) => doc.needsSave)) {
+    let { response } = await dialog.showMessageBox(window, {
+      type: "warning",
+      message: "Do you want to save your changes?",
+      buttons: ["Save", "Don't Save", "Cancel"],
+    });
+
+    // Cancelled
+    if (response === 2) throw new CancelledError();
+
+    // Save
+    if (response === 0) {
+      for (let doc of docs) {
+        if (doc.needsSave) {
+          if (doc.path !== null) {
+            doc.save();
+          } else {
+            filesystem.currentDocID = doc.id;
+            let { canceled, filePath } = await dialog.showSaveDialog(window);
+
+            if (!canceled && filePath) {
+              await doc.save(filePath);
+            } else {
+              throw new CancelledError();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Close all documents
+  await Promise.all(
+    docs.map((doc) => doc.close().then(() => send("close", { id: doc.id })))
+  );
 }
 
 menu.on("about", showAbout);

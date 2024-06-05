@@ -1,0 +1,14 @@
+.timer-warning {
+  color: var(--color-error-foreground);
+}
+
+.timer-warning.timer-blink {
+  color: var(--color-foreground-inverted);
+  background: var(--color-error-foreground);
+}
+
+.timer-icon {
+  display: inline-block;
+  margin: -2px calc(var(--s-1) - 1px) 0 -1px;
+  vertical-align: middle;
+}

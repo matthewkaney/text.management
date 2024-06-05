@@ -1,38 +1,32 @@
 .cm-console {
-  margin: 12px 18px 0 18px;
+  margin: 0 var(--s-2);
   max-height: 30vh;
-  line-height: 1.4;
 }
 
-.cm-console::-webkit-scrollbar {
-  width: 18px;
-}
-
-.cm-console::-webkit-scrollbar-thumb {
-  background-color: var(--col-bg-shadow);
-}
-
-.cm-console::-webkit-scrollbar-corner {
-  background-color: transparent;
-}
-
-.cm-console:last-child {
-  margin-bottom: 12px;
+.cm-console:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 4px var(--color-focus-border);
 }
 
 .cm-console-message {
   margin: 0;
 }
 
-.cm-console-message-source,
-.cm-console-message-input,
-.cm-console-message-output {
-  padding: 4px 6px;
+.cm-console-message-source {
+  position: relative;
+  padding: var(--s-0-5);
+  margin-left: var(--s-0-5);
+  font-size: var(--font-small);
+  float: right;
+  z-index: 1;
+  user-select: none;
+  clip-path: inset(0 0 1px 1px);
+  background-color: var(--color-ui-background);
 }
 
-.cm-console-message-source {
-  padding-left: 12px;
-  float: right;
+.cm-console-message-error .cm-console-message-source {
+  background-color: var(--color-error-foreground);
+  color: var(--color-foreground-inverted);
 }
 
 .cm-console {
@@ -43,16 +37,8 @@
   margin-right: 2px;
 }
 
-.cm-console-message:not(:first-child) {
-  clip-path: inset(1px 0 0 0);
-}
-
 .cm-console-message:not(:last-child) {
-  clip-path: inset(0 0 1px 0);
-}
-
-.cm-console-message:not(:first-child):not(:last-child) {
-  clip-path: inset(1px 0);
+  margin-bottom: var(--s-1);
 }
 
 .cm-console-message-content {
@@ -60,46 +46,54 @@
   overflow-wrap: anywhere;
 }
 
-.cm-console-message-info .cm-console-message-source,
-.cm-console-message-info .cm-console-message-input {
-  border-color: var(--col-bg-shadow);
-  background-color: var(--col-bg-shadow-soft);
-}
-
-.cm-console-message-info .cm-console-message-output {
-  background-color: var(--col-bg-shadow);
-}
-
-.cm-console-message-info .cm-console-message-source,
-.cm-console-message-info .cm-console-message-input {
-  color: var(--col-text-soft);
-}
-
-.cm-console-message-error .cm-console-message-input,
-.cm-console-message-error .cm-console-message-output {
-  background-image: repeating-linear-gradient(
-    135deg,
-    #6c000050 0px 10px,
-    #a6020250 10px 20px
-  );
-}
-
-.cm-console-message-error .cm-console-message-source {
-  color: coral;
+.cm-console-message-info .cm-console-message-source {
+  color: var(--col-text-inactive);
 }
 
 .cm-console-message-input,
 .cm-console-message-output {
-  padding-left: 24px;
+  margin-left: calc(var(--s-2) + 1px);
+  padding: var(--s-0-5);
+  padding-left: calc(var(--s-0-5) - 1px);
   position: relative;
+  white-space: pre-wrap;
+}
+
+.cm-console-message-input {
+  font-size: var(--font-small);
+  min-height: var(--s-2);
+  background-color: var(--color-ui-background-inactive);
+}
+
+.cm-console-message-output {
+  background-color: var(--color-ui-background);
+}
+
+.cm-console-message-input:has(+ .cm-console-message-output) {
+  clip-path: margin-box inset(0 0 1px 0);
+}
+
+.cm-console-message-input + .cm-console-message-output {
+  clip-path: margin-box inset(1px 0 0 0);
+}
+
+.cm-console-message-input::before,
+.cm-console-message-output::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--s-2) * -1 - 1px);
+  width: calc(var(--s-2) - 1px);
+  height: 100%;
+  background-color: var(--color-ui-background-inactive);
 }
 
 .cm-console-message-icon {
-  width: 24px;
-  height: 24px;
+  width: var(--s-2);
+  height: var(--s-2);
   position: absolute;
-  top: 3px;
-  left: 0;
+  top: var(--s-0-5);
+  left: calc(var(--s-2) * -1 - 1px);
   color: var(--col-text-soft);
 }
 
@@ -107,6 +101,16 @@
   display: block;
 }
 
-.cm-console-message-error .cm-console-message-output .cm-console-message-icon {
-  color: crimson;
+.cm-console-message-error .cm-console-message-input,
+.cm-console-message-error .cm-console-message-output {
+  background-color: var(--color-error-background);
+}
+
+.cm-console-message-error .cm-console-message-input::before,
+.cm-console-message-error .cm-console-message-output::before {
+  background-color: var(--color-error-foreground);
+}
+
+.cm-console-message-error .cm-console-message-icon {
+  color: var(--color-foreground-inverted);
 }

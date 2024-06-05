@@ -8,27 +8,42 @@ import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
 
-import { StateManagement } from "@core/state";
+import { Config, ConfigExtension } from "@core/state";
 export { TidalSettingsSchema } from "./settings";
 import { TidalSettingsSchema } from "./settings";
 
 import { generateIntegrationCode } from "./editor-integration";
+import { NTPTime } from "@core/osc/types";
 import { EventEmitter } from "@core/events";
+
+export interface HighlightEvent {
+  miniID: number;
+  from: number;
+  to: number;
+  onset: NTPTime;
+  cycle: number;
+  duration: number;
+}
 
 interface GHCIEvents {
   message: Evaluation | Log;
   now: number;
   openSettings: string;
+  highlight: HighlightEvent;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
+  private settings: ConfigExtension<typeof TidalSettingsSchema>;
+
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private history: (Evaluation | Log)[] = [];
 
-  constructor(private settings: StateManagement<typeof TidalSettingsSchema>) {
+  constructor(settings: Config) {
     super();
+
+    this.settings = settings.extend(TidalSettingsSchema);
 
     this.settings.on("change", () => {
       this.reloadSettings;
@@ -56,11 +71,24 @@ export class GHCI extends Engine<GHCIEvents> {
       });
 
       socket.on("message", (data) => {
-        let message = parse(data);
+        let packet = parse(data);
 
-        if ("address" in message && message.address === "/now") {
-          if (typeof message.args[0] === "number") {
-            this.emit("now", message.args[0]);
+        for (let message of asMessages(packet)) {
+          if (message.address === "/now") {
+            if (typeof message.args[0] === "number") {
+              this.emit("now", message.args[0]);
+            }
+          } else if (message.address === "/highlight") {
+            let [_orbit, duration, cycle, from, miniID, to] =
+              message.args as number[];
+            this.emit("highlight", {
+              miniID: miniID - 1,
+              from,
+              to,
+              onset: message.ntpTime,
+              cycle,
+              duration: duration / 1000, // Convert from microseconds
+            });
           }
         }
       });
@@ -70,13 +98,12 @@ export class GHCI extends Engine<GHCIEvents> {
   private wrapper: ProcessWrapper | null = null;
 
   private async initProcess() {
-    console.log(JSON.stringify(this.settings.getData()));
     const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
       "tidal.runFromSource": sourceLocation,
-    } = this.settings.getData();
+    } = this.settings.data;
     const port = (await this.socket).address().port.toString();
 
     // this.outputFilters.push(
@@ -121,20 +148,15 @@ export class GHCI extends Engine<GHCIEvents> {
     if (!disableEditorIntegration) {
       const integrationCode = generateIntegrationCode(await this.getVersion());
       await this.send(integrationCode);
-
-      // Disable reloading of Sound.Tidal.Context since it's already loaded
-      this.wrapper.addInputFilter(
-        /^[ \t]*import[ \t]+Sound\.Tidal\.Context.*$/m
-      );
     }
 
     if (useDefaultBootfile) {
-      this.sendFile(await this.defaultBootfile());
+      await this.sendFile(await this.defaultBootfile());
     }
 
     for (let path of bootFiles ?? []) {
       try {
-        this.sendFile(path);
+        await this.sendFile(path);
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
           throw err;
@@ -230,6 +252,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
 import { extractStatements } from "./parse";
 import { EOL } from "os";
+import { asMessages } from "@core/osc/utils";
 
 interface ProcessWrapperEvents {
   prologue: string;

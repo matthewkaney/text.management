@@ -60,6 +60,7 @@ export class LayoutView {
 
       if (!currentTab) throw Error("View doesn't have old current tab");
 
+      currentTab.beforeUnmount();
       this.dom.removeChild(currentTab.dom);
     }
 
@@ -86,6 +87,7 @@ export class LayoutView {
       if (!currentTab) throw Error("View doesn't have old new tab");
 
       this.dom.insertBefore(currentTab.dom, this.panelArea);
+      currentTab.afterMount();
     }
 
     // Update tab bar
@@ -112,6 +114,10 @@ export abstract class TabView<T> {
   update(tr: LayoutTransaction) {
     this.state = tr.state.tabs[this.state.id];
   }
+
+  beforeUnmount() {}
+
+  afterMount() {}
 
   beforeClose() {
     return true;

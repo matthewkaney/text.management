@@ -1,10 +1,15 @@
 /**
+ * An object representing any sort of OSC packet.
+ */
+export type OSCPacket = OSCBundle | OSCMessage;
+
+/**
  * An object representing a complete OSC bundle.
  */
 export interface OSCBundle {
   time: number;
-  ntpTime: [number, number];
-  packets: (OSCBundle | OSCMessage)[];
+  ntpTime: NTPTime;
+  packets: OSCPacket[];
 }
 
 /**
@@ -14,7 +19,15 @@ export interface OSCMessage {
   address: string;
   args: OSCArgumentValueList;
   argTypes: OSCArgumentTagList;
+  ntpTime?: NTPTime;
 }
+
+export type OSCMessageWithTime = Required<OSCMessage>;
+
+/**
+ * A representation of an NTP timestamp.
+ */
+export type NTPTime = [number, number];
 
 /**
  * The possible types that an individual OSC argument may have.
@@ -59,7 +72,7 @@ const OSCArgumentTags = [
 /**
  * Any one of those type strings.
  */
-export type OSCArgumentTag = typeof OSCArgumentTags[number];
+export type OSCArgumentTag = (typeof OSCArgumentTags)[number];
 
 /**
  * The list of type strings for the arguments of an OSC message. An argument
