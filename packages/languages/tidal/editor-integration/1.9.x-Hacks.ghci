@@ -1,0 +1,12 @@
+import qualified Sound.Tidal.Stream as Stream
+
+:{
+startStream :: Config -> [(Target, [OSC])] -> IO Stream
+startStream config oscmap
+  = Stream.startStream config (oscmap ++ [(highlightTarget, highlightShape)])
+:}
+
+:{
+startTidal :: Target -> Config -> IO Stream
+startTidal t c = startStream c [(t, [superdirtShape])]
+:}

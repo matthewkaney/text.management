@@ -30,6 +30,7 @@ interface GHCIEvents {
   now: number;
   openSettings: string;
   highlight: HighlightEvent;
+  version: string;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -38,7 +39,7 @@ export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
-  version: Promise<string>;
+  private version: string;
 
   private history: (Evaluation | Log)[] = [];
 
@@ -51,11 +52,10 @@ export class GHCI extends Engine<GHCIEvents> {
       this.reloadSettings;
     });
 
-    const versionResolvers = Promise.withResolvers<string>();
-    this.version = versionResolvers.promise;
+    this.version = "Unknown";
 
     this.socket = this.initSocket();
-    this.process = this.initProcess(versionResolvers);
+    this.process = this.initProcess();
 
     this.on("message", (message) => {
       this.history.push(message);
@@ -102,7 +102,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private wrapper: ProcessWrapper | null = null;
 
-  private async initProcess(versionResolvers: PromiseWithResolvers<string>) {
+  private async initProcess() {
     const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
@@ -150,17 +150,17 @@ export class GHCI extends Engine<GHCIEvents> {
     });
 
     // Query Tidal version
-    let version = "Unknown";
     for await (let response of this.wrapper.send(
       ["import Sound.Tidal.Version", "putStr tidal_version"].join("\n")
     )) {
-      if (response.text) version = response.text;
+      if (response.text) {
+        this.version = response.text;
+        this.emit("version", this.version);
+      }
     }
 
-    versionResolvers.resolve(version);
-
     if (!disableEditorIntegration) {
-      const integrationCode = generateIntegrationCode(version);
+      const integrationCode = generateIntegrationCode(this.version);
       await this.send(integrationCode);
     }
 
@@ -185,6 +185,11 @@ export class GHCI extends Engine<GHCIEvents> {
           text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
         });
       }
+    }
+
+    // Send watch clock instruction
+    if (!disableEditorIntegration) {
+      await this.send("_ <- watchClock tidal");
     }
 
     // child.on("close", (code) => {
@@ -250,10 +255,7 @@ export class GHCI extends Engine<GHCIEvents> {
   async restart() {
     await this.close();
 
-    const versionResolvers = Promise.withResolvers<string>();
-    this.version = versionResolvers.promise;
-
-    this.process = this.initProcess(versionResolvers);
+    this.process = this.initProcess();
     await this.process;
     this.emit("started", undefined);
   }

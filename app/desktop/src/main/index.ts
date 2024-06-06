@@ -116,9 +116,11 @@ const createWindow = (configuration: Config) => {
     );
 
     // Set up tidal communication
-    tidal.version.then((version) => {
-      send("tidalVersion", version);
-    });
+    listeners.push(
+      tidal.on("version", (version) => {
+        send("tidalVersion", version);
+      })
+    );
 
     listeners.push(
       listen("evaluation", (code) => {
