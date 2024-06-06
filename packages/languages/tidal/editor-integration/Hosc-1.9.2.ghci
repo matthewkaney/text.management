@@ -1,0 +1,3 @@
+import qualified Sound.OSC.FD as HOSC
+
+hoscOpenUDP = HOSC.openUdp

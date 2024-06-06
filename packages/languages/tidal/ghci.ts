@@ -38,6 +38,8 @@ export class GHCI extends Engine<GHCIEvents> {
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
+  version: Promise<string>;
+
   private history: (Evaluation | Log)[] = [];
 
   constructor(settings: Config) {
@@ -49,8 +51,11 @@ export class GHCI extends Engine<GHCIEvents> {
       this.reloadSettings;
     });
 
+    const versionResolvers = Promise.withResolvers<string>();
+    this.version = versionResolvers.promise;
+
     this.socket = this.initSocket();
-    this.process = this.initProcess();
+    this.process = this.initProcess(versionResolvers);
 
     this.on("message", (message) => {
       this.history.push(message);
@@ -97,7 +102,7 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private wrapper: ProcessWrapper | null = null;
 
-  private async initProcess() {
+  private async initProcess(versionResolvers: PromiseWithResolvers<string>) {
     const {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
@@ -129,8 +134,7 @@ export class GHCI extends Engine<GHCIEvents> {
         "cabal",
         ["repl", "--repl-options", "-XOverloadedStrings"],
         {
-          // TODO: pull this from settings
-          cwd: "/path/to/tidal/repo",
+          cwd: sourceLocation,
           env: {
             ...process.env,
             editor_port: port,
@@ -145,13 +149,27 @@ export class GHCI extends Engine<GHCIEvents> {
       this.emit("message", message);
     });
 
+    // Query Tidal version
+    let version = "Unknown";
+    for await (let response of this.wrapper.send(
+      ["import Sound.Tidal.Version", "putStr tidal_version"].join("\n")
+    )) {
+      if (response.text) version = response.text;
+    }
+
+    versionResolvers.resolve(version);
+
     if (!disableEditorIntegration) {
-      const integrationCode = generateIntegrationCode(await this.getVersion());
+      const integrationCode = generateIntegrationCode(version);
       await this.send(integrationCode);
     }
 
     if (useDefaultBootfile) {
-      await this.sendFile(await this.defaultBootfile());
+      if (sourceLocation) {
+        await this.sendFile(join(sourceLocation, "BootTidal.hs"));
+      } else {
+        await this.sendFile(await this.defaultBootfile());
+      }
     }
 
     for (let path of bootFiles ?? []) {
@@ -211,18 +229,6 @@ export class GHCI extends Engine<GHCIEvents> {
     }
   }
 
-  private version: Promise<string> | undefined;
-
-  getVersion() {
-    if (!this.version) {
-      this.version = promisify(exec)(
-        'ghc -e "import Sound.Tidal.Version" -e "putStr tidal_version"'
-      ).then(({ stdout }) => stdout);
-    }
-
-    return this.version;
-  }
-
   async close() {
     let process = await this.process;
 
@@ -244,7 +250,10 @@ export class GHCI extends Engine<GHCIEvents> {
   async restart() {
     await this.close();
 
-    this.process = this.initProcess();
+    const versionResolvers = Promise.withResolvers<string>();
+    this.version = versionResolvers.promise;
+
+    this.process = this.initProcess(versionResolvers);
     await this.process;
     this.emit("started", undefined);
   }

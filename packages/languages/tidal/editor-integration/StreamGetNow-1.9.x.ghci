@@ -1,0 +1,3 @@
+import Sound.Tidal.Context (streamGetnow)
+
+streamGetNow = streamGetnow
