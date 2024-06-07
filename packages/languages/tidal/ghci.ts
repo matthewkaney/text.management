@@ -287,7 +287,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
   private async evaluate(code: string): Promise<Evaluation> {
     let nextPrompt = this.next("prompt");
 
-    console.log(`EVALUATE: "${code}"`);
+    // console.log(`EVALUATE: "${code}"`);
 
     this.child.stdin.write(code + EOL);
 
@@ -320,7 +320,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stdout) {
-      console.log(`CHUNK: "${chunk}"`);
+      // console.log(`CHUNK: "${chunk}"`);
 
       if (!this.runningProcess) {
         // TODO: Use a timeout to batch outputs
@@ -368,7 +368,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
     let chunk: string;
 
     for await (chunk of this.child.stderr) {
-      console.log(`ERROR CHUNK: "${chunk}"`);
+      // console.log(`ERROR CHUNK: "${chunk}"`);
 
       if (!this.runningProcess) {
         // TODO: Use a timeout to batch outputs
@@ -417,7 +417,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
 
       // Check for empty statements post-filter
       if (/^\s*$/.test(statement)) {
-        console.log("BREAK");
+        // console.log("BREAK");
         continue;
       }
 

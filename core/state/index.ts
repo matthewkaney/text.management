@@ -1,9 +1,10 @@
-import { Draft, Draft2019 } from "json-schema-library";
+import { JSONSchema } from "json-schema-to-ts";
 
 import { EventEmitter } from "@core/events";
 
 export * from "./schema";
 import { SettingsSchema, FromSchema } from "./schema";
+import { normalize } from "./template";
 
 interface ConfigEvents<T> {
   change: T;
@@ -34,7 +35,7 @@ class ConfigExtension<
   S extends SettingsSchema,
   D = FromSchema<S>
 > extends EventEmitter<ConfigEvents<D>> {
-  private draft: Draft;
+  private schema: JSONSchema;
   private _data: D;
 
   get data() {
@@ -44,7 +45,7 @@ class ConfigExtension<
   constructor(schema: S, private parent: Config) {
     super();
 
-    this.draft = new Draft2019({ ...schema, type: "object" });
+    this.schema = { ...schema, type: "object" };
 
     this._data = this.getTemplate();
 
@@ -55,8 +56,6 @@ class ConfigExtension<
   }
 
   private getTemplate() {
-    return this.draft.getTemplate(this.parent.data, undefined, {
-      addOptionalProps: false,
-    });
+    return normalize(this.schema, this.parent.data);
   }
 }

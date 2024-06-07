@@ -56,7 +56,6 @@
     "commander": "^9.5.0",
     "dashify": "^2.0.0",
     "firebase": "^9.23.0",
-    "json-schema-library": "^10.0.0-rc1",
     "json-schema-to-ts": "^3.1.0",
     "preact": "^10.22.0",
     "style-mod": "^4.1.2"

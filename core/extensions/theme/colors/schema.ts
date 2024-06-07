@@ -3,7 +3,7 @@ import { JSONSchema } from "json-schema-to-ts";
 const color = {
   type: "string",
   format: "color",
-} as const;
+} as const satisfies JSONSchema;
 
 export const ThemeColorSchema = {
   type: "object",
