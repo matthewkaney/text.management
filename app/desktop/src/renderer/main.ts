@@ -5,6 +5,8 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
+import { getStrudelFrame } from "packages/languages/strudel/extension";
+
 import { Config } from "@core/state";
 import { settings } from "@core/extensions/settings/editor";
 
@@ -55,6 +57,10 @@ export class Editor {
       canvas.src = background;
       canvas.classList.add("background");
     }
+
+    const strudel = getStrudelFrame();
+    parent.appendChild(strudel.dom);
+    strudel.dom.classList.add("background");
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;

@@ -1,0 +1,16 @@
+{
+  "name": "@management/engine-strudel",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "targets": {
+    "browser": {
+      "source": "./editor.ts"
+    }
+  },
+  "author": "Matthew Kaney",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@strudel/web": "1.0.3"
+  }
+}

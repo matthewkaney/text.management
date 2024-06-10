@@ -23,12 +23,14 @@
     "postversion": "git add package.json"
   },
   "main": "build/main.js",
+  "renderer": "build/index.html",
+  "preload": "build/preload.js",
   "targets": {
     "renderer": {
       "source": "src/renderer/index.html",
       "distDir": "build",
       "context": "browser",
-      "publicUrl": "./..",
+      "publicUrl": ".",
       "includeNodeModules": true
     },
     "preload": {

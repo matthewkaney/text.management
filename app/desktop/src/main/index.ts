@@ -32,7 +32,7 @@ const createWindow = (configuration: Config) => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: resolve(app.getAppPath(), "build/preload/index.js"),
+      preload: resolve(app.getAppPath(), "build/preload.js"),
       sandbox: process.env.NODE_ENV === "production",
     },
   });
@@ -190,7 +190,7 @@ const createWindow = (configuration: Config) => {
     window.show();
   });
 
-  window.loadFile("./build/renderer/index.html");
+  window.loadFile("./build/index.html");
 
   window.on("close", async (event) => {
     let docs = [...filesystem.docs.values()];
