@@ -1,39 +1,64 @@
 import { WebMessage } from "../messageType";
 
-export interface ExtensionFrame {
-  dom: HTMLIFrameElement;
-  evaluate: (code: string) => void;
+interface FrameResource {
+  type: "script";
+  src: string | URL;
 }
 
-export function createExtensionFrame(src: string): ExtensionFrame {
-  const dom = document.createElement("iframe");
-  dom.src = new URL("../frame/index.html", import.meta.url).href;
+export class ExtensionFrame {
+  dom: HTMLIFrameElement;
+  port: MessagePort;
 
-  const channel = new MessageChannel();
-  const port = channel.port1;
+  constructor(...resources: FrameResource[]) {
+    this.dom = document.createElement("iframe");
+    this.dom.src = new URL("../frame/index.html", import.meta.url).href;
 
-  dom.addEventListener("load", () => {
-    if (dom.contentDocument === null)
+    const channel = new MessageChannel();
+    this.port = channel.port1;
+
+    this.dom.addEventListener("load", () => {
+      if (this.dom.contentDocument === null)
+        throw Error("Extension frame document didn't load correctly");
+
+      this.loadResource({
+        type: "script",
+        src: new URL("../frame/main.ts", import.meta.url),
+      }).then(() => {
+        this.dom.contentWindow?.postMessage("web-engine-message-port", "*", [
+          channel.port2,
+        ]);
+
+        let p = Promise.resolve();
+
+        for (let res of resources) {
+          p = p.then(() => this.loadResource(res));
+        }
+      });
+    });
+  }
+
+  private loadResource({ type, src }: FrameResource): Promise<void> {
+    if (this.dom.contentDocument === null)
       throw Error("Extension frame document didn't load correctly");
 
-    const script = dom.contentDocument.createElement("script");
-    script.src = new URL("../frame/main.ts", import.meta.url).href;
+    switch (type) {
+      case "script": {
+        const script = this.dom.contentDocument.createElement("script");
+        script.src = src instanceof URL ? src.href : src;
 
-    script.addEventListener("load", () => {
-      dom.contentWindow?.postMessage("web-engine-message-port", "*", [
-        channel.port2,
-      ]);
+        const { promise, resolve } = Promise.withResolvers<void>();
 
-      port.postMessage({ type: WebMessage.LoadModule, src });
-    });
+        script.addEventListener("load", () => {
+          resolve();
+        });
 
-    dom.contentDocument.head.appendChild(script);
-  });
+        this.dom.contentDocument.head.appendChild(script);
 
-  return {
-    dom,
-    evaluate: (code) => {
-      port.postMessage({ type: WebMessage.Code, code });
-    },
-  };
+        return promise;
+      }
+
+      default:
+        throw Error("Unrecognized resource type");
+    }
+  }
 }

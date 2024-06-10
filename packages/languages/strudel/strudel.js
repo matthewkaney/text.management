@@ -1,2 +1,11 @@
+let strudel = require("@strudel/web/dist/index.js");
+
 initStrudel();
-evaluate('note("c a f e").jux(rev)');
+
+setTimeout(() => {
+  evaluate('note("c d e")');
+}, 1000);
+
+setTimeout(() => {
+  evaluate("hush()");
+}, 5000);
