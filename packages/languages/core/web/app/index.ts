@@ -1,8 +1,19 @@
 import { WebMessage } from "../messageType";
 
-interface FrameResource {
-  type: "script";
+type FrameResource = FrameScriptResource | FrameStyleResource;
+
+interface FrameBaseResource {
+  type: "script" | "style" | "html";
   src: string | URL;
+}
+
+interface FrameScriptResource extends FrameBaseResource {
+  type: "script";
+  module?: boolean;
+}
+
+interface FrameStyleResource extends FrameBaseResource {
+  type: "style";
 }
 
 export class ExtensionFrame {
@@ -23,6 +34,7 @@ export class ExtensionFrame {
       this.loadResource({
         type: "script",
         src: new URL("../frame/main.ts", import.meta.url),
+        module: true,
       }).then(() => {
         this.dom.contentWindow?.postMessage("web-engine-message-port", "*", [
           channel.port2,
@@ -37,7 +49,9 @@ export class ExtensionFrame {
     });
   }
 
-  private loadResource({ type, src }: FrameResource): Promise<void> {
+  private loadResource(resource: FrameResource): Promise<void> {
+    const { type, src } = resource;
+
     if (this.dom.contentDocument === null)
       throw Error("Extension frame document didn't load correctly");
 
@@ -45,6 +59,10 @@ export class ExtensionFrame {
       case "script": {
         const script = this.dom.contentDocument.createElement("script");
         script.src = src instanceof URL ? src.href : src;
+
+        if (resource.module) {
+          script.type = "module";
+        }
 
         const { promise, resolve } = Promise.withResolvers<void>();
 
@@ -60,5 +78,10 @@ export class ExtensionFrame {
       default:
         throw Error("Unrecognized resource type");
     }
+  }
+
+  evaluate(code: string) {
+    console.log("send evaluation message");
+    this.port.postMessage({ type: WebMessage.Code, code });
   }
 }

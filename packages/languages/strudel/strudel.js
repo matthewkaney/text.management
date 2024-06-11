@@ -1,11 +1,27 @@
-let strudel = require("@strudel/web/dist/index.js");
+// Currently, a bug with v1.1.0 prevents bundling, but it will
+// eventually look something like this
+
+// import { initStrudel } from "@strudel/web";
+
+// async function start() {
+//   const repl = await initStrudel();
+
+//   repl.evaluate('note("c5 e5 g5 bf5").fast(8)');
+// }
+
+// start();
+
+require("@strudel/web/dist/index.js");
 
 initStrudel();
 
 setTimeout(() => {
-  evaluate('note("c d e")');
-}, 1000);
+  console.log(evaluate);
+  evaluate('note("c c c")');
 
-setTimeout(() => {
-  evaluate("hush()");
-}, 5000);
+  parentFrame.on("evaluation", (code) => {
+    console.log("got evaluation");
+    console.log(evaluate);
+    evaluate(code);
+  });
+}, 1000);

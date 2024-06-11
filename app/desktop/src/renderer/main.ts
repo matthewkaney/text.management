@@ -5,7 +5,10 @@ import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 import { tidal } from "@management/lang-tidal/editor";
 
-import { getStrudelFrame } from "packages/languages/strudel/extension";
+import {
+  frame as strudelFrame,
+  strudel,
+} from "packages/languages/strudel/extension";
 
 import { Config } from "@core/state";
 import { settings } from "@core/extensions/settings/editor";
@@ -20,11 +23,6 @@ import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
 
-import {
-  evaluationWithHighlights,
-  highlighter,
-} from "@management/lang-tidal/highlights";
-import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 
 window.addEventListener("load", () => {
@@ -58,9 +56,8 @@ export class Editor {
       canvas.classList.add("background");
     }
 
-    const strudel = getStrudelFrame();
-    parent.appendChild(strudel.dom);
-    strudel.dom.classList.add("background");
+    parent.appendChild(strudelFrame.dom);
+    strudelFrame.dom.classList.add("background");
 
     // Keep track of Tidal state
     let tidalVersion: string | undefined;
@@ -86,7 +83,10 @@ export class Editor {
 
     api.onOpen(({ id, path }) => {
       // TODO: This is a hacky heuristic
-      let languageMode = path?.endsWith("settings.json") ? settings() : tidal();
+      let languageMode = path?.endsWith("settings.json")
+        ? settings()
+        : tidal(api);
+      languageMode = strudel();
 
       let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
@@ -98,8 +98,6 @@ export class Editor {
                 doc,
                 extensions: [
                   oneDark,
-                  evaluationWithHighlights(api.evaluate),
-                  highlighter(api),
                   evaluation(() => {
                     tidalConsole.toggleVisibility(false);
                   }),
