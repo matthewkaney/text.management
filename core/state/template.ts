@@ -1,6 +1,6 @@
 import { JSONSchema } from "json-schema-to-ts";
 
-export function normalize(schema: JSONSchema, data: any) {
+export function normalize(schema: JSONSchema, data?: unknown) {
   if (typeof schema === "boolean") {
     return data;
   }
@@ -9,7 +9,10 @@ export function normalize(schema: JSONSchema, data: any) {
     let normalized: { [prop: string]: any } = {};
 
     for (let prop in schema.properties) {
-      let propData = typeof data === "object" ? data[prop] : undefined;
+      let propData =
+        typeof data === "object" && data !== null && prop in data
+          ? data[prop as keyof typeof data]
+          : undefined;
 
       let normalizedProp = normalize(schema.properties[prop], propData);
 
@@ -32,7 +35,11 @@ export function normalize(schema: JSONSchema, data: any) {
   return undefined;
 }
 
-function validate(schema: JSONSchema, data: any) {
+export function validate(schema: JSONSchema, data: unknown) {
+  if (data === undefined) {
+    return false;
+  }
+
   if (typeof schema === "boolean") {
     return schema;
   }
@@ -42,10 +49,18 @@ function validate(schema: JSONSchema, data: any) {
     return false;
   }
 
+  // Validate properties keyword
   if (typeof data === "object" && data !== null && "properties" in schema) {
     for (let property in schema.properties) {
-      if (!validate(schema.properties[property], data[property])) {
-        return false;
+      if (property in data) {
+        if (
+          !validate(
+            schema.properties[property],
+            data[property as keyof typeof data]
+          )
+        ) {
+          return false;
+        }
       }
     }
   }
@@ -76,12 +91,10 @@ function validateType(
     case "number":
       return typeof data === "number";
     case "integer":
-      // TODO: Figure out the appropriate check here
-      return typeof data === "number";
+      return Number.isInteger(data);
     case "boolean":
       return typeof data === "boolean";
     case "object":
-      // TODO: Double-check whether null should validate or not
       return typeof data === "object" && data !== null && !Array.isArray(data);
     case "array":
       return Array.isArray(data);
