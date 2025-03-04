@@ -15,6 +15,32 @@ import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { decorateEmptyLines } from "./emptyLines";
 import { tabFocus } from "./tabTrapping";
 
+import { atom, Store, StoreValue } from "nanostores";
+import { Compartment, Extension } from "@codemirror/state";
+import { ViewPlugin } from "@codemirror/view";
+
+const tabSetting = atom(false);
+
+function fromStore<StoreType extends Store>(
+  store: StoreType,
+  compute: (value: StoreValue<StoreType>) => Extension
+): Extension {
+  const compartment = new Compartment();
+  const storeUpdater = ViewPlugin.define(({ dispatch }) => {
+    const unsubscribe = store.subscribe((value) => {
+      dispatch({ effects: compartment.reconfigure(compute(value)) });
+    });
+
+    return {
+      destroy: () => {
+        unsubscribe();
+      },
+    };
+  });
+
+  return [compartment.of(compute(store.get()))];
+}
+
 export const basicSetup = [
   // lineNumbers(),
   drawSelection(),
