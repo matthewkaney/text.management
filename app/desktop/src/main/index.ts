@@ -15,6 +15,7 @@ import { dialog } from "electron";
 import { Config } from "@core/state";
 
 import { GHCI } from "@management/lang-tidal";
+
 import { Filesystem } from "./filesystem";
 import { wrapIPC } from "./ipcMain";
 
@@ -26,6 +27,8 @@ const settingsPath = resolve(app.getPath("userData"), "settings.json");
 
 const createWindow = (configuration: Config) => {
   const tidal = new GHCI(configuration);
+
+  const zwirn = new ZwirnZI();
 
   const window = new BrowserWindow({
     show: false,
@@ -227,6 +230,7 @@ const createWindow = (configuration: Config) => {
 };
 
 import { readFile } from "fs/promises";
+import { ZwirnZI } from "packages/languages/zwirn/zwirnzi";
 
 app.whenReady().then(async () => {
   const settings = new Config();
@@ -247,6 +251,8 @@ app.whenReady().then(async () => {
   // app.on("activate", () => {
   //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
   // });
+
+  const zwirn = new ZwirnZI();
 });
 
 // app.on("window-all-closed", () => {
