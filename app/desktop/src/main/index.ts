@@ -225,6 +225,7 @@ const createWindow = (configuration: Config) => {
     }
     docsListeners = {};
 
+    zwirn.close();
     tidal.close();
   });
 };
@@ -251,8 +252,6 @@ app.whenReady().then(async () => {
   // app.on("activate", () => {
   //   if (BrowserWindow.getAllWindows().length === 0) createWindow();
   // });
-
-  const zwirn = new ZwirnZI();
 });
 
 // app.on("window-all-closed", () => {

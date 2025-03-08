@@ -8,14 +8,14 @@ import { readFile } from "fs/promises";
 import { message } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
-import { OSCSocket } from "../core/oscsocket";
+import { EventDisconnect, OSCSocket } from "../core/oscsocket";
 
 import { Config, ConfigExtension } from "@core/state";
 // export { TidalSettingsSchema } from "./settings";
 // import { TidalSettingsSchema } from "./settings";
 
 // import { generateIntegrationCode } from "./editor-integration";
-import { NTPTime } from "@core/osc/types";
+import { NTPTime, OSCMessage } from "@core/osc/types";
 import { EventEmitter } from "@core/events";
 
 interface ZwirnZIEvents {
@@ -139,9 +139,23 @@ export class ZwirnZI extends Engine<ZwirnZIEvents> {
   async send(code: string) {
     let socket = await this.socket;
 
-    socket.send(message("/eval", ":t 7"));
+    socket.send(message("/eval", code));
 
-    console.log(await socket.await("/ok"));
+    let offOK: EventDisconnect;
+    let offError: EventDisconnect;
+
+    let { promise, resolve } = Promise.withResolvers<OSCMessage>();
+
+    function handler(response: OSCMessage) {
+      resolve(response);
+      offOK();
+      offError();
+    }
+
+    offOK = socket.once("/ok", handler);
+    offError = socket.once("/error", handler);
+
+    return promise;
     // if (!this.wrapper)
     //   throw Error("Can't evaluate code before process is started");
     // for await (let evaluation of this.wrapper.send(code)) {
