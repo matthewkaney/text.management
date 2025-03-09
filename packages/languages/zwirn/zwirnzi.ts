@@ -78,9 +78,17 @@ export class ZwirnZI extends Engine<ZwirnZIEvents> {
 
     // let stdout = new ReadableStream();
 
-    const child = spawn(join(homedir(), "Documents/zwirnzi"), [
-      "--ci.listener=true",
-    ]);
+    // const child = spawn(join(homedir(), "Documents/zwirnzi"), [
+    //   "--ci.listener=true",
+    // ]);
+
+    const child = spawn(
+      "cabal",
+      ["run", "zwirnzi", "--", "--ci.listener=true"],
+      {
+        cwd: "../../../zwirnzi/",
+      }
+    );
 
     // this.wrapper = new ProcessWrapper(child);
 
@@ -152,8 +160,8 @@ export class ZwirnZI extends Engine<ZwirnZIEvents> {
       offError();
     }
 
-    offOK = socket.once("/ok", handler);
-    offError = socket.once("/error", handler);
+    offOK = socket.once("/eval/value", handler);
+    offError = socket.once("/eval/error", handler);
 
     return promise;
     // if (!this.wrapper)

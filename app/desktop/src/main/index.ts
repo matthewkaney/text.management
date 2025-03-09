@@ -30,6 +30,11 @@ const createWindow = (configuration: Config) => {
 
   const zwirn = new ZwirnZI();
 
+  setTimeout(async () => {
+    console.log(await zwirn.send(":t 8"));
+    console.log(await zwirn.send(":t foo"));
+  }, 1000);
+
   const window = new BrowserWindow({
     show: false,
     width: 800,
