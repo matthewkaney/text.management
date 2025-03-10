@@ -58,6 +58,14 @@ export class EventEmitter<T extends EventMap> {
     return disconnect;
   }
 
+  next<E extends EventKey<T>>(event: E): Promise<T[E]> {
+    return new Promise((resolve) => {
+      this.once(event, (value) => {
+        resolve(value);
+      });
+    });
+  }
+
   protected emit<E extends EventKey<T>>(event: E, value: T[E]) {
     (this.listeners[event] || []).forEach((handler) => {
       handler(value);

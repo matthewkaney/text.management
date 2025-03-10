@@ -16,7 +16,12 @@ function emptyLineDeco(view: EditorView) {
   for (let { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       let line = view.state.doc.lineAt(pos);
-      if (line.text === "") builder.add(line.from, line.from, emptyLine);
+      if (
+        line.text === "" &&
+        line.number !==
+          view.state.doc.lineAt(view.state.selection.main.head).number
+      )
+        builder.add(line.from, line.from, emptyLine);
       pos = line.to + 1;
     }
   }
@@ -31,7 +36,7 @@ export function decorateEmptyLines() {
         this.decorations = emptyLineDeco(view);
       }
       update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged)
+        if (update.docChanged || update.selectionSet || update.viewportChanged)
           this.decorations = emptyLineDeco(update.view);
       }
     },

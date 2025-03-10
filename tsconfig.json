@@ -3,8 +3,9 @@
     "strict": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+    "jsxImportSource": "preact",
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./",
     "paths": {

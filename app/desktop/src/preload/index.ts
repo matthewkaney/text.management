@@ -68,7 +68,7 @@ const ElectronAPI = {
 
   onShowAbout: listen("showAbout"),
 
-  evaluate: (code: string) => {
+  evaluate: ({ code }: { code: string }) => {
     send("evaluation", code);
   },
 
@@ -87,6 +87,10 @@ const ElectronAPI = {
   onTidalVersion: listen("tidalVersion"),
 
   onTidalNow: listen("tidalNow"),
+
+  onTidalHighlight: listen("tidalHighlight"),
+
+  onSettingsData: listen("settingsData"),
 };
 
 contextBridge.exposeInMainWorld("api", ElectronAPI);

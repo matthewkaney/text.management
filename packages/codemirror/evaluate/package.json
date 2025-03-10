@@ -1,6 +1,6 @@
 {
   "name": "@management/cm-evaluate",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "CodeMirror 6 extension for enabling lines of code to be evaluated",
   "keywords": [
     "codemirror",
@@ -24,7 +24,7 @@
     "url": "https://github.com/mindofmatthew/text.management/issues"
   },
   "dependencies": {
-    "@codemirror/state": "^6.0.0",
-    "@codemirror/view": "^6.0.0"
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/view": "^6.26.3"
   }
 }

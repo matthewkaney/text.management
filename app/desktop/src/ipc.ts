@@ -1,6 +1,7 @@
-import type { DocumentUpdate, TerminalMessage } from "@core/api";
+import type { DocumentUpdate, Evaluation, Log } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
+import { HighlightEvent } from "@management/lang-tidal";
 
 export type Handler<T> = (event: T) => void;
 
@@ -23,9 +24,11 @@ export interface ToRendererChannels {
   status: { withID: string; content: SavedStatus };
   setCurrent: { id: string };
   close: { id: string };
-  console: TerminalMessage;
+  console: Evaluation | Log;
   tidalVersion: string;
   tidalNow: number;
   toggleConsole: undefined;
   showAbout: string;
+  tidalHighlight: HighlightEvent;
+  settingsData: any;
 }

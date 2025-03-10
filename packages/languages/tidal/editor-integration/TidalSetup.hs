@@ -4,9 +4,22 @@ import Sound.Tidal.Context hiding (startStream, startTidal)
 import qualified Sound.Tidal.Stream as Stream
 
 :{
+highlightTarget :: Target
+highlightTarget = Target {oName = "Text Management Highlights",
+                          oAddress = "127.0.0.1",
+                          oPort = editorPort,
+                          oBusPort = Nothing,
+                          oLatency = 0.02,
+                          oWindow = Nothing,
+                          oSchedule = Pre BundleStamp,
+                          oHandshake = False
+                         }
+:}
+
+:{
 startStream :: Config -> [(Target, [OSC])] -> IO Stream
 startStream config oscmap
-  = do tidal <- Stream.startStream config oscmap
+  = do tidal <- Stream.startStream config (oscmap ++ [(highlightTarget, [OSCContext "/highlight"])])
        watchClock tidal
        return tidal
     where

@@ -1,7 +1,6 @@
 import { ElectronAPI } from "../preload";
 
 import { Text } from "@codemirror/state";
-import { evaluation } from "@management/cm-evaluate";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
 
@@ -9,14 +8,25 @@ import { languageMode } from "@core/extensions/language/editor";
 import tidal from "@management/lang-tidal/editor";
 import hydra from "@management/lang-hydra/editor";
 
+import { Config } from "@core/state";
+import { settings } from "@core/extensions/settings/editor";
+
 import { LayoutView } from "@core/extensions/layout";
 import { console as electronConsole } from "@core/extensions/console";
 // import { peer } from "@core/extensions/peer";
 import { toolbarConstructor } from "@core/extensions/toolbar";
+import { ColorScheme } from "@core/extensions/theme/colors";
 
 import { fileSync } from "./file";
 import { EditorTabView } from "@core/extensions/layout/tabs/editor";
 import { AboutTabView } from "@core/extensions/layout/tabs/about";
+
+import {
+  evaluationWithHighlights,
+  highlighter,
+} from "@management/lang-tidal/highlights";
+import { keymap } from "@codemirror/view";
+import { evaluation } from "@management/cm-evaluate";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -28,6 +38,14 @@ const { api } = window as Window &
   typeof globalThis & {
     api: typeof ElectronAPI;
   };
+
+const configuration = new Config();
+api.onSettingsData((data) => {
+  configuration.update(data);
+});
+
+// Color scheme extension
+const colorScheme = new ColorScheme(configuration);
 
 const background: string | null = null;
 
@@ -47,7 +65,7 @@ export class Editor {
     let tidalConsole = electronConsole();
     layout.panelArea.appendChild(tidalConsole.dom);
 
-    let toolbar = toolbarConstructor(api, tidalVersion);
+    let toolbar = toolbarConstructor(api, configuration, tidalVersion);
     layout.panelArea.appendChild(toolbar.dom);
 
     api.onTidalVersion((version) => {
@@ -63,6 +81,9 @@ export class Editor {
     });
 
     api.onOpen(({ id, path }) => {
+      // TODO: This is a hacky heuristic
+      let languageMode = path?.endsWith("settings.json") ? settings() : tidal();
+
       let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
 
@@ -72,10 +93,14 @@ export class Editor {
               view: new EditorTabView(layout, id, api, {
                 doc,
                 extensions: [
-                  tidal(),
-                  evaluation(api.evaluate),
-                  basicSetup,
                   oneDark,
+                  evaluationWithHighlights(api.evaluate),
+                  highlighter(api),
+                  evaluation(() => {
+                    tidalConsole.toggleVisibility(false);
+                  }),
+                  languageMode,
+                  basicSetup,
                   fileSync(
                     id,
                     { path, saved, version, thisVersion: version },

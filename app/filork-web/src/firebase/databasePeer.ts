@@ -9,7 +9,7 @@ import {
   startAt,
 } from "firebase/database";
 
-import { ChangeSet, Transaction } from "@codemirror/state";
+import { ChangeSet, Transaction, StateEffect } from "@codemirror/state";
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
 import {
   collab,
@@ -19,7 +19,7 @@ import {
   getClientID,
   Update,
 } from "@codemirror/collab";
-import { commandEffect, evalEffect } from "@management/cm-evaluate";
+import { evaluationEffect, Evaluation } from "@management/cm-evaluate";
 
 export function firebaseCollab(
   session: DatabaseReference,
@@ -44,7 +44,11 @@ export function firebaseCollab(
             effects = (effects as string[])
               .map((e) => JSON.parse(e) as any[])
               .filter((args) => typeof args[0] === "number")
-              .map(([from, to]) => evalEffect.of({ from, to }));
+              .map(([from, to]) =>
+                evaluationEffect.of(
+                  new Evaluation(view.state.sliceDoc(from, to), { from, to })
+                )
+              );
           }
 
           if (version.key !== null) {
@@ -81,11 +85,11 @@ export function firebaseCollab(
         let version = getSyncedVersion(this.view.state);
 
         let evaluations = update.effects
-          ?.filter((e) => e.is(evalEffect) || e.is(commandEffect))
+          ?.filter((e) => e.is(evaluationEffect))
           .map((e) =>
-            e.is(evalEffect)
-              ? JSON.stringify([e.value.from, e.value.to])
-              : JSON.stringify([e.value.method])
+            "span" in e.value
+              ? JSON.stringify([e.value.span.from, e.value.span.to])
+              : JSON.stringify([e.value.code])
           );
 
         try {
@@ -123,5 +127,5 @@ export function firebaseCollab(
 }
 
 function evals(tr: Transaction) {
-  return tr.effects.filter((e) => e.is(evalEffect) || e.is(commandEffect));
+  return tr.effects.filter((e) => e.is(evaluationEffect));
 }
