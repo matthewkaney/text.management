@@ -144,26 +144,32 @@ export class ZwirnZI extends Engine<ZwirnZIEvents> {
     await this.send(code);
   }
 
-  async send(code: string) {
+  async send(input: string) {
     let socket = await this.socket;
 
-    socket.send(message("/eval", code));
+    socket.send(message("/eval", input));
 
-    let offOK: EventDisconnect;
-    let offError: EventDisconnect;
+    const abort = new AbortController();
 
-    let { promise, resolve } = Promise.withResolvers<OSCMessage>();
+    let result = await Promise.any([
+      socket.await("/eval/ok", abort.signal),
+      socket.await("/eval/value", abort.signal),
+      socket.await("/eval/error", abort.signal),
+    ]);
 
-    function handler(response: OSCMessage) {
-      resolve(response);
-      offOK();
-      offError();
+    if (result.address !== "/eval/ok") {
+      let [value] = result.args;
+      this.emit("message", {
+        success: result.address === "/eval/value",
+        input,
+        text: value?.toString() ?? "[No result]",
+      });
     }
 
-    offOK = socket.once("/eval/value", handler);
-    offError = socket.once("/eval/error", handler);
+    // Abort the remaining message listeners
+    abort.abort();
 
-    return promise;
+    return;
     // if (!this.wrapper)
     //   throw Error("Can't evaluate code before process is started");
     // for await (let evaluation of this.wrapper.send(code)) {

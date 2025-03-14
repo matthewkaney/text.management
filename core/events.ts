@@ -66,6 +66,7 @@ export class EventEmitter<T extends EventMap> {
     });
   }
 
+  // protected emit<E extends EventKey<T>>(event: E);
   protected emit<E extends EventKey<T>>(event: E, value: T[E]) {
     (this.listeners[event] || []).forEach((handler) => {
       handler(value);

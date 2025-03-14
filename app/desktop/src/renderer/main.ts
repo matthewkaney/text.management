@@ -3,7 +3,9 @@ import { ElectronAPI } from "../preload";
 import { Text } from "@codemirror/state";
 import { basicSetup } from "@core/extensions/basicSetup";
 import { oneDark } from "@core/extensions/theme/theme";
-import { tidal } from "@management/lang-tidal/editor";
+
+import { zwirn } from "packages/languages/zwirn/editor";
+// import { tidal } from "@management/lang-tidal/editor";
 
 import { Config } from "@core/state";
 import { settings } from "@core/extensions/settings/editor";
@@ -23,7 +25,7 @@ import {
   highlighter,
 } from "@management/lang-tidal/highlights";
 import { keymap } from "@codemirror/view";
-import { evaluation } from "@management/cm-evaluate";
+import { evaluation, evaluationKeymap } from "@management/cm-evaluate";
 
 window.addEventListener("load", () => {
   const parent = document.body.appendChild(document.createElement("section"));
@@ -80,7 +82,7 @@ export class Editor {
 
     api.onOpen(({ id, path }) => {
       // TODO: This is a hacky heuristic
-      let languageMode = path?.endsWith("settings.json") ? settings() : tidal();
+      let languageMode = path?.endsWith("settings.json") ? settings() : zwirn();
 
       let offContent = api.onContent(id, ({ doc: docJSON, version, saved }) => {
         let doc = Text.of(docJSON);
@@ -92,8 +94,10 @@ export class Editor {
                 doc,
                 extensions: [
                   oneDark,
-                  evaluationWithHighlights(api.evaluate),
-                  highlighter(api),
+                  // evaluationWithHighlights(api.evaluate),
+                  keymap.of(evaluationKeymap),
+                  evaluation(api.evaluate),
+                  // highlighter(api),
                   evaluation(() => {
                     tidalConsole.toggleVisibility(false);
                   }),

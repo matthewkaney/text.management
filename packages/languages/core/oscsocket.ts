@@ -27,6 +27,7 @@ export class OSCSocket {
 
     this.socket.on("message", (data) => {
       for (let message of asMessages(parse(data))) {
+        console.log(`OSC: ${message.address} ${JSON.stringify(message.args)}`);
         if (message.address in this.listeners) {
           for (let handler of this.listeners[message.address]) {
             handler(message);
@@ -66,11 +67,20 @@ export class OSCSocket {
     return disconnect;
   }
 
-  // TODO: Add abortcontroller
-  await(event: string): Promise<OSCMessage> {
-    return new Promise((resolve) => {
-      this.once(event, (value) => {
+  await(event: string, signal?: AbortSignal): Promise<OSCMessage> {
+    return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(signal.reason);
+        return;
+      }
+
+      const unsubscribe = this.once(event, (value) => {
         resolve(value);
+      });
+
+      signal?.addEventListener("abort", () => {
+        unsubscribe();
+        reject(signal.reason);
       });
     });
   }

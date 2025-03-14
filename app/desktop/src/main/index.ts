@@ -26,14 +26,10 @@ const filesystem = new Filesystem();
 const settingsPath = resolve(app.getPath("userData"), "settings.json");
 
 const createWindow = (configuration: Config) => {
-  const tidal = new GHCI(configuration);
+  let engine: Engine<any>;
+  // const engine = new GHCI(configuration);
 
-  const zwirn = new ZwirnZI();
-
-  setTimeout(async () => {
-    console.log(await zwirn.send(":t 8"));
-    console.log(await zwirn.send(":t foo"));
-  }, 1000);
+  engine = new ZwirnZI();
 
   const window = new BrowserWindow({
     show: false,
@@ -123,20 +119,16 @@ const createWindow = (configuration: Config) => {
       })
     );
 
-    // Set up tidal communication
-    tidal.getVersion().then((version) => {
-      send("tidalVersion", version);
-    });
-
+    // Set up engine communication
     listeners.push(
       listen("evaluation", (code) => {
-        tidal.send(code);
+        engine.send(code);
       })
     );
 
     listeners.push(
       menu.on("rebootTidal", () => {
-        tidal.restart();
+        engine.restart();
       })
     );
 
@@ -167,22 +159,28 @@ const createWindow = (configuration: Config) => {
     );
 
     listeners.push(
-      tidal.on("message", (message) => {
+      engine.on("message", (message) => {
         send("console", message);
       })
     );
 
-    listeners.push(
-      tidal.on("now", (now) => {
-        send("tidalNow", now);
-      })
-    );
+    if (engine instanceof GHCI) {
+      engine.getVersion().then((version) => {
+        send("tidalVersion", version);
+      });
 
-    listeners.push(
-      tidal.on("highlight", (highlightEvent) => {
-        send("tidalHighlight", highlightEvent);
-      })
-    );
+      listeners.push(
+        engine.on("now", (now) => {
+          send("tidalNow", now);
+        })
+      );
+
+      listeners.push(
+        engine.on("highlight", (highlightEvent) => {
+          send("tidalHighlight", highlightEvent);
+        })
+      );
+    }
 
     send("settingsData", configuration.data);
     listeners.push(
@@ -230,13 +228,13 @@ const createWindow = (configuration: Config) => {
     }
     docsListeners = {};
 
-    zwirn.close();
-    tidal.close();
+    engine.close();
   });
 };
 
 import { readFile } from "fs/promises";
 import { ZwirnZI } from "packages/languages/zwirn/zwirnzi";
+import { Engine } from "packages/languages/core/engine";
 
 app.whenReady().then(async () => {
   const settings = new Config();
