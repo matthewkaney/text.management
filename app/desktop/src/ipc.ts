@@ -16,19 +16,28 @@ export interface ToMainChannels {
 }
 
 export interface ToRendererChannels {
+  // Filesystem events
   open: { id: string; path: string | null };
   content: {
     withID: string;
     content: { doc: string[]; version: number; saved: boolean | "saving" };
   };
   status: { withID: string; content: SavedStatus };
-  setCurrent: { id: string };
   close: { id: string };
+
+  // Editor events
+  setCurrent: { id: string };
+
+  // Other UI
   console: Evaluation | Log;
-  tidalVersion: string;
-  tidalNow: number;
   toggleConsole: undefined;
   showAbout: string;
-  tidalHighlight: HighlightEvent;
+
+  // Settings
   settingsData: any;
+
+  // TODO: Wrap these in a tool-specific protocol
+  tidalVersion: string;
+  tidalNow: number;
+  tidalHighlight: HighlightEvent;
 }
