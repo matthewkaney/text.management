@@ -1,13 +1,13 @@
 import satisfies from "semver/functions/satisfies";
 
 // @ts-ignore
-import editorPort from "bundle-text:./EditorPort.hs";
+import editorPort from "./EditorPort.hs?raw";
 // @ts-ignore
-import editorSocket_1_9_2 from "bundle-text:./EditorSocket-1.9.2.hs";
+import editorSocket_1_9_2 from "./EditorSocket-1.9.2.hs?raw";
 // @ts-ignore
-import editorSocket_1_9_3 from "bundle-text:./EditorSocket-1.9.3.hs";
+import editorSocket_1_9_3 from "./EditorSocket-1.9.3.hs?raw";
 // @ts-ignore
-import tidalSetup from "bundle-text:./TidalSetup.hs";
+import tidalSetup from "./TidalSetup.hs?raw";
 
 export function generateIntegrationCode(version: string) {
   let integrationCode = editorPort;

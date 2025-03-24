@@ -15,14 +15,14 @@
   },
   "scripts": {
     "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
-    "dev": "parcel watch --target main --target preload --target renderer --no-hmr & electronmon .",
+    "dev": "electron-vite dev",
     "build": "parcel build --target main --target preload --target renderer",
     "start": "electron .",
     "pack": "electron-builder --config build.config.js",
     "dist": "electron-builder",
     "postversion": "git add package.json"
   },
-  "main": "build/main.js",
+  "main": "out/main/index.js",
   "targets": {
     "renderer": {
       "source": "src/renderer/index.html",
@@ -62,9 +62,11 @@
   "devDependencies": {
     "electron": "^30.0.2",
     "electron-builder": "^24.13.3",
+    "electron-vite": "^3.0.0",
     "electronmon": "^2.0.3"
   },
   "dependencies": {
+    "@management/lang-tidal": "^1.0.0",
     "electron-updater": "^6.1.8",
     "fix-path": "^4.0.0"
   }
