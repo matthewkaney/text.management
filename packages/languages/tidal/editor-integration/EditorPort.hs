@@ -1,4 +1,4 @@
-:set -package hosc
+-- :set -package hosc
 
 import System.Environment (getEnv)
 

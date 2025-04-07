@@ -4,7 +4,7 @@ import { exec, spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { join } from "path";
 import { readFile } from "fs/promises";
 
-import { parse } from "@core/osc/osc";
+import { message, parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
 
@@ -89,6 +89,12 @@ export class GHCI extends Engine<GHCIEvents> {
               cycle,
               duration: duration / 1000, // Convert from microseconds
             });
+          } else {
+            console.log(
+              `Unrecognized "${message.address}": ${JSON.stringify(
+                message.args
+              )}`
+            );
           }
         }
       });
@@ -114,12 +120,16 @@ export class GHCI extends Engine<GHCIEvents> {
 
     // let stdout = new ReadableStream();
 
-    const child = spawn("ghci", ["-XOverloadedStrings"], {
-      env: {
-        ...process.env,
-        editor_port: port,
-      },
-    });
+    const child = spawn(
+      "ghci",
+      ["-XOverloadedStrings", "-package", "hosc-0.20"],
+      {
+        env: {
+          ...process.env,
+          editor_port: port,
+        },
+      }
+    );
 
     this.wrapper = new ProcessWrapper(child);
 
@@ -153,6 +163,8 @@ export class GHCI extends Engine<GHCIEvents> {
         });
       }
     }
+
+    (await this.socket).send(message("/notify", { i: 1 }), 57110, "127.0.0.1");
 
     // child.on("close", (code) => {
     //   console.log(`child process exited with code ${code}`);
