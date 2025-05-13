@@ -1,5 +1,7 @@
 import Control.Concurrent
 
+import qualified Sound.Osc.Fd as HOSC hiding (time)
+
 import Sound.Tidal.Context hiding (startStream, startTidal)
 
 :{
