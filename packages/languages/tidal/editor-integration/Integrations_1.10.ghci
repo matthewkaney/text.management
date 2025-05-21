@@ -32,3 +32,31 @@ watchClock stream = forkIO checkClock
                     threadDelay 100000
                     checkClock
 :}
+
+import qualified Sound.Tidal.Stream as Stream
+
+:{
+startStream :: Config -> [(Target, [OSC])] -> IO Stream
+startStream config oscmap
+  = Stream.startStream config (oscmap ++ [(highlightTarget, [highlightShape])])
+:}
+
+:{
+startTidal :: Target -> Config -> IO Stream
+startTidal t c = startStream c [(t, [superdirtShape])]
+:}
+
+import Sound.Tidal.Boot hiding (mkTidal, mkTidalWith)
+import System.IO (hSetEncoding, stdout, utf8)
+
+:{
+mkTidalWith :: OscMap -> Config -> IO Stream
+mkTidalWith oscmap config = do
+  hSetEncoding stdout utf8
+  startStream config oscmap
+:}
+
+:{
+mkTidal :: IO Stream
+mkTidal = mkTidalWith mkOscMap defaultConfig
+:}
