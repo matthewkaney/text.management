@@ -7,6 +7,7 @@ import { readFile } from "fs/promises";
 import { parse } from "@core/osc/osc";
 import { Evaluation, Log } from "@core/api";
 import { Engine } from "../core/engine";
+import { OSCSocket } from "../core/oscsocket";
 
 import { Config, ConfigExtension } from "@core/state";
 export { TidalSettingsSchema } from "./settings";
@@ -36,7 +37,7 @@ interface GHCIEvents {
 export class GHCI extends Engine<GHCIEvents> {
   private settings: ConfigExtension<typeof TidalSettingsSchema>;
 
-  private socket: Promise<Socket>;
+  private socket: OSCSocket;
   private process: Promise<ChildProcessWithoutNullStreams>;
 
   private version: string;
@@ -69,35 +70,27 @@ export class GHCI extends Engine<GHCIEvents> {
   }
 
   private initSocket() {
-    return new Promise<Socket>((resolve) => {
-      const socket = createSocket("udp4");
-      socket.bind(0, "localhost", () => {
-        resolve(socket);
-      });
+    const socket = new OSCSocket(0);
 
-      socket.on("message", (data) => {
-        let packet = parse(data);
+    socket.on("/now", ({ args }) => {
+      if (typeof args[0] === "number") {
+        this.emit("now", args[0]);
+      }
+    });
 
-        for (let message of asMessages(packet)) {
-          if (message.address === "/now") {
-            if (typeof message.args[0] === "number") {
-              this.emit("now", message.args[0]);
-            }
-          } else if (message.address === "/highlight") {
-            let [_orbit, duration, cycle, from, miniID, to] =
-              message.args as number[];
-            this.emit("highlight", {
-              miniID: miniID - 1,
-              from,
-              to,
-              onset: message.ntpTime,
-              cycle,
-              duration: duration / 1000, // Convert from microseconds
-            });
-          }
-        }
+    socket.on("/highlight", ({ args, ntpTime }) => {
+      let [_orbit, duration, cycle, from, miniID, to] = args as number[];
+      this.emit("highlight", {
+        miniID: miniID - 1,
+        from,
+        to,
+        onset: ntpTime,
+        cycle,
+        duration: duration / 1000, // Convert from microseconds
       });
     });
+
+    return socket;
   }
 
   private wrapper: ProcessWrapper | null = null;
@@ -109,7 +102,7 @@ export class GHCI extends Engine<GHCIEvents> {
       "tidal.boot.customFiles": bootFiles,
       "tidal.runFromSource": sourceLocation,
     } = this.settings.data;
-    const port = (await this.socket).address().port.toString();
+    const editor_port = (await this.socket.port).toString();
 
     // this.outputFilters.push(
     //   /^Loaded package environment from \S+$/,
@@ -126,7 +119,7 @@ export class GHCI extends Engine<GHCIEvents> {
       child = spawn("ghci", ["-XOverloadedStrings", "-package", "hosc"], {
         env: {
           ...process.env,
-          editor_port: port,
+          editor_port,
         },
       });
     } else {
@@ -137,7 +130,7 @@ export class GHCI extends Engine<GHCIEvents> {
           cwd: sourceLocation,
           env: {
             ...process.env,
-            editor_port: port,
+            editor_port,
           },
         }
       );

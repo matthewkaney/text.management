@@ -4,7 +4,7 @@ import { parse } from "@core/osc/osc";
 import { asMessages } from "@core/osc/utils";
 import { OSCMessage } from "@core/osc/types";
 
-export type MessageHandler = (message: OSCMessage) => void;
+export type MessageHandler = (message: Required<OSCMessage>) => void;
 export type EventDisconnect = () => void;
 
 export class OSCSocket {
@@ -12,14 +12,23 @@ export class OSCSocket {
 
   private socket = createSocket("udp4");
 
+  readonly port: Promise<number>;
   readonly bound: Promise<void>;
 
   constructor(port: number, remotePort?: number) {
-    this.bound = new Promise((resolve) =>
-      this.socket.bind(port, "localhost", () => {
-        resolve();
-      })
-    );
+    const { promise: portPromise, resolve: portResolve } =
+      Promise.withResolvers<number>();
+
+    const { promise: boundPromise, resolve: boundResolve } =
+      Promise.withResolvers<void>();
+
+    this.port = portPromise;
+    this.bound = boundPromise;
+
+    this.socket.bind(port, "localhost", () => {
+      portResolve(this.socket.address().port);
+      boundResolve();
+    });
 
     if (remotePort) {
       this.socket.connect(remotePort);
@@ -67,14 +76,14 @@ export class OSCSocket {
     return disconnect;
   }
 
-  await(event: string, signal?: AbortSignal): Promise<OSCMessage> {
+  await(address: string, signal?: AbortSignal): Promise<Required<OSCMessage>> {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
         reject(signal.reason);
         return;
       }
 
-      const unsubscribe = this.once(event, (value) => {
+      const unsubscribe = this.once(address, (value) => {
         resolve(value);
       });
 
