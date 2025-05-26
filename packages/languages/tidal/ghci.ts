@@ -30,6 +30,7 @@ interface GHCIEvents {
   now: number;
   openSettings: string;
   highlight: HighlightEvent;
+  version: string;
 }
 
 export class GHCI extends Engine<GHCIEvents> {
@@ -37,6 +38,8 @@ export class GHCI extends Engine<GHCIEvents> {
 
   private socket: Promise<Socket>;
   private process: Promise<ChildProcessWithoutNullStreams>;
+
+  private version: string;
 
   private history: (Evaluation | Log)[] = [];
 
@@ -48,6 +51,8 @@ export class GHCI extends Engine<GHCIEvents> {
     this.settings.on("change", () => {
       this.reloadSettings;
     });
+
+    this.version = "Unknown";
 
     this.socket = this.initSocket();
     this.process = this.initProcess();
@@ -102,6 +107,7 @@ export class GHCI extends Engine<GHCIEvents> {
       "tidal.boot.disableEditorIntegration": disableEditorIntegration,
       "tidal.boot.useDefaultFile": useDefaultBootfile,
       "tidal.boot.customFiles": bootFiles,
+      "tidal.runFromSource": sourceLocation,
     } = this.settings.data;
     const port = (await this.socket).address().port.toString();
 
@@ -114,12 +120,28 @@ export class GHCI extends Engine<GHCIEvents> {
 
     // let stdout = new ReadableStream();
 
-    const child = spawn("ghci", ["-XOverloadedStrings"], {
-      env: {
-        ...process.env,
-        editor_port: port,
-      },
-    });
+    let child: ChildProcessWithoutNullStreams;
+
+    if (!sourceLocation) {
+      child = spawn("ghci", ["-XOverloadedStrings", "-package", "hosc"], {
+        env: {
+          ...process.env,
+          editor_port: port,
+        },
+      });
+    } else {
+      child = spawn(
+        "cabal",
+        ["repl", "--repl-options", "-XOverloadedStrings"],
+        {
+          cwd: sourceLocation,
+          env: {
+            ...process.env,
+            editor_port: port,
+          },
+        }
+      );
+    }
 
     this.wrapper = new ProcessWrapper(child);
 
@@ -127,16 +149,27 @@ export class GHCI extends Engine<GHCIEvents> {
       this.emit("message", message);
     });
 
+    // Query Tidal version
+    for await (let response of this.wrapper.send(
+      ["import Sound.Tidal.Version", "putStr tidal_version"].join("\n")
+    )) {
+      if (response.text) {
+        this.version = response.text;
+        this.emit("version", this.version);
+      }
+    }
+
     if (!disableEditorIntegration) {
-      // this.outputFilters.push(
-      //   /package flags have changed, resetting and loading new packages\.\.\./
-      // );
-      const integrationCode = generateIntegrationCode(await this.getVersion());
+      const integrationCode = generateIntegrationCode(this.version);
       await this.send(integrationCode);
     }
 
     if (useDefaultBootfile) {
-      await this.sendFile(await this.defaultBootfile());
+      if (sourceLocation) {
+        await this.sendFile(join(sourceLocation, "BootTidal.hs"));
+      } else {
+        await this.sendFile(await this.defaultBootfile());
+      }
     }
 
     for (let path of bootFiles ?? []) {
@@ -152,6 +185,11 @@ export class GHCI extends Engine<GHCIEvents> {
           text: `The boot file "${path}" can't be found, so it wasn't loaded.`,
         });
       }
+    }
+
+    // Send watch clock instruction
+    if (!disableEditorIntegration) {
+      await this.send("_ <- watchClock tidal");
     }
 
     // child.on("close", (code) => {
@@ -194,18 +232,6 @@ export class GHCI extends Engine<GHCIEvents> {
         this.emit("message", evaluation);
       }
     }
-  }
-
-  private version: Promise<string> | undefined;
-
-  getVersion() {
-    if (!this.version) {
-      this.version = promisify(exec)(
-        'ghc -e "import Sound.Tidal.Version" -e "putStr tidal_version"'
-      ).then(({ stdout }) => stdout);
-    }
-
-    return this.version;
   }
 
   async close() {

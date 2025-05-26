@@ -1,7 +1,8 @@
 import Control.Concurrent
 
+import qualified Sound.Osc.Fd as HOSC hiding (time)
+
 import Sound.Tidal.Context hiding (startStream, startTidal)
-import qualified Sound.Tidal.Stream as Stream
 
 :{
 highlightTarget :: Target
@@ -17,20 +18,27 @@ highlightTarget = Target {oName = "Text Management Highlights",
 :}
 
 :{
+highlightShape :: OSC
+highlightShape = OSCContext "/highlight"
+:}
+
+:{
+watchClock :: Stream -> IO ThreadId
+watchClock stream = forkIO checkClock
+  where
+    checkClock :: IO ()
+    checkClock = do time <- streamGetnow stream
+                    HOSC.sendMessage editorSocket (HOSC.Message "/now" [HOSC.Float $ realToFrac time])
+                    threadDelay 100000
+                    checkClock
+:}
+
+import qualified Sound.Tidal.Stream as Stream
+
+:{
 startStream :: Config -> [(Target, [OSC])] -> IO Stream
 startStream config oscmap
-  = do tidal <- Stream.startStream config (oscmap ++ [(highlightTarget, [OSCContext "/highlight"])])
-       watchClock tidal
-       return tidal
-    where
-      watchClock :: Stream -> IO ThreadId
-      watchClock stream = forkIO checkClock
-        where
-          checkClock :: IO ()
-          checkClock = do time <- streamGetnow stream
-                          sendMessage editorSocket (Message "/now" [Float $ realToFrac time])
-                          threadDelay 100000
-                          checkClock
+  = Stream.startStream config (oscmap ++ [(highlightTarget, [highlightShape])])
 :}
 
 :{
