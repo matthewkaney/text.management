@@ -425,7 +425,7 @@ filesystem.on("current", (doc) => {
   menu.currentDoc = doc;
 });
 
-menu.setRecentFiles(filesystem.recentFiles);
-filesystem.on("recentFiles", (recent) => {
-  menu.setRecentFiles(recent);
-});
+// menu.setRecentFiles(filesystem.recentFiles);
+// filesystem.on("recentFiles", (recent) => {
+//   menu.setRecentFiles(recent);
+// });
