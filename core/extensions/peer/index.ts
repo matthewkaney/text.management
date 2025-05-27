@@ -8,7 +8,7 @@ import {
   getClientID,
   Update,
 } from "@codemirror/collab";
-import { commandEffect, evalEffect } from "@management/cm-evaluate";
+import { evaluationEffect } from "@management/cm-evaluate";
 import { DocumentUpdate } from "@core/api";
 
 interface Authority {
@@ -107,5 +107,5 @@ export function peer(startVersion: number) {
 }
 
 function evals(tr: Transaction) {
-  return tr.effects.filter((e) => e.is(evalEffect) || e.is(commandEffect));
+  return tr.effects.filter((e) => e.is(evaluationEffect));
 }

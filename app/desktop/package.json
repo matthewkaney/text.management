@@ -4,7 +4,7 @@
     "name": "Matthew Kaney",
     "email": "matthew.s.kaney@gmail.com"
   },
-  "version": "0.9.0",
+  "version": "1.0.0-beta.1",
   "private": "true",
   "description": "Live code editor",
   "license": "GPL-3.0-or-later",
@@ -15,6 +15,7 @@
   },
   "scripts": {
     "electron-version": "node -p \"require('../../node_modules/electron/package.json').version\"",
+    "dev": "parcel watch --target main --target preload --target renderer --no-hmr & electronmon .",
     "build": "parcel build --target main --target preload --target renderer",
     "start": "electron .",
     "pack": "electron-builder --config build.config.js",
@@ -53,13 +54,19 @@
       }
     }
   },
+  "electronmon": {
+    "patterns": [
+      "!src/**/*"
+    ]
+  },
   "devDependencies": {
-    "electron": "^26.2.2",
-    "electron-builder": "^24.6.4"
+    "electron": "^30.0.2",
+    "electron-builder": "^24.13.3",
+    "electronmon": "^2.0.3"
   },
   "dependencies": {
-    "electron-store": "^8.2.0",
-    "electron-updater": "^6.1.4",
+    "electron-store": "^10.0.1",
+    "electron-updater": "^6.1.8",
     "fix-path": "^4.0.0"
   }
 }

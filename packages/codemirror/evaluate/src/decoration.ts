@@ -1,36 +1,79 @@
-import { ViewPlugin, ViewUpdate, Decoration } from "@codemirror/view";
-import { Transaction } from "@codemirror/state";
+import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
+import { Facet, StateEffect } from "@codemirror/state";
 
-import { evalEffect } from "./evaluate";
+import { Evaluation, evaluationEffect } from "./evaluate";
 
-export function evalDecoration() {
-  const lifespan = 500;
+export const flashDuration = Facet.define({
+  combine(values: readonly number[]) {
+    return values.reduce((a, b) => Math.max(a, b), 200);
+  },
+});
 
-  return ViewPlugin.fromClass(
-    class {
-      decorations = Decoration.none;
+const endEvalEffect = StateEffect.define<Evaluation>();
 
-      update({ transactions }: ViewUpdate) {
+const evaluationTheme = EditorView.baseTheme({
+  "& .cm-evaluated": { backgroundColor: "#FFFFFF" },
+});
+
+export const evaluateDecorationPlugin = ViewPlugin.define(
+  (view) => {
+    let decorations = Decoration.none;
+    let timers = new Set<number>();
+
+    return {
+      update: ({ state, transactions }) => {
+        let flashTime = state.facet(flashDuration);
+
         for (let tr of transactions) {
-          this.decorations = this.decorations.map(tr.changes);
+          if (tr.docChanged) {
+            decorations = decorations.map(tr.changes);
+          }
 
-          this.decorations = this.decorations.update({
-            add: tr.effects
-              .filter((e) => e.is(evalEffect) && e.value.from !== e.value.to)
-              .map(({ value: { from, to } }) =>
-                Decoration.mark({
-                  class: "cm-evaluated",
-                  time: tr.annotation(Transaction.time),
-                }).range(from, to)
-              ),
-            sort: true,
-            filter: (_f, _t, { spec: { time } }) => {
-              return typeof time === "number" && time + lifespan > Date.now();
-            },
-          });
+          for (let effect of tr.effects) {
+            if (
+              effect.is(evaluationEffect) &&
+              effect.value.span !== undefined
+            ) {
+              let { from, to } = effect.value.span;
+
+              if (from === to) break;
+
+              let timer = window.setTimeout(() => {
+                timers.delete(timer);
+                view.dispatch({ effects: endEvalEffect.of(effect.value) });
+              }, flashTime);
+
+              timers.add(timer);
+
+              decorations = decorations.update({
+                add: [
+                  Decoration.mark({
+                    class: "cm-evaluated",
+                    evaluation: effect.value,
+                  }).range(from, to),
+                ],
+              });
+            } else if (effect.is(endEvalEffect)) {
+              decorations = decorations.update({
+                filter: (_f, _t, value) =>
+                  value.spec.evaluation !== effect.value,
+              });
+            }
+          }
         }
-      }
-    },
-    { decorations: (v) => v.decorations }
-  );
-}
+      },
+
+      destroy: () => {
+        for (let timer of timers) {
+          window.clearTimeout(timer);
+        }
+      },
+
+      getDecorations: () => decorations,
+    };
+  },
+  {
+    provide: () => evaluationTheme,
+    decorations: (value) => value.getDecorations(),
+  }
+);

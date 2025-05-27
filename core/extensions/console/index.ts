@@ -1,18 +1,41 @@
-import { ConsoleMessage } from "@management/cm-console";
+import { Evaluation, Log } from "@core/api";
 
-import { TerminalMessage } from "@core/api";
-
+import { messageConstructor } from "./message";
 import "./style.css";
 
-export function console(history: TerminalMessage[] = []) {
+export function console(history: (Evaluation | Log)[] = []) {
   let consoleNode = document.createElement("div");
   consoleNode.classList.add("cm-console");
 
   consoleNode.setAttribute("role", "log");
   consoleNode.tabIndex = 0;
 
+  let consoleWrapperNode = document.createElement("div");
+  consoleNode.appendChild(consoleWrapperNode);
+
+  let consoleHeight = 0;
+  let wrapperHeight = 0;
+
+  const observer = new ResizeObserver((elements) => {
+    for (let element of elements) {
+      if (element.target === consoleNode) {
+        consoleHeight = element.contentBoxSize[0].blockSize;
+      } else if (element.target === consoleWrapperNode) {
+        wrapperHeight = element.contentBoxSize[0].blockSize;
+      }
+    }
+
+    consoleWrapperNode.classList.toggle(
+      "scrolling",
+      wrapperHeight > consoleHeight
+    );
+  });
+
+  observer.observe(consoleNode);
+  observer.observe(consoleWrapperNode);
+
   for (let message of history) {
-    consoleNode.appendChild(messageConstructor(message));
+    consoleWrapperNode.appendChild(messageConstructor(message));
   }
 
   let visible = true;
@@ -25,8 +48,10 @@ export function console(history: TerminalMessage[] = []) {
 
   return {
     dom: consoleNode,
-    update(message: TerminalMessage) {
-      let lastElement = consoleNode.appendChild(messageConstructor(message));
+    update(message: Evaluation | Log) {
+      let lastElement = consoleWrapperNode.appendChild(
+        messageConstructor(message)
+      );
 
       toggleVisibility(true);
       lastElement.scrollIntoView({ behavior: "smooth" });
@@ -34,27 +59,4 @@ export function console(history: TerminalMessage[] = []) {
     toggleVisibility,
     destroy() {},
   };
-}
-
-function messageConstructor(message: ConsoleMessage) {
-  const messageNode = document.createElement("div");
-  messageNode.classList.add("cm-console-message");
-  messageNode.classList.add(`cm-console-message-${message.level}`);
-  messageNode.appendChild(messageSourceConstructor(message));
-  messageNode.appendChild(messageContentConstructor(message));
-  return messageNode;
-}
-
-function messageSourceConstructor(message: ConsoleMessage) {
-  const messageSource = document.createElement("div");
-  messageSource.classList.add("cm-console-message-source");
-  messageSource.innerText = message.source;
-  return messageSource;
-}
-
-function messageContentConstructor(message: ConsoleMessage) {
-  const messageContent = document.createElement("div");
-  messageContent.classList.add("cm-console-message-content");
-  messageContent.innerText = message.text;
-  return messageContent;
 }

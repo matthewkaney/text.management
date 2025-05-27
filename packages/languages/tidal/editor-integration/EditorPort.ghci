@@ -1,0 +1,4 @@
+import System.Environment (getEnv)
+
+editorPort <- read <$> getEnv "editor_port" :: IO Int
+editorSocket <- hoscOpenUDP "127.0.0.1" editorPort
