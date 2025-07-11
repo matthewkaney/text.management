@@ -1,6 +1,6 @@
 {
   "name": "@management/cm-evaluate",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "CodeMirror 6 extension for enabling lines of code to be evaluated",
   "keywords": [
     "codemirror",
@@ -9,19 +9,23 @@
   "source": "src/index.ts",
   "browser": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepare": "rm -rf dist && parcel build"
+  },
   "files": [
     "dist/*"
   ],
   "author": "Matthew Kaney",
   "license": "MIT",
-  "homepage": "https://github.com/mindofmatthew/text.management/tree/main/packages/codemirror/evaluate#readme",
+  "homepage": "https://github.com/matthewkaney/text.management/tree/main/packages/codemirror/evaluate#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mindofmatthew/text.management.git",
+    "url": "git+https://github.com/matthewkaney/text.management.git",
     "directory": "packages/codemirror/evaluate"
   },
   "bugs": {
-    "url": "https://github.com/mindofmatthew/text.management/issues"
+    "url": "https://github.com/matthewkaney/text.management/issues"
   },
   "dependencies": {
     "@codemirror/state": "^6.4.1",

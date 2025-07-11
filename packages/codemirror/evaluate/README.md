@@ -13,7 +13,7 @@ import { EditorView, basicSetup } from "codemirror";
 import { evaluation } from "@management/cm-evaluate";
 
 // Define a function that handles evaluated code
-function myEval(code) {
+function myEval({ evaluation: { code } }) {
   eval(code);
 }
 
