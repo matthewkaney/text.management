@@ -120,8 +120,25 @@ window.makeMan = (name, scale = 1, x = 0, y = 0, z = 0) => {
 window.remove = (name) => {
   if (scene.children.includes(window[name])) {
     scene.remove(window[name]);
+  } else if ("animation" in window[name]) {
+    cancelAnimationFrame(window[name].animation);
   }
+
+  window[name] = undefined;
 };
+
+// window.move = (name, draw) => {
+//   if (name) {
+//     remove(name);
+
+//     const callback = (t) => {
+//       draw(t);
+//       window[name] = requestAnimationFrame(callback);
+//     };
+
+//     callback();
+//   }
+// };
 
 window.rand = Math.random;
 
@@ -147,4 +164,10 @@ window.ground = (color = "white") => {
   window.gnd.rotation.x = -Math.PI / 2;
   window.gnd.receiveShadow = true;
   scene.add(window.gnd);
+};
+
+window.many = (num, func) => {
+  for (let i = 0; i < num; ++i) {
+    func(i);
+  }
 };
