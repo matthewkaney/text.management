@@ -6,7 +6,7 @@ import { searchStyles } from "./search";
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
-export const col = (name: string) => `var(--color-${name})`;
+const col = (name: string) => `var(--color-${name})`;
 
 const coral = "#e06c75",
   ivory = "#abb2bf",
