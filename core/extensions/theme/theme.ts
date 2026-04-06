@@ -2,6 +2,7 @@ import { EditorView } from "@codemirror/view";
 import { Extension } from "@codemirror/state";
 import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
+import { searchStyles } from "./search";
 
 // Using https://github.com/one-dark/vscode-one-dark-theme/ as reference for the colors
 
@@ -139,6 +140,28 @@ export const managementTheme = EditorView.theme({
       color: ivory,
     },
   },
+  ".cm-button": {
+    color: "inherit",
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    lineHeight: "inherit",
+    appearance: "none",
+    border: "none",
+    outline: "none",
+    background: col("ui-background-inactive"),
+    cursor: "pointer",
+  },
+  ".cm-button:hover": {
+    background: col("ui-background"),
+  },
+  ".cm-button:focus-visible": {
+    boxShadow: "inset 0 0 0 4px var(--color-focus-border)",
+  },
+  ".cm-panels-top": {
+    borderBottom: `1px solid ${col("ui-background")}`,
+    background: col("ui-background-inactive"),
+  },
+  ...searchStyles
 });
 
 /// The highlighting style for code in the One Dark theme.

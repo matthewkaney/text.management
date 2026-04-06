@@ -12,6 +12,7 @@ import {
 } from "@codemirror/language";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { search, searchKeymap } from "@codemirror/search";
 import { decorateEmptyLines } from "./emptyLines";
 import { tabFocus } from "./tabTrapping";
 
@@ -24,7 +25,8 @@ export const basicSetup = [
   bracketMatching(),
   closeBrackets(),
   history(),
-  keymap.of([...defaultKeymap, ...closeBracketsKeymap, ...historyKeymap]),
+  search({ top: true }),
+  keymap.of([...defaultKeymap, ...closeBracketsKeymap, ...historyKeymap, ...searchKeymap]),
   decorateEmptyLines(),
   tabFocus,
 ];
