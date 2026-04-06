@@ -59,9 +59,7 @@ export const searchStyles = {
         content: '"Aa"',
         fontSize: "var(--font-small)",
         color: "var(--color-foreground)",
-        width: "24px",
-        height: "24px",
-        marginLeft: "4px",
+        marginLeft: "var(--s-0-5)",
     },
 
     // By word
@@ -71,9 +69,7 @@ export const searchStyles = {
         fontSize: "var(--font-small)",
         textDecoration: "underline",
         color: "var(--color-foreground)",
-        width: "24px",
-        height: "24px",
-        marginLeft: "4px",
+        marginLeft: "var(--s-0-5)",
     },
 
     // Regex
@@ -82,8 +78,6 @@ export const searchStyles = {
         content: '".*"',
         fontSize: "var(--font-small)",
         color: "var(--color-foreground)",
-        width: "24px",
-        height: "24px",
-        marginLeft: "4px",
+        marginLeft: "var(--s-0-5)",
     },
 };
