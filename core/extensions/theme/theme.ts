@@ -38,16 +38,22 @@ export const managementTheme = EditorView.theme({
     width: "fit-content",
     padding: `0 var(--s-0-5)`,
     backgroundColor: col("ui-background"),
+
+    // Extends the block background past the line at pattern boundaries. Uses
+    // shadows rather than padding with a negative margin, because CodeMirror
+    // measures line height with getBoundingClientRect, which counts padding
+    // but not margins; that mismatch sent clicks to the wrong line.
+    boxShadow: `0 calc(var(--line-cap-top, 0px) * -1) 0 0 ${col(
+      "ui-background"
+    )}, 0 var(--line-cap-bottom, 0px) 0 0 ${col("ui-background")}`,
   },
 
   ".cm-line:first-child, .cm-line.cm-emptyLine + .cm-line:not(.cm-emptyLine)": {
-    paddingTop: "var(--s-0-5)",
-    marginTop: "calc(var(--s-0-5) * -1)",
+    "--line-cap-top": "var(--s-0-5)",
   },
 
   ".cm-line:last-child, .cm-line:not(.cm-emptyLine):has(+ .cm-emptyLine)": {
-    paddingBottom: "var(--s-0-5)",
-    marginBottom: "calc(var(--s-0-5) * -1)",
+    "--line-cap-bottom": "var(--s-0-5)",
   },
 
   ".cm-emptyLine:not(.cm-activeLine)": {
