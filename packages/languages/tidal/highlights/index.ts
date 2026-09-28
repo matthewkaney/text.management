@@ -6,7 +6,13 @@ import {
   RangeSetBuilder,
   Prec,
 } from "@codemirror/state";
-import { Decoration, EditorView, ViewPlugin, keymap } from "@codemirror/view";
+import {
+  Decoration,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  keymap,
+} from "@codemirror/view";
 
 import {
   evaluation,
@@ -94,18 +100,61 @@ export function highlighter(api: typeof ElectronAPI): Extension {
   const highlighterPlugin = ViewPlugin.define((view) => {
     let pendingHighlights: TimestampedHighlightEvent[] = [];
 
+    // Tidal broadcasts every highlight to every editor; only handle our own.
+    let ownedMinis = new Set<number>();
+
+    const refreshOwnedMinis = () => {
+      ownedMinis.clear();
+
+      let cursor = view.state.field(mininotationStringField).iter();
+
+      while (cursor.value !== null) {
+        ownedMinis.add(cursor.value.id);
+        cursor.next();
+      }
+    };
+
+    refreshOwnedMinis();
+
+    // The loop only runs while events are pending or highlights are still
+    // live, and restarts when a new event arrives.
+    let animationFrame: number | null = null;
+
+    const schedule = () => {
+      if (animationFrame === null) {
+        animationFrame = requestAnimationFrame(update);
+      }
+    };
+
+    const hasWork = () =>
+      pendingHighlights.length > 0 ||
+      view.state.field(highlightSetField).length > 0;
+
     let offTidalHighlight = api.onTidalHighlight((highlight) => {
       // TODO: Filter out duplicate highlights
+      if (!ownedMinis.has(highlight.miniID)) return;
+
       pendingHighlights.push({
         ...highlight,
         time: fromNTPTime(highlight.onset),
       });
+
+      schedule();
     });
 
     const update = (time: number) => {
-      let effects: StateEffect<any>[] = [];
+      animationFrame = null;
 
-      effects.push(highlightTickEffect.of(time));
+      // Unmounted tab: drop stale events, clear anything still lit.
+      if (!view.dom.isConnected) {
+        pendingHighlights = [];
+
+        if (view.state.field(highlightSetField).length) {
+          view.dispatch({ effects: highlightTickEffect.of(time) });
+        }
+
+        return;
+      }
 
       let toAdd: TimestampedHighlightEvent[] = [];
       let stillPending: TimestampedHighlightEvent[] = [];
@@ -123,6 +172,20 @@ export function highlighter(api: typeof ElectronAPI): Extension {
         }
       }
 
+      // Without this the queue grows for the life of the tab.
+      pendingHighlights = stillPending;
+
+      const needsExpiry = view.state
+        .field(highlightSetField)
+        .some((event) => event.time + event.duration < time);
+
+      let effects: StateEffect<any>[] = [];
+
+      // Tick before add: expire by time first, then append what's newly due.
+      if (toAdd.length || needsExpiry) {
+        effects.push(highlightTickEffect.of(time));
+      }
+
       if (toAdd.length) {
         effects.push(highlightAddEffect.of(toAdd));
       }
@@ -131,21 +194,39 @@ export function highlighter(api: typeof ElectronAPI): Extension {
         view.dispatch({ effects });
       }
 
-      animationFrame = requestAnimationFrame(update);
+      if (hasWork()) {
+        schedule();
+      }
     };
 
-    let animationFrame = requestAnimationFrame(update);
-
     return {
+      update: (viewUpdate: ViewUpdate) => {
+        if (
+          viewUpdate.transactions.some((tr) =>
+            tr.effects.some((effect) => effect.is(replaceMininotationEffect))
+          )
+        ) {
+          refreshOwnedMinis();
+        }
+
+        // Resume after the tab is remounted, or if work is left over.
+        if (view.dom.isConnected && hasWork()) {
+          schedule();
+        }
+      },
       destroy: () => {
         offTidalHighlight();
-        cancelAnimationFrame(animationFrame);
+
+        if (animationFrame !== null) {
+          cancelAnimationFrame(animationFrame);
+        }
       },
     };
   });
 
   return [
     highlighterPlugin,
+    mininotationStringField,
     highlightSetField,
     Prec.highest(highlightDecorations),
   ];
