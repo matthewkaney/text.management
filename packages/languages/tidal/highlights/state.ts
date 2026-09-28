@@ -81,9 +81,14 @@ export const highlightSetField = StateField.define({
   update: (value: TimestampedHighlightEvent[], tr) => {
     for (let effect of tr.effects) {
       if (effect.is(highlightTickEffect)) {
-        value = value.filter((event) => {
-          event.time + event.duration >= effect.value;
-        });
+        const time = effect.value;
+
+        // Only rebuild when something actually expired. A bare filter returns
+        // a new array every tick, which invalidates the decoration set and
+        // forces a full rebuild on every frame.
+        if (value.some((event) => event.time + event.duration < time)) {
+          value = value.filter((event) => event.time + event.duration >= time);
+        }
       } else if (effect.is(highlightAddEffect)) {
         value = value.concat(effect.value);
       }
