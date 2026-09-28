@@ -22,6 +22,7 @@ import {
   evaluationWithHighlights,
   highlighter,
 } from "@management/lang-tidal/highlights";
+import { rmsMeter } from "@core/extensions/rms-meter";
 import { keymap } from "@codemirror/view";
 import { evaluation } from "@management/cm-evaluate";
 
@@ -66,6 +67,9 @@ export class Editor {
     let toolbar = toolbarConstructor(api, configuration, tidalVersion);
     layout.panelArea.appendChild(toolbar.dom);
 
+    let meter = rmsMeter();
+    parent.appendChild(meter.dom);
+
     api.onTidalVersion((version) => {
       tidalVersion = version;
     });
@@ -76,6 +80,19 @@ export class Editor {
 
     api.onConsoleMessage((message) => {
       tidalConsole.update(message);
+    });
+
+    api.onTidalRms((rmsEvent) => {
+      console.log("RENDERER RMS:", rmsEvent);
+      meter.update(rmsEvent);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "M") {
+        console.log("### HERE");
+        e.preventDefault();
+        meter.toggleVisibility();
+      }
     });
 
     api.onOpen(({ id, path }) => {

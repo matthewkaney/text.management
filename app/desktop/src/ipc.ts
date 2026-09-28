@@ -1,7 +1,7 @@
 import type { DocumentUpdate, Evaluation, Log } from "@core/api";
 
 import type { SavedStatus } from "./main/filesystem";
-import { HighlightEvent } from "@management/lang-tidal";
+import { HighlightEvent, RmsEvent } from "@management/lang-tidal";
 
 export type Handler<T> = (event: T) => void;
 
@@ -30,5 +30,6 @@ export interface ToRendererChannels {
   toggleConsole: undefined;
   showAbout: string;
   tidalHighlight: HighlightEvent;
+  tidalRms: RmsEvent;
   settingsData: any;
 }

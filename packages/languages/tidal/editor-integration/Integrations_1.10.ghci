@@ -56,7 +56,15 @@ mkTidalWith oscmap config = do
   startStream config oscmap
 :}
 
+-- :{
+-- mkTidal :: IO Stream
+-- mkTidal = mkTidalWith mkOscMap defaultConfig
+-- :}
+
 :{
 mkTidal :: IO Stream
-mkTidal = mkTidalWith mkOscMap defaultConfig
+mkTidal = do
+  stream <- mkTidalWith mkOscMap (defaultConfig { cCtrlAddr = "127.0.0.1", cCtrlPort = 6010 })
+  watchRms
+  return stream
 :}

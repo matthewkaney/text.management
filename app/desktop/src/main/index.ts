@@ -178,6 +178,13 @@ const createWindow = (configuration: Config) => {
       })
     );
 
+    listeners.push(
+      tidal.on("rms", (rmsEvent) => {
+        console.log("RMS EVENT:", rmsEvent);
+        send("tidalRms", rmsEvent);
+      })
+    )
+
     send("settingsData", configuration.data);
     listeners.push(
       configuration.on("change", (data) => {

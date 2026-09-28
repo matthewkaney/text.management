@@ -33,6 +33,24 @@ watchClock stream = forkIO checkClock
                     checkClock
 :}
 
+-- Used Claude Code to generate this bit
+:{
+watchRms :: IO ThreadId
+watchRms = do
+  rmsSocket <- hoscOpenUDP "127.0.0.1" 57120
+  HOSC.sendMessage rmsSocket (HOSC.Message "/dirt/handshake" [])
+  putStrLn "watchRms: handshake sent"
+  forkIO $ let loop = do
+                  msg <- HOSC.recvMessage rmsSocket
+                  putStrLn $ "watchRms: received " ++ show msg
+                  case msg of
+                    Just (HOSC.Message "/rms" args) ->
+                      HOSC.sendMessage editorSocket (HOSC.Message "/rms" args)
+                    _ -> return ()
+                  loop
+            in loop
+:}
+
 import qualified Sound.Tidal.Stream as Stream
 
 :{
@@ -41,7 +59,15 @@ startStream config oscmap
   = Stream.startStream config (oscmap ++ [(highlightTarget, [highlightShape])])
 :}
 
+-- :{
+-- startTidal :: Target -> Config -> IO Stream
+-- startTidal t c = startStream c [(t, [superdirtShape])]
+-- :}
+
 :{
 startTidal :: Target -> Config -> IO Stream
-startTidal t c = startStream c [(t, [superdirtShape])]
+startTidal t c = do
+  stream <- startStream c [(t, [superdirtShape])]
+  watchRms
+  return stream
 :}

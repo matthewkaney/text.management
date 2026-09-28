@@ -25,11 +25,18 @@ export interface HighlightEvent {
   duration: number;
 }
 
+export interface RmsEvent {
+  orbit: number;
+  peak: number;
+  power: number;
+}
+
 interface GHCIEvents {
   message: Evaluation | Log;
   now: number;
   openSettings: string;
   highlight: HighlightEvent;
+  rms: RmsEvent;
   version: string;
 }
 
@@ -94,6 +101,21 @@ export class GHCI extends Engine<GHCIEvents> {
               cycle,
               duration: duration / 1000, // Convert from microseconds
             });
+          } else if (message.address === '/rms') {
+            console.log("OSC IN:", message.address, message.args);
+            const [_synthID, orbitIndex, ...channelData] = message.args as number[];
+
+            let peak = 0, power = 0;
+            for (let i = 0; i < channelData.length; i += 2) {
+              peak = Math.max(peak, channelData[i]);
+              power = Math.max(power, channelData[i + 1]);
+            }
+
+            this.emit("rms", {
+              orbit: orbitIndex,
+              peak,
+              power
+            })
           }
         }
       });
@@ -264,6 +286,7 @@ export class GHCI extends Engine<GHCIEvents> {
 import { extractStatements } from "./parse";
 import { EOL } from "os";
 import { asMessages } from "@core/osc/utils";
+import { channel } from "diagnostics_channel";
 
 interface ProcessWrapperEvents {
   prologue: string;
@@ -424,7 +447,7 @@ class ProcessWrapper extends EventEmitter<ProcessWrapperEvents> {
   }
 
   public async *send(code: string) {
-    let resolve = () => {};
+    let resolve = () => { };
 
     if (this.runningProcess !== null) {
       await this.runningProcess;

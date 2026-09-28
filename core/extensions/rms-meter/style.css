@@ -1,0 +1,57 @@
+.rms-meter {
+   position: fixed;
+   top: var(--s-3);        /* clear the tab bar (~36px) */
+   right: 0;
+   width: 160px;
+   padding: var(--s-1);
+   background: rgba(0, 0, 0, 0.6);
+   z-index: 100;
+   font-family: "Fira Code", monospace;
+   font-size: var(--font-small);
+   color: var(--color-foreground);
+   pointer-events: none;   /* clicks pass through to editor beneath */
+ }
+
+ .rms-orbit {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+   margin: 3px 0;
+ }
+
+ .rms-label {
+   width: 1.5em;
+   text-align: right;
+   opacity: 0.5;
+   flex-shrink: 0;
+ }
+
+ .rms-track {
+   flex: 1;
+   height: 5px;
+   background: rgba(255, 255, 255, 0.08);
+   border-radius: 2px;
+   overflow: hidden;
+ }
+
+ .rms-fill {
+   height: 100%;
+   width: 0%;
+   background: #4caf50;          
+   border-radius: 2px;
+ }
+
+ .rms-fill--loud {
+   background: #ffb74d;          
+ }
+
+ .rms-fill--clipping {
+   background: #ef5350;          
+ }
+
+ .rms-db {
+   width: 3.5em;
+   text-align: right;
+   opacity: 0.45;
+   flex-shrink: 0;
+ }

@@ -90,6 +90,8 @@ const ElectronAPI = {
 
   onTidalHighlight: listen("tidalHighlight"),
 
+  onTidalRms: listen("tidalRms"),
+
   onSettingsData: listen("settingsData"),
 };
 
